@@ -62,7 +62,7 @@ const Hero: React.FC = () => {
               <p className="text-charcoal/80 mb-5 text-center">
                 Register here to start saving time on your probate application
               </p>
-              <a href="#" className="block">
+              <a href="/auth" className="block">
                 <Button className="w-full bg-primary text-white hover:bg-primary/90 py-3 flex items-center justify-center">
                   <span className="font-medium">Get Started</span>
                   <ArrowRight className="ml-2 h-4 w-4" />
