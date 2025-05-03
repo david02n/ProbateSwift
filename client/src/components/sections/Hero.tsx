@@ -48,15 +48,13 @@ const Hero: React.FC = () => {
         
         <div className="md:w-1/2">
           <Card className="bg-muted p-6 md:p-8 rounded-xl shadow-lg">
-            <div className="flex items-center mb-6">
-              <div className="w-12 h-12 bg-primary rounded-full flex items-center justify-center text-white">
+            <div className="mb-6">
+              <div className="w-12 h-12 bg-primary rounded-full flex items-center justify-center text-white mx-auto mb-3">
                 <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
                 </svg>
               </div>
-              <h3 className="ml-4 text-xl font-semibold font-inter">Do I need probate?</h3>
             </div>
-            <p className="text-charcoal/80 mb-6">Answer a few simple questions to determine if you need probate for your situation.</p>
             
             {/* CTA Card */}
             <div className="bg-white rounded-lg p-6 shadow-sm mb-6 border border-lavender/30">
