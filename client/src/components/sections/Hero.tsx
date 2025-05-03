@@ -58,31 +58,27 @@ const Hero: React.FC = () => {
             </div>
             <p className="text-charcoal/80 mb-6">Answer a few simple questions to determine if you need probate for your situation.</p>
             
-            {/* Assessment preview */}
-            <div className="bg-white rounded-lg p-6 shadow-sm mb-4 border border-lavender/30">
-              <h4 className="font-medium mb-4">Has the person passed away?</h4>
-              <p className="text-sm text-mid-grey mb-4">We can only help once someone has officially died.</p>
-              <div className="space-y-2">
-                <button className="w-full py-2 px-4 border border-primary text-primary rounded hover:bg-primary/5 font-medium text-left flex justify-between items-center">
-                  <span>Yes</span>
-                  <ArrowRight className="h-4 w-4" />
-                </button>
-                <button className="w-full py-2 px-4 border border-mid-grey text-charcoal rounded hover:bg-muted font-medium text-left">
-                  <span>No</span>
-                </button>
-              </div>
+            {/* CTA Card */}
+            <div className="bg-white rounded-lg p-6 shadow-sm mb-6 border border-lavender/30">
+              <h4 className="font-medium mb-3 text-center text-lg">Already know probate is required?</h4>
+              <p className="text-charcoal/80 mb-5 text-center">
+                Register here to start saving time on your probate application
+              </p>
+              <a href="#" className="block">
+                <Button className="w-full bg-primary text-white hover:bg-primary/90 py-3 flex items-center justify-center">
+                  <span className="font-medium">Get Started</span>
+                  <ArrowRight className="ml-2 h-4 w-4" />
+                </Button>
+              </a>
             </div>
             
-            <div className="flex items-center justify-between">
+            <div className="flex items-center justify-center">
               <div className="flex items-center text-sm text-mid-grey">
                 <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
                 </svg>
                 <span>Your information is secure</span>
               </div>
-              <button className="text-primary hover:underline text-sm font-medium">
-                Skip to registration <ArrowRight className="inline-block ml-1 h-3 w-3" />
-              </button>
             </div>
           </Card>
         </div>
