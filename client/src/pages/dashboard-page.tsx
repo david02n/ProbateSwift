@@ -110,9 +110,13 @@ const DashboardPage: React.FC = () => {
                       
                       <Button 
                         className="w-full bg-primary hover:bg-primary/90"
-                        onClick={() => window.location.href = "/?tab=tasks"}
+                        onClick={() => {
+                          document.querySelector('[value="tasks"]')?.dispatchEvent(
+                            new MouseEvent('click', { bubbles: true })
+                          );
+                        }}
                       >
-                        Continue Probate Process
+                        View Probate Tasks
                         <ArrowRight className="ml-2 h-4 w-4" />
                       </Button>
                     </div>
@@ -215,19 +219,176 @@ const DashboardPage: React.FC = () => {
                 </CardDescription>
               </CardHeader>
               <CardContent>
-                <div className="flex flex-col items-center justify-center py-12 text-center">
-                  <Check className="h-12 w-12 text-mid-grey mb-4" />
-                  <h3 className="text-lg font-medium mb-2">No Tasks Yet</h3>
-                  <p className="text-charcoal/70 mb-4 max-w-md mx-auto">
-                    Complete your assessment to get a personalized task list for your probate process
-                  </p>
-                  <Button 
-                    className="bg-primary hover:bg-primary/90"
-                    onClick={() => window.location.href = "/#assessment"}
-                  >
-                    Start Assessment
-                  </Button>
-                </div>
+                {isLoadingAssessment ? (
+                  <div className="flex justify-center py-8">
+                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+                  </div>
+                ) : assessmentResult && assessmentResult.isProbateRequired ? (
+                  <div className="space-y-4">
+                    <div className="text-sm text-charcoal/70 mb-4">
+                      Complete these milestones to progress with your probate application
+                    </div>
+                    
+                    {/* Milestones List */}
+                    <div className="border rounded-lg divide-y">
+                      {/* Initial Assessment Milestone */}
+                      <div className="p-4 flex items-center justify-between">
+                        <div className="flex items-center">
+                          <div className="h-8 w-8 rounded-full bg-success/10 text-success flex items-center justify-center mr-3">
+                            <Check className="h-4 w-4" />
+                          </div>
+                          <span className="font-medium">Probate Assessment</span>
+                        </div>
+                        <span className="text-xs py-1 px-2 bg-success/10 text-success rounded-full">Complete</span>
+                      </div>
+                      
+                      {/* Executor Information Milestone */}
+                      <div className="p-4 flex items-center justify-between">
+                        <div className="flex items-center">
+                          <div className="h-8 w-8 rounded-full bg-amber/10 text-amber flex items-center justify-center mr-3">
+                            <FileText className="h-4 w-4" />
+                          </div>
+                          <span className="font-medium">Enter Executor Info</span>
+                        </div>
+                        <div>
+                          <span className="text-xs py-1 px-2 bg-amber/10 text-amber rounded-full mr-2">Pending</span>
+                          <Button 
+                            variant="outline" 
+                            size="sm" 
+                            className="h-7 text-xs"
+                          >
+                            Start
+                          </Button>
+                        </div>
+                      </div>
+                      
+                      {/* Death Certificate Milestone */}
+                      <div className="p-4 flex items-center justify-between">
+                        <div className="flex items-center">
+                          <div className="h-8 w-8 rounded-full bg-mid-grey/10 text-mid-grey flex items-center justify-center mr-3">
+                            <FileText className="h-4 w-4" />
+                          </div>
+                          <span className="font-medium">Upload Death Certificate</span>
+                        </div>
+                        <div>
+                          <span className="text-xs py-1 px-2 bg-mid-grey/10 text-mid-grey rounded-full mr-2">Not Started</span>
+                          <Button 
+                            variant="outline" 
+                            size="sm" 
+                            className="h-7 text-xs"
+                            disabled
+                          >
+                            Upload
+                          </Button>
+                        </div>
+                      </div>
+                      
+                      {/* Will Upload Milestone */}
+                      {assessmentResult.hasWill && (
+                        <div className="p-4 flex items-center justify-between">
+                          <div className="flex items-center">
+                            <div className="h-8 w-8 rounded-full bg-mid-grey/10 text-mid-grey flex items-center justify-center mr-3">
+                              <FileText className="h-4 w-4" />
+                            </div>
+                            <span className="font-medium">Upload Will</span>
+                          </div>
+                          <div>
+                            <span className="text-xs py-1 px-2 bg-mid-grey/10 text-mid-grey rounded-full mr-2">Not Started</span>
+                            <Button 
+                              variant="outline" 
+                              size="sm" 
+                              className="h-7 text-xs"
+                              disabled
+                            >
+                              Upload
+                            </Button>
+                          </div>
+                        </div>
+                      )}
+                      
+                      {/* Property Valuation */}
+                      <div className="p-4 flex items-center justify-between">
+                        <div className="flex items-center">
+                          <div className="h-8 w-8 rounded-full bg-mid-grey/10 text-mid-grey flex items-center justify-center mr-3">
+                            <FileText className="h-4 w-4" />
+                          </div>
+                          <span className="font-medium">Enter Property Values</span>
+                        </div>
+                        <div>
+                          <span className="text-xs py-1 px-2 bg-mid-grey/10 text-mid-grey rounded-full mr-2">Not Started</span>
+                          <Button 
+                            variant="outline" 
+                            size="sm" 
+                            className="h-7 text-xs"
+                            disabled
+                          >
+                            Start
+                          </Button>
+                        </div>
+                      </div>
+                      
+                      {/* Bank Accounts */}
+                      <div className="p-4 flex items-center justify-between">
+                        <div className="flex items-center">
+                          <div className="h-8 w-8 rounded-full bg-mid-grey/10 text-mid-grey flex items-center justify-center mr-3">
+                            <FileText className="h-4 w-4" />
+                          </div>
+                          <span className="font-medium">Add Financial Accounts</span>
+                        </div>
+                        <div>
+                          <span className="text-xs py-1 px-2 bg-mid-grey/10 text-mid-grey rounded-full mr-2">Not Started</span>
+                          <Button 
+                            variant="outline" 
+                            size="sm" 
+                            className="h-7 text-xs"
+                            disabled
+                          >
+                            Start
+                          </Button>
+                        </div>
+                      </div>
+                      
+                      {/* Submit Application */}
+                      <div className="p-4 flex items-center justify-between">
+                        <div className="flex items-center">
+                          <div className="h-8 w-8 rounded-full bg-mid-grey/10 text-mid-grey flex items-center justify-center mr-3">
+                            <FileText className="h-4 w-4" />
+                          </div>
+                          <span className="font-medium">Submit Probate Application</span>
+                        </div>
+                        <div>
+                          <span className="text-xs py-1 px-2 bg-mid-grey/10 text-mid-grey rounded-full mr-2">Locked</span>
+                          <Button 
+                            variant="outline" 
+                            size="sm" 
+                            className="h-7 text-xs"
+                            disabled
+                          >
+                            Submit
+                          </Button>
+                        </div>
+                      </div>
+                    </div>
+                    
+                    <div className="mt-6 text-sm text-center text-charcoal/70">
+                      Complete all required tasks to submit your probate application
+                    </div>
+                  </div>
+                ) : (
+                  <div className="flex flex-col items-center justify-center py-12 text-center">
+                    <Check className="h-12 w-12 text-mid-grey mb-4" />
+                    <h3 className="text-lg font-medium mb-2">No Tasks Yet</h3>
+                    <p className="text-charcoal/70 mb-4 max-w-md mx-auto">
+                      Complete your assessment to get a personalized task list for your probate process
+                    </p>
+                    <Button 
+                      className="bg-primary hover:bg-primary/90"
+                      onClick={() => window.location.href = "/#assessment"}
+                    >
+                      Start Assessment
+                    </Button>
+                  </div>
+                )}
               </CardContent>
             </Card>
           </TabsContent>
