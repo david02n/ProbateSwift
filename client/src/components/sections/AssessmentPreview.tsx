@@ -1,6 +1,6 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
-import { ArrowRight, AlertCircle, CheckCircle, Info } from "lucide-react";
+import { ArrowRight, ArrowLeft, AlertCircle, CheckCircle, Info } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Label } from "@/components/ui/label";
@@ -11,7 +11,10 @@ interface QuestionProps {
   question: string;
   description: string;
   options: string[];
+  value: string;
   onAnswer: (value: string) => void;
+  onBack?: () => void;
+  showBackButton: boolean;
 }
 
 const Question: React.FC<QuestionProps> = ({ 
@@ -19,18 +22,15 @@ const Question: React.FC<QuestionProps> = ({
   question, 
   description, 
   options, 
-  onAnswer
+  value,
+  onAnswer,
+  onBack,
+  showBackButton
 }) => {
-  const [selectedValue, setSelectedValue] = useState<string>("");
-
-  const handleChange = (value: string) => {
-    setSelectedValue(value);
-  };
-
-  const handleContinue = () => {
-    if (selectedValue) {
-      onAnswer(selectedValue);
-    }
+  // Using the value passed in as the selected value
+  const handleChange = (selectedValue: string) => {
+    // Automatically go to next question when an option is selected
+    onAnswer(selectedValue);
   };
 
   return (
@@ -43,7 +43,7 @@ const Question: React.FC<QuestionProps> = ({
       </div>
       <p className="text-charcoal/70 mb-5 pl-11">{description}</p>
       <div className="space-y-3 pl-11 mb-6">
-        <RadioGroup value={selectedValue} onValueChange={handleChange} name={`question-${number}`}>
+        <RadioGroup value={value} onValueChange={handleChange} name={`question-${number}`}>
           {options.map((option, index) => (
             <div key={index} className="flex items-center p-3 border rounded-lg cursor-pointer hover:bg-muted transition">
               <RadioGroupItem id={`question-${number}-${index}`} value={option} className="text-primary" />
@@ -52,16 +52,19 @@ const Question: React.FC<QuestionProps> = ({
           ))}
         </RadioGroup>
       </div>
-      <div className="flex justify-end">
-        <Button 
-          className="bg-primary text-white hover:bg-primary/90"
-          onClick={handleContinue}
-          disabled={!selectedValue}
-        >
-          <span>Continue</span>
-          <ArrowRight className="ml-2 h-4 w-4" />
-        </Button>
-      </div>
+      
+      {showBackButton && (
+        <div className="flex justify-start">
+          <Button 
+            variant="outline"
+            className="text-primary border-primary hover:bg-primary/5"
+            onClick={onBack}
+          >
+            <ArrowLeft className="mr-2 h-4 w-4" />
+            <span>Back</span>
+          </Button>
+        </div>
+      )}
     </div>
   );
 };
@@ -192,6 +195,8 @@ const AssessmentPreview: React.FC = () => {
     title: string;
     description: string;
   } | null>(null);
+  // Track question navigation history to enable back navigation
+  const [questionHistory, setQuestionHistory] = useState<number[]>([]);
 
   const handleAnswer = (answer: string) => {
     const currentQuestion = assessmentQuestions[currentQuestionIndex];
@@ -282,7 +287,8 @@ const AssessmentPreview: React.FC = () => {
     
     // Skip executor question if no will
     if (currentQuestion.id === "will" && (answer === "No" || answer === "Not sure")) {
-      // Skip the executor question (index 4)
+      // Skip the executor question (index 4) but add current index to history first
+      setQuestionHistory(prev => [...prev, currentQuestionIndex]);
       setCurrentQuestionIndex(currentQuestionIndex + 2);
       return;
     }
@@ -297,14 +303,28 @@ const AssessmentPreview: React.FC = () => {
       return;
     }
     
-    // Move to next question
+    // Move to next question and update history
+    setQuestionHistory(prev => [...prev, currentQuestionIndex]);
     setCurrentQuestionIndex(currentQuestionIndex + 1);
+  };
+
+  // Go back to previous question
+  const handleBack = () => {
+    if (questionHistory.length > 0) {
+      // Get the last question from history
+      const previousIndex = questionHistory[questionHistory.length - 1];
+      // Update history by removing the last item
+      setQuestionHistory(prev => prev.slice(0, -1));
+      // Go back to previous question
+      setCurrentQuestionIndex(previousIndex);
+    }
   };
 
   const restartAssessment = () => {
     setCurrentQuestionIndex(0);
     setAnswers({});
     setResult(null);
+    setQuestionHistory([]);
   };
   
   const currentQuestion = assessmentQuestions[currentQuestionIndex];
@@ -334,7 +354,10 @@ const AssessmentPreview: React.FC = () => {
                 question={currentQuestion.question}
                 description={currentQuestion.description}
                 options={currentQuestion.options}
+                value={answers[currentQuestion.id] || ""}
                 onAnswer={handleAnswer}
+                onBack={handleBack}
+                showBackButton={questionHistory.length > 0}
               />
             )}
           </CardContent>
