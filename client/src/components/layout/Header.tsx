@@ -42,7 +42,7 @@ const Header: React.FC = () => {
         </nav>
         
         <div className="flex items-center space-x-4">
-          <Link href="#">
+          <Link href="/auth">
             <Button 
               variant="outline" 
               className="hidden md:inline-flex border-primary text-primary hover:bg-primary hover:text-white"
@@ -50,7 +50,7 @@ const Header: React.FC = () => {
               Login
             </Button>
           </Link>
-          <Link href="#">
+          <Link href="/auth">
             <Button className="bg-primary text-white hover:bg-primary/90">
               Get Started
             </Button>
@@ -88,15 +88,19 @@ const Header: React.FC = () => {
                     </a>
                   ))}
                   <div className="flex flex-col gap-2 pt-4">
-                    <Button 
-                      variant="outline" 
-                      className="border-primary text-primary hover:bg-primary hover:text-white w-full"
-                    >
-                      Login
-                    </Button>
-                    <Button className="bg-primary text-white hover:bg-primary/90 w-full">
-                      Get Started
-                    </Button>
+                    <Link href="/auth" className="w-full">
+                      <Button 
+                        variant="outline" 
+                        className="border-primary text-primary hover:bg-primary hover:text-white w-full"
+                      >
+                        Login
+                      </Button>
+                    </Link>
+                    <Link href="/auth" className="w-full">
+                      <Button className="bg-primary text-white hover:bg-primary/90 w-full">
+                        Get Started
+                      </Button>
+                    </Link>
                   </div>
                 </nav>
               </div>
