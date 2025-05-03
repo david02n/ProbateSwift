@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import { Link } from "wouter";
 import { Button } from "@/components/ui/button";
 import { ArrowRight, ArrowLeft, AlertCircle, CheckCircle, Info } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
@@ -94,9 +95,11 @@ const Result: React.FC<ResultProps> = ({ type, title, description, restart }) =>
       <p className="text-charcoal/80 mb-6">{description}</p>
       
       {type === "probate-required" && (
-        <Button className="bg-primary text-white hover:bg-primary/90">
-          Register to Begin
-        </Button>
+        <Link href="/auth">
+          <Button className="bg-primary text-white hover:bg-primary/90">
+            Register to Begin
+          </Button>
+        </Link>
       )}
       
       <div className="mt-4">
@@ -365,7 +368,7 @@ const AssessmentPreview: React.FC = () => {
         
         <div className="mt-8 text-center">
           <p className="text-mid-grey">Want to save your assessment progress?</p>
-          <a href="#" className="text-primary hover:underline font-medium">Create a free account</a>
+          <Link href="/auth?tab=register" className="text-primary hover:underline font-medium">Create a free account</Link>
         </div>
       </div>
     </section>

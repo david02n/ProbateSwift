@@ -108,7 +108,10 @@ const DashboardPage: React.FC = () => {
                         )}
                       </div>
                       
-                      <Button className="w-full bg-primary hover:bg-primary/90">
+                      <Button 
+                        className="w-full bg-primary hover:bg-primary/90"
+                        onClick={() => window.location.href = "/?tab=tasks"}
+                      >
                         Continue Probate Process
                         <ArrowRight className="ml-2 h-4 w-4" />
                       </Button>
@@ -120,7 +123,10 @@ const DashboardPage: React.FC = () => {
                       <p className="text-charcoal/70 mb-4">
                         Complete our assessment to determine if probate is required for your situation
                       </p>
-                      <Button className="bg-primary hover:bg-primary/90">
+                      <Button 
+                        className="bg-primary hover:bg-primary/90"
+                        onClick={() => window.location.href = "/#assessment"}
+                      >
                         Start Assessment
                         <ArrowRight className="ml-2 h-4 w-4" />
                       </Button>
@@ -215,7 +221,10 @@ const DashboardPage: React.FC = () => {
                   <p className="text-charcoal/70 mb-4 max-w-md mx-auto">
                     Complete your assessment to get a personalized task list for your probate process
                   </p>
-                  <Button className="bg-primary hover:bg-primary/90">
+                  <Button 
+                    className="bg-primary hover:bg-primary/90"
+                    onClick={() => window.location.href = "/#assessment"}
+                  >
                     Start Assessment
                   </Button>
                 </div>
