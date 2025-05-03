@@ -20,7 +20,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Return the most recent assessment
       if (assessments.length > 0) {
         const mostRecent = assessments.sort((a, b) => {
-          return new Date(b.updatedAt!).getTime() - new Date(a.updatedAt!).getTime();
+          const dateA = a.updatedAt ? new Date(a.updatedAt).getTime() : a.createdAt ? new Date(a.createdAt).getTime() : 0;
+          const dateB = b.updatedAt ? new Date(b.updatedAt).getTime() : b.createdAt ? new Date(b.createdAt).getTime() : 0;
+          return dateB - dateA; // Sort in descending order (newest first)
         })[0];
         
         return res.json(mostRecent);

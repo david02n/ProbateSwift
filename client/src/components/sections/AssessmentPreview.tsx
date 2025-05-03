@@ -197,9 +197,26 @@ const AssessmentPreview: React.FC = () => {
     type: "probate-required" | "no-probate" | "end-flow";
     title: string;
     description: string;
-  } | null>(null);
+  } | null>(() => {
+    // Try to load saved result from localStorage on component mount
+    const savedResult = localStorage.getItem('probate_assessment_result');
+    return savedResult ? JSON.parse(savedResult) : null;
+  });
   // Track question navigation history to enable back navigation
   const [questionHistory, setQuestionHistory] = useState<number[]>([]);
+  
+  // Save result to localStorage whenever it changes
+  useEffect(() => {
+    if (result) {
+      localStorage.setItem('probate_assessment_result', JSON.stringify(result));
+      
+      // Also save the answers for further processing
+      localStorage.setItem('probate_assessment_answers', JSON.stringify(answers));
+    } else {
+      localStorage.removeItem('probate_assessment_result');
+      localStorage.removeItem('probate_assessment_answers');
+    }
+  }, [result, answers]);
 
   const handleAnswer = (answer: string) => {
     const currentQuestion = assessmentQuestions[currentQuestionIndex];

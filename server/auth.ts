@@ -113,12 +113,34 @@ export function setupAuth(app: Express) {
         return res.status(400).json({ error: "Email already registered" });
       }
 
+      // Extract assessment data if present
+      const { assessment, ...userData } = req.body;
+
       // Create new user with hashed password
-      const hashedPassword = await hashPassword(req.body.password);
+      const hashedPassword = await hashPassword(userData.password);
       const newUser = await storage.createUser({
-        ...req.body,
+        ...userData,
         password: hashedPassword
       });
+
+      // If an assessment was passed, save it to the database
+      if (assessment && assessment.result && assessment.result.type === "probate-required") {
+        // Determine probate type based on will answer if available
+        const hasWill = assessment.answers && assessment.answers.will === "Yes";
+        const probateType = hasWill ? "grant_of_probate" : "letters_of_administration";
+        
+        // Create assessment result
+        await storage.createAssessmentResult({
+          userId: newUser.id,
+          isProbateRequired: true,
+          probateType,
+          hasWill,
+          hasDispute: assessment.answers && assessment.answers.disputes === "Yes",
+          isInsolvent: assessment.answers && (assessment.answers.debts === "Yes" || assessment.answers.debts === "Not sure"),
+          results: assessment.result,
+          createdAt: new Date()
+        });
+      }
 
       // Log in the new user automatically
       req.login(newUser, (err) => {

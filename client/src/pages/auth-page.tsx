@@ -76,7 +76,20 @@ const AuthPage: React.FC = () => {
 
   // Handle register submission
   const onRegisterSubmit = (values: RegisterFormValues) => {
-    registerMutation.mutate(values);
+    // Get assessment data from localStorage if available
+    const savedResult = localStorage.getItem('probate_assessment_result');
+    const savedAnswers = localStorage.getItem('probate_assessment_answers');
+    
+    // Add metadata to track that the user came from an assessment
+    const userRegisterData = {
+      ...values,
+      assessment: savedResult ? {
+        result: JSON.parse(savedResult),
+        answers: savedAnswers ? JSON.parse(savedAnswers) : {},
+      } : undefined
+    };
+    
+    registerMutation.mutate(userRegisterData);
   };
 
   // Redirect if already logged in
