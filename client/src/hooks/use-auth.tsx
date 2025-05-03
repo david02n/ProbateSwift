@@ -83,10 +83,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     },
     onSuccess: (user: AuthUser) => {
       queryClient.setQueryData(["/api/user"], user);
+      // Clear assessment data from localStorage as it's now saved to the database
+      localStorage.removeItem('probate_assessment_result');
+      localStorage.removeItem('probate_assessment_answers');
+      
       toast({
         title: "Registration successful",
         description: `Welcome to ProbateSwift${user.firstName ? ', ' + user.firstName : ''}!`,
       });
+      
+      // Query assessment data right away
+      queryClient.invalidateQueries({ queryKey: ["/api/assessment"] });
+      
       // Redirect to dashboard
       window.location.href = "/dashboard";
     },

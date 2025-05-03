@@ -137,8 +137,10 @@ export function setupAuth(app: Express) {
           hasWill,
           hasDispute: assessment.answers && assessment.answers.disputes === "Yes",
           isInsolvent: assessment.answers && (assessment.answers.debts === "Yes" || assessment.answers.debts === "Not sure"),
-          results: assessment.result,
-          createdAt: new Date()
+          assessmentData: JSON.stringify({
+            result: assessment.result,
+            answers: assessment.answers
+          })
         });
       }
 
