@@ -81,7 +81,7 @@ const AuthPage: React.FC = () => {
 
   // Redirect if already logged in
   if (user) {
-    return <Redirect to="/" />;
+    return <Redirect to="/dashboard" />;
   }
 
   return (
