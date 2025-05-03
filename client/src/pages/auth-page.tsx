@@ -177,6 +177,12 @@ const AuthPage: React.FC = () => {
                         )}
                         Login
                       </Button>
+                      
+                      <div className="mt-4 text-xs text-center text-charcoal/60">
+                        <div className="mb-1">Test account credentials:</div>
+                        <div className="font-mono bg-muted p-1 rounded-sm">Email: test@probateswift.com</div>
+                        <div className="font-mono bg-muted p-1 mt-1 rounded-sm">Password: 1234</div>
+                      </div>
                     </CardFooter>
                   </form>
                 </Form>

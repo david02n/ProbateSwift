@@ -129,7 +129,19 @@ const DashboardPage: React.FC = () => {
                       </p>
                       <Button 
                         className="bg-primary hover:bg-primary/90"
-                        onClick={() => window.location.href = "/#assessment"}
+                        onClick={() => {
+                          // First attempt: redirect to home and trigger the assessment section
+                          window.location.href = "/#assessment";
+                          
+                          // Add a fallback in case the direct link doesn't work
+                          setTimeout(() => {
+                            // Try to find and click on the assessment section link
+                            const assessmentLink = document.querySelector('a[href="#assessment"]');
+                            if (assessmentLink) {
+                              (assessmentLink as HTMLElement).click();
+                            }
+                          }, 500);
+                        }}
                       >
                         Start Assessment
                         <ArrowRight className="ml-2 h-4 w-4" />
@@ -383,7 +395,19 @@ const DashboardPage: React.FC = () => {
                     </p>
                     <Button 
                       className="bg-primary hover:bg-primary/90"
-                      onClick={() => window.location.href = "/#assessment"}
+                      onClick={() => {
+                        // First attempt: redirect to home and trigger the assessment section
+                        window.location.href = "/#assessment";
+                        
+                        // Add a fallback in case the direct link doesn't work
+                        setTimeout(() => {
+                          // Try to find and click on the assessment section link
+                          const assessmentLink = document.querySelector('a[href="#assessment"]');
+                          if (assessmentLink) {
+                            (assessmentLink as HTMLElement).click();
+                          }
+                        }, 500);
+                      }}
                     >
                       Start Assessment
                     </Button>
