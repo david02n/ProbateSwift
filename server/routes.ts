@@ -286,10 +286,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(404).json({ error: "Not authorized to delete this executor" });
       }
       
-      // Check if it's the primary executor
-      if (executor.isApplicant) {
-        return res.status(400).json({ error: "Cannot delete the primary executor" });
-      }
+      // Allow deleting all executor types (including primary ones)
       
       await storage.deleteExecutor(executorId);
       res.status(200).json({ success: true });
