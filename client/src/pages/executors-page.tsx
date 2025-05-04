@@ -12,7 +12,8 @@ import {
   Briefcase,
   Users,
   Loader2,
-  Check
+  Check,
+  AlertTriangle
 } from "lucide-react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { getQueryFn, apiRequest, queryClient } from "@/lib/queryClient";

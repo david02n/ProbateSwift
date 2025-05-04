@@ -231,6 +231,73 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.status(500).json({ error: "Failed to create executor" });
     }
   });
+  
+  app.put("/api/executors/:id", async (req, res) => {
+    if (!req.isAuthenticated()) {
+      return res.status(401).json({ error: "Authentication required" });
+    }
+    
+    try {
+      const userId = req.user!.id;
+      const executorId = parseInt(req.params.id, 10);
+      
+      // Get the executor and verify it belongs to the user
+      const executor = await storage.getExecutor(executorId);
+      if (!executor) {
+        return res.status(404).json({ error: "Executor not found" });
+      }
+      
+      // Verify the case belongs to the user
+      const probateCase = await storage.getProbateCase(executor.caseId);
+      if (!probateCase || probateCase.userId !== userId) {
+        return res.status(404).json({ error: "Not authorized to update this executor" });
+      }
+      
+      const updatedExecutor = await storage.updateExecutor(executorId, req.body);
+      if (!updatedExecutor) {
+        return res.status(404).json({ error: "Failed to update executor" });
+      }
+      
+      res.json(updatedExecutor);
+    } catch (error) {
+      console.error("Error updating executor:", error);
+      res.status(500).json({ error: "Failed to update executor" });
+    }
+  });
+  
+  app.delete("/api/executors/:id", async (req, res) => {
+    if (!req.isAuthenticated()) {
+      return res.status(401).json({ error: "Authentication required" });
+    }
+    
+    try {
+      const userId = req.user!.id;
+      const executorId = parseInt(req.params.id, 10);
+      
+      // Get the executor and verify it belongs to the user
+      const executor = await storage.getExecutor(executorId);
+      if (!executor) {
+        return res.status(404).json({ error: "Executor not found" });
+      }
+      
+      // Verify the case belongs to the user
+      const probateCase = await storage.getProbateCase(executor.caseId);
+      if (!probateCase || probateCase.userId !== userId) {
+        return res.status(404).json({ error: "Not authorized to delete this executor" });
+      }
+      
+      // Check if it's the primary executor
+      if (executor.isApplicant) {
+        return res.status(400).json({ error: "Cannot delete the primary executor" });
+      }
+      
+      await storage.deleteExecutor(executorId);
+      res.status(200).json({ success: true });
+    } catch (error) {
+      console.error("Error deleting executor:", error);
+      res.status(500).json({ error: "Failed to delete executor" });
+    }
+  });
 
   // API routes for estate assets
   app.get("/api/assets/:caseId", async (req, res) => {

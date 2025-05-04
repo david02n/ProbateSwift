@@ -59,6 +59,7 @@ export interface IStorage {
   getExecutorsByCaseId(caseId: number): Promise<Executor[]>;
   createExecutor(executorData: InsertExecutor): Promise<Executor>;
   updateExecutor(id: number, executorData: Partial<InsertExecutor>): Promise<Executor | undefined>;
+  deleteExecutor(id: number): Promise<void>;
   
   // Estate Asset methods
   getEstateAsset(id: number): Promise<EstateAsset | undefined>;
@@ -363,6 +364,12 @@ export class MemStorage implements IStorage {
     
     this.executors.set(id, updatedExecutor);
     return updatedExecutor;
+  }
+  
+  async deleteExecutor(id: number): Promise<void> {
+    if (this.executors.has(id)) {
+      this.executors.delete(id);
+    }
   }
   
   // Estate Asset methods
@@ -671,6 +678,12 @@ export class DatabaseStorage implements IStorage {
       .where(eq(executors.id, id))
       .returning();
     return updatedExecutor;
+  }
+  
+  async deleteExecutor(id: number): Promise<void> {
+    await db
+      .delete(executors)
+      .where(eq(executors.id, id));
   }
 
   // Estate Asset methods
