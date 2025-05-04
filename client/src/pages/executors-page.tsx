@@ -48,6 +48,16 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 
 interface ProcessedExecutor extends Executor {
   isPrimary?: boolean;
@@ -77,6 +87,14 @@ const ExecutorsPage: React.FC = () => {
   const [isExecutorModalOpen, setIsExecutorModalOpen] = useState(false);
   // State to track if we are adding a legal professional
   const [isLegalProfessional, setIsLegalProfessional] = useState(false);
+  // State to track if we are editing an executor
+  const [isEditing, setIsEditing] = useState(false);
+  // State to store the executor being edited
+  const [currentExecutor, setCurrentExecutor] = useState<Executor | null>(null);
+  // State for delete confirmation dialog
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+  // State to store the executor ID to delete
+  const [executorToDelete, setExecutorToDelete] = useState<number | null>(null);
   
   // Initialize form with validation
   const form = useForm<ExecutorFormValues>({
@@ -133,6 +151,50 @@ const ExecutorsPage: React.FC = () => {
     onError: (error: Error) => {
       toast({
         title: "Error adding executor",
+        description: error.message,
+        variant: "destructive",
+      });
+    },
+  });
+  
+  // Update executor mutation
+  const updateExecutorMutation = useMutation({
+    mutationFn: async ({ id, executorData }: { id: number, executorData: Partial<Executor> }) => {
+      const res = await apiRequest("PUT", `/api/executors/${id}`, executorData);
+      return await res.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/executors"] });
+      toast({
+        title: "Executor updated",
+        description: "The executor has been updated successfully",
+      });
+    },
+    onError: (error: Error) => {
+      toast({
+        title: "Error updating executor",
+        description: error.message,
+        variant: "destructive",
+      });
+    },
+  });
+  
+  // Delete executor mutation
+  const deleteExecutorMutation = useMutation({
+    mutationFn: async (id: number) => {
+      const res = await apiRequest("DELETE", `/api/executors/${id}`);
+      return res.ok;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/executors"] });
+      toast({
+        title: "Executor deleted",
+        description: "The executor has been removed successfully",
+      });
+    },
+    onError: (error: Error) => {
+      toast({
+        title: "Error deleting executor",
         description: error.message,
         variant: "destructive",
       });
@@ -212,11 +274,52 @@ const ExecutorsPage: React.FC = () => {
     setIsExecutorModalOpen(true);
   };
   
-  // Handle form submission
+  // Handler for editing an executor
+  const handleEditExecutor = (executor: Executor) => {
+    setCurrentExecutor(executor);
+    setIsEditing(true);
+    setIsLegalProfessional(executor.relationshipToDeceased === "Legal Professional");
+    
+    // Populate form with executor data
+    form.reset({
+      firstName: executor.firstName,
+      lastName: executor.lastName,
+      email: executor.email || "",
+      phone: executor.phone || "",
+      address: executor.address || "",
+      city: executor.city || "",
+      postCode: executor.postCode || "",
+      relationshipToDeceased: executor.relationshipToDeceased,
+      isApplicant: executor.isApplicant || false,
+      isNotifying: executor.isNotifying || false,
+    });
+    
+    setIsExecutorModalOpen(true);
+  };
+  
+  // Handler for confirming executor deletion
+  const handleDeleteExecutor = (executorId: number) => {
+    setExecutorToDelete(executorId);
+    setIsDeleteDialogOpen(true);
+  };
+  
+  // Handler for executing the deletion
+  const confirmDeleteExecutor = () => {
+    if (executorToDelete) {
+      deleteExecutorMutation.mutate(executorToDelete, {
+        onSuccess: () => {
+          setIsDeleteDialogOpen(false);
+          setExecutorToDelete(null);
+        }
+      });
+    }
+  };
+  
+  // Handle form submission (for both create and update)
   const onSubmit = (data: ExecutorFormValues) => {
     if (!activeCaseId) return;
     
-    createExecutorMutation.mutate({
+    const executorData = {
       caseId: activeCaseId,
       userId: user?.id || 0,
       firstName: data.firstName,
@@ -229,12 +332,33 @@ const ExecutorsPage: React.FC = () => {
       relationshipToDeceased: data.relationshipToDeceased,
       isApplicant: data.isApplicant,
       isNotifying: data.isNotifying,
-    }, {
-      onSuccess: () => {
-        setIsExecutorModalOpen(false);
-        form.reset();
-      }
-    });
+    };
+    
+    if (isEditing && currentExecutor) {
+      // Update existing executor
+      updateExecutorMutation.mutate(
+        { 
+          id: currentExecutor.id, 
+          executorData 
+        },
+        {
+          onSuccess: () => {
+            setIsExecutorModalOpen(false);
+            setIsEditing(false);
+            setCurrentExecutor(null);
+            form.reset();
+          }
+        }
+      );
+    } else {
+      // Create new executor
+      createExecutorMutation.mutate(executorData, {
+        onSuccess: () => {
+          setIsExecutorModalOpen(false);
+          form.reset();
+        }
+      });
+    }
   };
   
   const isLoading = isLoadingCases || isLoadingExecutors;
@@ -531,16 +655,26 @@ const ExecutorsPage: React.FC = () => {
           </Card>
           
           {/* Add Executor Modal */}
-          <Dialog open={isExecutorModalOpen} onOpenChange={setIsExecutorModalOpen}>
+          <Dialog open={isExecutorModalOpen} onOpenChange={(open) => {
+            setIsExecutorModalOpen(open);
+            if (!open) {
+              // Reset editing state when dialog is closed
+              setIsEditing(false);
+              setCurrentExecutor(null);
+            }
+          }}>
             <DialogContent className="sm:max-w-md md:max-w-lg">
               <DialogHeader>
                 <DialogTitle>
-                  {isLegalProfessional ? "Add Legal Professional" : "Add Executor"}
+                  {isEditing 
+                    ? (isLegalProfessional ? "Edit Legal Professional" : "Edit Executor") 
+                    : (isLegalProfessional ? "Add Legal Professional" : "Add Executor")
+                  }
                 </DialogTitle>
                 <DialogDescription>
                   {isLegalProfessional 
-                    ? "Add details of a solicitor or legal professional who is assisting with the probate process." 
-                    : "Add details of a person who is named as an executor in the will or who will be handling the estate."}
+                    ? `${isEditing ? "Edit" : "Add"} details of a solicitor or legal professional who is assisting with the probate process.` 
+                    : `${isEditing ? "Edit" : "Add"} details of a person who is named as an executor in the will or who will be handling the estate.`}
                 </DialogDescription>
               </DialogHeader>
               
@@ -746,15 +880,15 @@ const ExecutorsPage: React.FC = () => {
                     <Button 
                       type="submit"
                       className="bg-primary hover:bg-primary/90"
-                      disabled={createExecutorMutation.isPending}
+                      disabled={createExecutorMutation.isPending || updateExecutorMutation.isPending}
                     >
-                      {createExecutorMutation.isPending ? (
+                      {createExecutorMutation.isPending || updateExecutorMutation.isPending ? (
                         <>
                           <Loader2 className="h-4 w-4 mr-2 animate-spin" />
                           Saving...
                         </>
                       ) : (
-                        "Save Executor"
+                        isEditing ? "Update Executor" : "Save Executor"
                       )}
                     </Button>
                   </DialogFooter>
