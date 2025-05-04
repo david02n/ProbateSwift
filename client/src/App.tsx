@@ -8,7 +8,6 @@ import { ProtectedRoute } from "@/lib/protected-route";
 import NotFound from "@/pages/not-found";
 import Home from "@/pages/Home";
 import AuthPage from "@/pages/auth-page";
-import DashboardPage from "@/pages/dashboard-page";
 
 // New redesigned pages
 import NewDashboardPage from "@/pages/new-dashboard";
@@ -38,22 +37,25 @@ function Router() {
     );
   }
 
+  // If user is authenticated, show the new dashboard and related pages
+  if (user) {
+    return (
+      <Switch>
+        <Route path="/auth" component={AuthPage} />
+        <Route path="/executors" component={ExecutorsPage} />
+        <Route path="/estate" component={EstatePage} />
+        <Route path="/documents" component={DocumentsPage} />
+        <Route path="/" component={NewDashboardPage} />
+        <Route component={NotFound} />
+      </Switch>
+    );
+  }
+  
+  // If user is not authenticated, show the landing page or auth page
   return (
     <Switch>
-      {/* Public routes */}
       <Route path="/auth" component={AuthPage} />
-      
-      {/* Protected routes */}
-      <ProtectedRoute path="/" component={NewDashboardPage} />
-      <ProtectedRoute path="/executors" component={ExecutorsPage} />
-      <ProtectedRoute path="/estate" component={EstatePage} />
-      <ProtectedRoute path="/documents" component={DocumentsPage} />
-      <ProtectedRoute path="/dashboard" component={DashboardPage} /> {/* Legacy route */}
-      
-      {/* Home page for non-authenticated users - placed after protected routes to not interfere */}
-      {!user && <Route path="/" component={Home} />}
-      
-      {/* 404 page */}
+      <Route path="/" component={Home} />
       <Route component={NotFound} />
     </Switch>
   );

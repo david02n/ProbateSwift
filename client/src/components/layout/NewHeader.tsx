@@ -17,7 +17,7 @@ interface HeaderProps {
 }
 
 export const NewHeader: React.FC<HeaderProps> = ({ className = "" }) => {
-  const [location] = useLocation();
+  const [location, setLocation] = useLocation();
   const { user, logoutMutation } = useAuth();
   const [isOpen, setIsOpen] = useState(false);
 
@@ -41,30 +41,26 @@ export const NewHeader: React.FC<HeaderProps> = ({ className = "" }) => {
         <div className="flex justify-between items-center">
           {/* Logo Section */}
           <div className="flex items-center">
-            <Link href="/">
-              <a className="flex items-center">
-                <SwiftLogoWithText size={35} />
-              </a>
-            </Link>
+            <div onClick={() => window.location.href = "/"} className="cursor-pointer">
+              <SwiftLogoWithText size={35} />
+            </div>
 
             {/* Navigation Links - Show only when authenticated */}
             {isAuthenticated && (
               <nav className="hidden md:flex ml-8 space-x-1">
                 {navLinks.map((link) => (
-                  <Link key={link.path} href={link.path}>
-                    <a>
-                      <Button
-                        variant={link.active ? "default" : "ghost"}
-                        className={`rounded-full text-sm font-medium ${
-                          link.active 
-                            ? "bg-[#002B49] hover:bg-[#002B49]/90 text-white" 
-                            : "text-gray-700 hover:bg-gray-100"
-                        }`}
-                      >
-                        {link.name}
-                      </Button>
-                    </a>
-                  </Link>
+                  <div key={link.path} onClick={() => window.location.href = link.path}>
+                    <Button
+                      variant={link.active ? "default" : "ghost"}
+                      className={`rounded-full text-sm font-medium ${
+                        link.active 
+                          ? "bg-[#002B49] hover:bg-[#002B49]/90 text-white" 
+                          : "text-gray-700 hover:bg-gray-100"
+                      }`}
+                    >
+                      {link.name}
+                    </Button>
+                  </div>
                 ))}
               </nav>
             )}
@@ -116,16 +112,12 @@ export const NewHeader: React.FC<HeaderProps> = ({ className = "" }) => {
             </div>
           ) : (
             <div className="flex items-center space-x-4">
-              <Link href="/auth">
-                <a>
-                  <Button variant="outline">Log In</Button>
-                </a>
-              </Link>
-              <Link href="/auth?tab=register">
-                <a>
-                  <Button>Register</Button>
-                </a>
-              </Link>
+              <div onClick={() => window.location.href = "/auth"}>
+                <Button variant="outline">Log In</Button>
+              </div>
+              <div onClick={() => window.location.href = "/auth?tab=register"}>
+                <Button>Register</Button>
+              </div>
             </div>
           )}
           
@@ -161,18 +153,16 @@ export const NewHeader: React.FC<HeaderProps> = ({ className = "" }) => {
           <nav className="md:hidden mt-2 pt-2 border-t">
             <div className="flex flex-col space-y-2">
               {navLinks.map((link) => (
-                <Link key={link.path} href={link.path}>
-                  <a>
-                    <Button
-                      variant={link.active ? "default" : "ghost"}
-                      className={`w-full justify-start ${
-                        link.active ? "bg-primary text-white" : ""
-                      }`}
-                    >
-                      {link.name}
-                    </Button>
-                  </a>
-                </Link>
+                <div key={link.path} onClick={() => window.location.href = link.path}>
+                  <Button
+                    variant={link.active ? "default" : "ghost"}
+                    className={`w-full justify-start ${
+                      link.active ? "bg-primary text-white" : ""
+                    }`}
+                  >
+                    {link.name}
+                  </Button>
+                </div>
               ))}
               <Button onClick={handleLogout} variant="ghost" className="w-full justify-start">
                 <LogOut className="mr-2 h-4 w-4" />
