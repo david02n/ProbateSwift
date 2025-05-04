@@ -4,6 +4,7 @@ import { getQueryFn } from "@/lib/queryClient";
 import { AssessmentResult } from "@shared/schema";
 import { useAuth } from "@/hooks/use-auth";
 import NewHeader from "@/components/layout/NewHeader";
+import Assessment from "@/components/sections/Assessment";
 
 // UI Components
 import { Card, CardContent } from "@/components/ui/card";
@@ -26,6 +27,7 @@ import {
 
 const NewDashboardPage: React.FC = () => {
   const { user } = useAuth();
+  const [isAssessmentOpen, setIsAssessmentOpen] = useState(false);
   
   // Fetch assessment results
   const { 
@@ -72,7 +74,10 @@ const NewDashboardPage: React.FC = () => {
                 <p className="text-gray-700">Complete the probate assessment to determine your needs</p>
               )}
             </div>
-            <Button className="bg-[#002B49] hover:bg-[#002B49]/90">
+            <Button 
+              className="bg-[#002B49] hover:bg-[#002B49]/90"
+              onClick={() => setIsAssessmentOpen(true)}
+            >
               {assessmentResult ? "start application" : "begin assessment"}
             </Button>
           </div>
@@ -193,10 +198,7 @@ const NewDashboardPage: React.FC = () => {
                                 variant="outline" 
                                 size="sm" 
                                 className="text-xs h-7"
-                                onClick={() => {
-                                  // Redirect to home page assessment section
-                                  window.location.href = "/#assessment";
-                                }}
+                                onClick={() => setIsAssessmentOpen(true)}
                               >
                                 Review
                               </Button>
@@ -298,10 +300,7 @@ const NewDashboardPage: React.FC = () => {
                               <Button 
                                 size="sm" 
                                 className="text-xs h-7 bg-[#002B49] hover:bg-[#002B49]/90"
-                                onClick={() => {
-                                  // Redirect to home page which has the assessment form
-                                  window.location.href = "/#assessment";
-                                }}
+                                onClick={() => setIsAssessmentOpen(true)}
                               >
                                 Start Assessment
                               </Button>
