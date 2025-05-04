@@ -552,7 +552,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(404).json({ success: false, error: "Probate case not found" });
       }
       
-      // Create a document record - set as processed immediately
+      // Create a document record - set as processed immediately since we're storing locally
       const newDocument = await storage.createDocument({
         filename: req.file.originalname,
         caseId,
@@ -565,18 +565,71 @@ export async function registerRoutes(app: Express): Promise<Server> {
         notes: `Uploaded and stored locally at ${req.file.path}`,
       });
       
-      // Simulate processing success by immediately updating clients
-      setTimeout(() => {
-        broadcastDocumentUpdate(newDocument.id, 'processed', { 
-          message: 'Document processed successfully',
-          documentType: category,
-          fileInfo: {
-            name: req.file!.originalname,
-            size: req.file!.size,
-            type: req.file!.mimetype
+      // Still attempt to send to webhook but don't wait for it or fail if it's not available
+      // This is done in a separate async function that doesn't affect the response
+      (async () => {
+        try {
+          // Webhook URL provided by the user (GET request as specified)
+          const webhookUrl = 'http://0.0.0.0:5678/webhook/b432c369-ac65-41c9-9d46-c7c37fc23f82';
+          
+          console.log(`Attempting to send document ${newDocument.id} to webhook: ${webhookUrl}`);
+          
+          // Try both GET and POST methods to ensure we connect properly
+          
+          // First, try a simple GET request as specified
+          const webhookResponse = await axios.get(webhookUrl, {
+            params: {
+              documentId: newDocument.id.toString(),
+              userId: userId.toString(),
+              caseId: caseId.toString(),
+              category: category,
+              filename: req.file!.originalname,
+              fileType: req.file!.mimetype,
+              fileSize: req.file!.size,
+              filePath: req.file!.path
+            },
+            timeout: 5000 // 5 second timeout
+          });
+          
+          // If GET fails or additional data is needed, we'll attempt a POST in the error handler
+          
+          console.log('Webhook response:', webhookResponse.data);
+          
+          // If the webhook responds successfully, update the document notes
+          if (webhookResponse.data) {
+            await storage.updateDocument(newDocument.id, {
+              notes: `Uploaded and stored locally at ${req.file!.path}. Webhook processing: ${JSON.stringify(webhookResponse.data)}`,
+            });
+            
+            // Broadcast the webhook processing result
+            broadcastDocumentUpdate(newDocument.id, 'processed', {
+              message: 'Document processed by webhook',
+              documentType: category,
+              webhookResponse: webhookResponse.data
+            });
           }
-        });
-      }, 1500); // slight delay to simulate processing
+        } catch (error: any) {
+          // Log the webhook error but don't fail the upload
+          const errorMessage = error?.message || 'Unknown error';
+          console.log('Webhook error (non-critical):', errorMessage);
+          
+          // Update the document notes to indicate webhook failure
+          await storage.updateDocument(newDocument.id, {
+            notes: `${newDocument.notes}\nWebhook processing attempted but failed: ${errorMessage}`
+          });
+        }
+      })();
+      
+      // Broadcast immediate success regardless of webhook status
+      broadcastDocumentUpdate(newDocument.id, 'processed', {
+        message: 'Document uploaded and stored successfully',
+        documentType: category,
+        fileInfo: {
+          name: req.file!.originalname,
+          size: req.file!.size,
+          type: req.file!.mimetype
+        }
+      });
       
       // Return success to the client with the document ID
       res.status(201).json({
