@@ -141,6 +141,9 @@ const NewDashboardPage: React.FC = () => {
     }
   }
   
+  // Check if any data is still loading
+  const isLoading = isLoadingAssessment || isLoadingCases || isLoadingAssets || createCaseMutation.isPending;
+  
   return (
     <div className="min-h-screen bg-gray-50">
       <NewHeader />
@@ -260,7 +263,16 @@ const NewDashboardPage: React.FC = () => {
                   <div className="border-2 border-dashed border-gray-200 rounded-lg p-6 text-center">
                     <Upload className="h-8 w-8 mx-auto mb-2 text-gray-400" />
                     <p className="text-sm text-gray-500 mb-3">drag & drop file<br />OR</p>
-                    <Button variant="outline" className="w-full">
+                    <Button 
+                      variant="outline" 
+                      className="w-full"
+                      disabled={!activeCase}
+                      onClick={() => activeCase ? navigate("/documents") : toast({
+                        title: "Assessment Required",
+                        description: "Please complete the assessment first to create a probate case.",
+                        variant: "destructive"
+                      })}
+                    >
                       choose file
                     </Button>
                   </div>
@@ -277,9 +289,9 @@ const NewDashboardPage: React.FC = () => {
                     <p className="text-sm text-gray-500">Track your progress through the probate process</p>
                   </div>
                   
-                  {isLoadingAssessment ? (
+                  {isLoading ? (
                     <div className="flex justify-center py-8">
-                      <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+                      <Loader2 className="h-8 w-8 animate-spin text-primary" />
                     </div>
                   ) : (
                     <div className="space-y-4">
@@ -371,7 +383,15 @@ const NewDashboardPage: React.FC = () => {
                               <span className="text-xs bg-gray-100 text-gray-600 px-2.5 py-0.5 rounded-full h-fit">Not Started</span>
                             </div>
                             <div className="ml-8 mt-2">
-                              <Button size="sm" className="text-xs h-7" variant="outline" disabled>Upload</Button>
+                              <Button 
+                                size="sm" 
+                                className="text-xs h-7" 
+                                variant="outline"
+                                disabled={!activeCase}
+                                onClick={() => activeCase ? navigate("/documents") : null}
+                              >
+                                Upload
+                              </Button>
                             </div>
                           </div>
                           
@@ -395,7 +415,15 @@ const NewDashboardPage: React.FC = () => {
                                 <span className="text-xs bg-gray-100 text-gray-600 px-2.5 py-0.5 rounded-full h-fit">Not Started</span>
                               </div>
                               <div className="ml-8 mt-2">
-                                <Button size="sm" className="text-xs h-7" variant="outline" disabled>Upload</Button>
+                                <Button 
+                                  size="sm" 
+                                  className="text-xs h-7" 
+                                  variant="outline"
+                                  disabled={!activeCase}
+                                  onClick={() => activeCase ? navigate("/documents") : null}
+                                >
+                                  Upload
+                                </Button>
                               </div>
                             </div>
                           )}
