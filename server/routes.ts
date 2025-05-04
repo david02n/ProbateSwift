@@ -158,6 +158,30 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // API routes for executors
+  app.get("/api/executors", async (req, res) => {
+    if (!req.isAuthenticated()) {
+      return res.status(401).json({ error: "Authentication required" });
+    }
+    
+    try {
+      const userId = req.user!.id;
+      // Get user's cases first
+      const cases = await storage.getProbateCasesByUserId(userId);
+      
+      if (cases.length === 0) {
+        return res.json([]);
+      }
+      
+      // Use the first case if no specific case is specified
+      const defaultCaseId = cases[0].id;
+      const executors = await storage.getExecutorsByCaseId(defaultCaseId);
+      res.json(executors);
+    } catch (error) {
+      console.error("Error fetching executors:", error);
+      res.status(500).json({ error: "Failed to fetch executors" });
+    }
+  });
+  
   app.get("/api/executors/:caseId", async (req, res) => {
     if (!req.isAuthenticated()) {
       return res.status(401).json({ error: "Authentication required" });
