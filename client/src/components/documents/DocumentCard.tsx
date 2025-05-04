@@ -142,24 +142,35 @@ const DocumentCard: React.FC<DocumentCardProps> = ({ document, onDelete }) => {
               {document.status.charAt(0).toUpperCase() + document.status.slice(1)}
             </span>
             <div className="flex space-x-1">
-              <Button 
-                variant="ghost" 
-                size="icon" 
-                className="h-8 w-8 text-gray-500 hover:text-gray-900"
-                title="View Document"
-                disabled={document.status !== 'processed'}
+              <a 
+                href={document.status === 'processed' ? `/api/documents/${document.id}/view` : undefined}
+                target="_blank"
+                rel="noopener noreferrer"
               >
-                <Eye className="h-4 w-4" />
-              </Button>
-              <Button 
-                variant="ghost" 
-                size="icon" 
-                className="h-8 w-8 text-gray-500 hover:text-gray-900"
-                title="Download Document"
-                disabled={document.status !== 'processed'}
+                <Button 
+                  variant="ghost" 
+                  size="icon" 
+                  className="h-8 w-8 text-gray-500 hover:text-gray-900"
+                  title="View Document"
+                  disabled={document.status !== 'processed'}
+                >
+                  <Eye className="h-4 w-4" />
+                </Button>
+              </a>
+              <a 
+                href={document.status === 'processed' ? `/api/documents/${document.id}/download` : undefined}
+                download
               >
-                <Download className="h-4 w-4" />
-              </Button>
+                <Button 
+                  variant="ghost" 
+                  size="icon" 
+                  className="h-8 w-8 text-gray-500 hover:text-gray-900"
+                  title="Download Document"
+                  disabled={document.status !== 'processed'}
+                >
+                  <Download className="h-4 w-4" />
+                </Button>
+              </a>
               <AlertDialog open={dialogOpen} onOpenChange={setDialogOpen}>
                 <AlertDialogTrigger asChild>
                   <Button 
