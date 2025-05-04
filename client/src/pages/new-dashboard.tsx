@@ -269,4 +269,5 @@ const NewDashboardPage: React.FC = () => {
   );
 };
 
+// Make sure to export as default for routing
 export default NewDashboardPage;
