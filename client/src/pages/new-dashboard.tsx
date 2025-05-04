@@ -24,7 +24,8 @@ import {
   ChevronRight,
   Send,
   Calendar,
-  CheckCheck
+  CheckCheck,
+  Loader2
 } from "lucide-react";
 
 const NewDashboardPage: React.FC = () => {
