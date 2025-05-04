@@ -342,6 +342,12 @@ const NewDashboardPage: React.FC = () => {
           </div>
         </div>
       </main>
+      
+      {/* Assessment Modal */}
+      <Assessment 
+        isOpen={isAssessmentOpen}
+        onClose={() => setIsAssessmentOpen(false)}
+      />
     </div>
   );
 };

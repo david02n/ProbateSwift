@@ -22,7 +22,7 @@ type QuestionType = {
 }
 
 type AssessmentAnswers = {
-  [key: string]: string;
+  [key: string | number]: string;
 };
 
 const questions: QuestionType[] = [
@@ -144,7 +144,7 @@ export const Assessment: React.FC<AssessmentProps> = ({ isOpen, onClose }) => {
     } else {
       // Calculate results
       const isProbateRequired = determineIfProbateRequired(newAnswers);
-      const probateType = newAnswers[2] === "Yes" ? "grant_of_probate" : "letters_of_administration";
+      const probateType = newAnswers["2"] === "Yes" ? "grant_of_probate" : "letters_of_administration";
       
       setResults({
         isProbateRequired,
@@ -160,9 +160,9 @@ export const Assessment: React.FC<AssessmentProps> = ({ isOpen, onClose }) => {
           userId: user.id,
           isProbateRequired,
           probateType,
-          hasWill: newAnswers[2] === "Yes",
-          hasDispute: newAnswers[5] === "Yes",
-          isInsolvent: newAnswers[6] === "Yes" || newAnswers[6] === "Not sure",
+          hasWill: newAnswers["2"] === "Yes",
+          hasDispute: newAnswers["5"] === "Yes",
+          isInsolvent: newAnswers["6"] === "Yes" || newAnswers["6"] === "Not sure",
           assessmentData: JSON.stringify({
             answers: newAnswers,
             result: {
@@ -181,10 +181,10 @@ export const Assessment: React.FC<AssessmentProps> = ({ isOpen, onClose }) => {
   const determineIfProbateRequired = (newAnswers: AssessmentAnswers): boolean => {
     // Logic to determine if probate is required based on answers
     // Property in sole name almost always requires probate
-    if (newAnswers[3] === "Yes") return true;
+    if (newAnswers["3"] === "Yes") return true;
     
     // Significant assets in sole name
-    if (newAnswers[4] === "Yes") return true;
+    if (newAnswers["4"] === "Yes") return true;
     
     // Default to true to be cautious
     return true;
