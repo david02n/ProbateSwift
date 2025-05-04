@@ -111,8 +111,8 @@ const ExecutorsPage: React.FC = () => {
     data: executors = [],
     isLoading: isLoadingExecutors 
   } = useQuery<Executor[]>({
-    queryKey: ["/api/executors", activeCaseId],
-    queryFn: activeCaseId ? getQueryFn({ on401: "throw" }) : () => Promise.resolve([]),
+    queryKey: ["/api/executors"],
+    queryFn: getQueryFn({ on401: "throw" }),
     enabled: !!activeCaseId,
   });
   
@@ -123,7 +123,7 @@ const ExecutorsPage: React.FC = () => {
       return await res.json();
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/executors", activeCaseId] });
+      queryClient.invalidateQueries({ queryKey: ["/api/executors"] });
       toast({
         title: "Executor added",
         description: "The executor has been added successfully",
