@@ -1,5 +1,4 @@
 import React from "react";
-import logoWideFull from "@assets/logo_lite_wide_full.png";
 
 interface SwiftLogoProps {
   className?: string;
@@ -41,7 +40,7 @@ export const SwiftLogoWithText: React.FC<SwiftLogoProps & { height?: number }> =
   return (
     <div className={`flex items-center ${className}`}>
       <img 
-        src={logoWideFull} 
+        src="/logo_lite_wide_full.png" 
         alt="ProbateSwift" 
         style={{ 
           height: `${height}px`,
