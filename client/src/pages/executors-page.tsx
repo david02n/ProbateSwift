@@ -151,7 +151,7 @@ const ExecutorsPage: React.FC = () => {
   const professionals = processedExecutors.filter(exec => exec.isLegalProfessional);
   const regularExecutors = processedExecutors.filter(exec => !exec.isLegalProfessional);
   
-  // Handle add executor
+  // Handle opening executor form
   const handleAddExecutor = () => {
     if (!activeCaseId) {
       toast({
@@ -162,20 +162,26 @@ const ExecutorsPage: React.FC = () => {
       return;
     }
     
-    // This would usually open a modal for data input
-    // For now, we'll create a dummy executor for demonstration
-    createExecutorMutation.mutate({
-      caseId: activeCaseId,
-      userId: user?.id || 0,
-      firstName: "New",
-      lastName: "Executor",
-      email: "executor@example.com",
-      isApplicant: regularExecutors.length === 0, // Make first executor the applicant
-      relationshipToDeceased: "Family Member",
+    // Reset form and set defaults
+    form.reset({
+      firstName: "",
+      lastName: "",
+      email: "",
+      phone: "",
+      address: "",
+      city: "",
+      postCode: "",
+      relationshipToDeceased: "",
+      isApplicant: regularExecutors.length === 0, // Make first executor the applicant if none exist
+      isNotifying: false,
     });
+    
+    // Open executor modal for regular executor
+    setIsLegalProfessional(false);
+    setIsExecutorModalOpen(true);
   };
   
-  // Handle add professional
+  // Handle opening professional form
   const handleAddProfessional = () => {
     if (!activeCaseId) {
       toast({
@@ -186,15 +192,47 @@ const ExecutorsPage: React.FC = () => {
       return;
     }
     
-    // This would usually open a modal for data input
+    // Reset form and set defaults for legal professional
+    form.reset({
+      firstName: "",
+      lastName: "",
+      email: "",
+      phone: "",
+      address: "",
+      city: "",
+      postCode: "",
+      relationshipToDeceased: "Legal Professional",
+      isApplicant: false,
+      isNotifying: false,
+    });
+    
+    // Open executor modal for legal professional
+    setIsLegalProfessional(true);
+    setIsExecutorModalOpen(true);
+  };
+  
+  // Handle form submission
+  const onSubmit = (data: ExecutorFormValues) => {
+    if (!activeCaseId) return;
+    
     createExecutorMutation.mutate({
       caseId: activeCaseId,
       userId: user?.id || 0,
-      firstName: "Legal",
-      lastName: "Representative",
-      email: "solicitor@example.com",
-      isApplicant: false,
-      relationshipToDeceased: "Legal Professional",
+      firstName: data.firstName,
+      lastName: data.lastName,
+      email: data.email || null,
+      phone: data.phone || null,
+      address: data.address || null,
+      city: data.city || null,
+      postCode: data.postCode || null,
+      relationshipToDeceased: data.relationshipToDeceased,
+      isApplicant: data.isApplicant,
+      isNotifying: data.isNotifying,
+    }, {
+      onSuccess: () => {
+        setIsExecutorModalOpen(false);
+        form.reset();
+      }
     });
   };
   
@@ -343,12 +381,28 @@ const ExecutorsPage: React.FC = () => {
                 )}
                 
                 {/* Add Executor Button */}
-                <div className="border rounded-lg border-dashed p-5 text-center hover:bg-gray-50 transition cursor-pointer">
+                <div 
+                  className="border rounded-lg border-dashed p-5 text-center hover:bg-gray-50 transition cursor-pointer"
+                  onClick={() => {
+                    if (!activeCaseId) {
+                      toast({
+                        title: "No probate case",
+                        description: "Please create a probate case first",
+                        variant: "destructive",
+                      });
+                      return;
+                    }
+                    handleAddExecutor();
+                  }}
+                >
                   <UserPlus className="h-8 w-8 mx-auto text-gray-400 mb-2" />
                   <p className="text-gray-600 mb-3">Add another executor</p>
                   <Button 
                     className="bg-primary hover:bg-primary/90" 
-                    onClick={handleAddExecutor}
+                    onClick={(e) => {
+                      e.stopPropagation(); // Prevent the parent div click
+                      handleAddExecutor();
+                    }}
                     disabled={createExecutorMutation.isPending}
                   >
                     {createExecutorMutation.isPending ? (
@@ -437,12 +491,28 @@ const ExecutorsPage: React.FC = () => {
                   ))}
                 </div>
               ) : (
-                <div className="border rounded-lg border-dashed p-5 text-center hover:bg-gray-50 transition cursor-pointer">
+                <div 
+                  className="border rounded-lg border-dashed p-5 text-center hover:bg-gray-50 transition cursor-pointer"
+                  onClick={() => {
+                    if (!activeCaseId) {
+                      toast({
+                        title: "No probate case",
+                        description: "Please create a probate case first",
+                        variant: "destructive",
+                      });
+                      return;
+                    }
+                    handleAddProfessional();
+                  }}
+                >
                   <Briefcase className="h-8 w-8 mx-auto text-gray-400 mb-2" />
                   <p className="text-gray-600 mb-3">No legal professionals added yet</p>
                   <Button 
                     variant="outline"
-                    onClick={handleAddProfessional}
+                    onClick={(e) => {
+                      e.stopPropagation(); // Prevent the parent div click
+                      handleAddProfessional();
+                    }}
                     disabled={createExecutorMutation.isPending}
                   >
                     {createExecutorMutation.isPending ? (
@@ -458,6 +528,239 @@ const ExecutorsPage: React.FC = () => {
               )}
             </CardContent>
           </Card>
+          
+          {/* Add Executor Modal */}
+          <Dialog open={isExecutorModalOpen} onOpenChange={setIsExecutorModalOpen}>
+            <DialogContent className="sm:max-w-md md:max-w-lg">
+              <DialogHeader>
+                <DialogTitle>
+                  {isLegalProfessional ? "Add Legal Professional" : "Add Executor"}
+                </DialogTitle>
+                <DialogDescription>
+                  {isLegalProfessional 
+                    ? "Add details of a solicitor or legal professional who is assisting with the probate process." 
+                    : "Add details of a person who is named as an executor in the will or who will be handling the estate."}
+                </DialogDescription>
+              </DialogHeader>
+              
+              <Form {...form}>
+                <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-5">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    {/* First Name */}
+                    <FormField
+                      control={form.control}
+                      name="firstName"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>First Name</FormLabel>
+                          <FormControl>
+                            <Input placeholder="Enter first name" {...field} />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    
+                    {/* Last Name */}
+                    <FormField
+                      control={form.control}
+                      name="lastName"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Last Name</FormLabel>
+                          <FormControl>
+                            <Input placeholder="Enter last name" {...field} />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                  </div>
+                  
+                  {/* Email */}
+                  <FormField
+                    control={form.control}
+                    name="email"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Email</FormLabel>
+                        <FormControl>
+                          <Input type="email" placeholder="Enter email address" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  
+                  {/* Phone */}
+                  <FormField
+                    control={form.control}
+                    name="phone"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Phone Number</FormLabel>
+                        <FormControl>
+                          <Input placeholder="Enter phone number" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  
+                  {/* Address */}
+                  <FormField
+                    control={form.control}
+                    name="address"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Address</FormLabel>
+                        <FormControl>
+                          <Input placeholder="Enter address" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    {/* City */}
+                    <FormField
+                      control={form.control}
+                      name="city"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>City</FormLabel>
+                          <FormControl>
+                            <Input placeholder="Enter city" {...field} />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    
+                    {/* Post Code */}
+                    <FormField
+                      control={form.control}
+                      name="postCode"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Post Code</FormLabel>
+                          <FormControl>
+                            <Input placeholder="Enter post code" {...field} />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                  </div>
+                  
+                  {/* Relationship to Deceased */}
+                  {!isLegalProfessional && (
+                    <FormField
+                      control={form.control}
+                      name="relationshipToDeceased"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Relationship to Deceased</FormLabel>
+                          <Select 
+                            onValueChange={field.onChange} 
+                            defaultValue={field.value}
+                          >
+                            <FormControl>
+                              <SelectTrigger>
+                                <SelectValue placeholder="Select relationship" />
+                              </SelectTrigger>
+                            </FormControl>
+                            <SelectContent>
+                              <SelectItem value="Spouse">Spouse</SelectItem>
+                              <SelectItem value="Child">Child</SelectItem>
+                              <SelectItem value="Sibling">Sibling</SelectItem>
+                              <SelectItem value="Parent">Parent</SelectItem>
+                              <SelectItem value="Grandchild">Grandchild</SelectItem>
+                              <SelectItem value="Other Family">Other Family</SelectItem>
+                              <SelectItem value="Friend">Friend</SelectItem>
+                            </SelectContent>
+                          </Select>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                  )}
+                  
+                  {/* Checkboxes */}
+                  <div className="space-y-3">
+                    {!isLegalProfessional && (
+                      <FormField
+                        control={form.control}
+                        name="isApplicant"
+                        render={({ field }) => (
+                          <FormItem className="flex items-start space-x-3 space-y-0">
+                            <FormControl>
+                              <Checkbox 
+                                checked={field.value} 
+                                onCheckedChange={field.onChange}
+                              />
+                            </FormControl>
+                            <div className="space-y-1 leading-none">
+                              <FormLabel>Primary Executor</FormLabel>
+                              <FormDescription>
+                                This person will be the main applicant for probate
+                              </FormDescription>
+                            </div>
+                          </FormItem>
+                        )}
+                      />
+                    )}
+                    
+                    <FormField
+                      control={form.control}
+                      name="isNotifying"
+                      render={({ field }) => (
+                        <FormItem className="flex items-start space-x-3 space-y-0">
+                          <FormControl>
+                            <Checkbox 
+                              checked={field.value} 
+                              onCheckedChange={field.onChange}
+                            />
+                          </FormControl>
+                          <div className="space-y-1 leading-none">
+                            <FormLabel>Notifying Only</FormLabel>
+                            <FormDescription>
+                              This person will be notified but won't be actively involved in the probate process
+                            </FormDescription>
+                          </div>
+                        </FormItem>
+                      )}
+                    />
+                  </div>
+                  
+                  <DialogFooter>
+                    <Button 
+                      type="button" 
+                      variant="outline" 
+                      onClick={() => setIsExecutorModalOpen(false)}
+                    >
+                      Cancel
+                    </Button>
+                    <Button 
+                      type="submit"
+                      className="bg-primary hover:bg-primary/90"
+                      disabled={createExecutorMutation.isPending}
+                    >
+                      {createExecutorMutation.isPending ? (
+                        <>
+                          <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                          Saving...
+                        </>
+                      ) : (
+                        "Save Executor"
+                      )}
+                    </Button>
+                  </DialogFooter>
+                </form>
+              </Form>
+            </DialogContent>
+          </Dialog>
         </div>
       </main>
     </div>
