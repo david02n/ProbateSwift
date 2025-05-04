@@ -66,11 +66,25 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       window.location.href = "/dashboard";
     },
     onError: (error: Error) => {
-      toast({
-        title: "Login failed",
-        description: error.message || "Invalid email or password",
-        variant: "destructive",
-      });
+      // If error is related to user not existing, suggest registration
+      if (error.message.includes("Authentication failed") || error.message.includes("Incorrect email")) {
+        toast({
+          title: "Account not found",
+          description: "Account doesn't exist. Please create a new account.",
+          variant: "destructive",
+        });
+        
+        // If available, trigger tab change through the window global
+        if (window.sharedAuthFunctions) {
+          window.sharedAuthFunctions.setActiveTab("register");
+        }
+      } else {
+        toast({
+          title: "Login failed",
+          description: error.message || "Invalid email or password",
+          variant: "destructive",
+        });
+      }
     },
   });
 

@@ -1,6 +1,16 @@
 import React, { useState } from "react";
 import { useAuth } from "@/hooks/use-auth";
 import { Redirect } from "wouter";
+
+// Extend Window interface to include our shared functions
+declare global {
+  interface Window {
+    sharedAuthFunctions?: {
+      setActiveTab: (tab: string) => void;
+      loginFormEmail?: string;
+    };
+  }
+}
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import * as z from "zod";
@@ -48,6 +58,11 @@ type RegisterFormValues = z.infer<typeof registerSchema>;
 const AuthPage: React.FC = () => {
   const { user, isLoading, loginMutation, registerMutation } = useAuth();
   const [activeTab, setActiveTab] = useState<string>("login");
+  
+  // Share the setActiveTab function with the parent window for error handling
+  window.sharedAuthFunctions = {
+    setActiveTab
+  };
 
   // Login form setup
   const loginForm = useForm<LoginFormValues>({
