@@ -1,9 +1,72 @@
-import type { Express } from "express";
+import type { Express, Request, Response } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
 import { setupAuth } from "./auth";
+import multer from "multer";
+import * as fs from "fs";
+import * as path from "path";
+import axios from "axios";
+import { WebSocketServer, WebSocket } from "ws";
+
+// Set up multer for file uploads
+const uploadDir = path.join(process.cwd(), "uploads");
+if (!fs.existsSync(uploadDir)) {
+  fs.mkdirSync(uploadDir, { recursive: true });
+}
+
+const storage2 = multer.diskStorage({
+  destination: (req, file, cb) => {
+    cb(null, uploadDir);
+  },
+  filename: (req, file, cb) => {
+    const uniqueSuffix = Date.now() + "-" + Math.round(Math.random() * 1e9);
+    cb(null, file.fieldname + "-" + uniqueSuffix + path.extname(file.originalname));
+  },
+});
+
+const upload = multer({
+  storage: storage2,
+  limits: {
+    fileSize: 10 * 1024 * 1024, // 10 MB
+  },
+});
 
 export async function registerRoutes(app: Express): Promise<Server> {
+  // Create a HTTP server for the express app
+  const httpServer = createServer(app);
+
+  // Initialize WebSocket Server for real-time notifications
+  const wss = new WebSocketServer({ 
+    server: httpServer, 
+    path: '/ws'
+  });
+
+  // Handle WebSocket connections
+  wss.on('connection', (ws) => {
+    console.log('WebSocket client connected');
+    
+    ws.on('message', (message) => {
+      console.log('Received: %s', message);
+    });
+    
+    ws.on('close', () => {
+      console.log('WebSocket client disconnected');
+    });
+  });
+
+  // Broadcast document updates to all connected clients
+  const broadcastDocumentUpdate = (docId: number, status: string, metadata?: any) => {
+    wss.clients.forEach((client) => {
+      if (client.readyState === WebSocket.OPEN) {
+        client.send(JSON.stringify({
+          type: 'DOCUMENT_UPDATE',
+          documentId: docId,
+          status,
+          metadata
+        }));
+      }
+    });
+  };
   // Set up authentication routes and middleware
   setupAuth(app);
 
@@ -395,7 +458,255 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.status(500).json({ error: "Failed to create liability" });
     }
   });
+  // API routes for documents
+  app.get("/api/documents/:caseId", async (req, res) => {
+    if (!req.isAuthenticated()) {
+      return res.status(401).json({ error: "Authentication required" });
+    }
+    
+    try {
+      const caseId = parseInt(req.params.caseId, 10);
+      
+      // Verify the case belongs to the user
+      const probateCase = await storage.getProbateCase(caseId);
+      if (!probateCase || probateCase.userId !== req.user!.id) {
+        return res.status(404).json({ error: "Probate case not found" });
+      }
+      
+      const documents = await storage.getDocumentsByCaseId(caseId);
+      res.json(documents);
+    } catch (error) {
+      console.error("Error fetching documents:", error);
+      res.status(500).json({ error: "Failed to fetch documents" });
+    }
+  });
+  
+  app.get("/api/documents/type/:caseId/:type", async (req, res) => {
+    if (!req.isAuthenticated()) {
+      return res.status(401).json({ error: "Authentication required" });
+    }
+    
+    try {
+      const caseId = parseInt(req.params.caseId, 10);
+      const type = req.params.type;
+      
+      // Verify the case belongs to the user
+      const probateCase = await storage.getProbateCase(caseId);
+      if (!probateCase || probateCase.userId !== req.user!.id) {
+        return res.status(404).json({ error: "Probate case not found" });
+      }
+      
+      const documents = await storage.getDocumentsByType(caseId, type);
+      res.json(documents);
+    } catch (error) {
+      console.error("Error fetching documents by type:", error);
+      res.status(500).json({ error: "Failed to fetch documents" });
+    }
+  });
+  
+  app.get("/api/documents/document/:id", async (req, res) => {
+    if (!req.isAuthenticated()) {
+      return res.status(401).json({ error: "Authentication required" });
+    }
+    
+    try {
+      const documentId = parseInt(req.params.id, 10);
+      const document = await storage.getDocument(documentId);
+      
+      if (!document) {
+        return res.status(404).json({ error: "Document not found" });
+      }
+      
+      // Verify the document belongs to a case owned by the user
+      const probateCase = await storage.getProbateCase(document.caseId);
+      if (!probateCase || probateCase.userId !== req.user!.id) {
+        return res.status(403).json({ error: "Not authorized to access this document" });
+      }
+      
+      res.json(document);
+    } catch (error) {
+      console.error("Error fetching document:", error);
+      res.status(500).json({ error: "Failed to fetch document" });
+    }
+  });
+  
+  app.post("/api/documents/upload", upload.single('file'), async (req, res) => {
+    if (!req.isAuthenticated()) {
+      return res.status(401).json({ error: "Authentication required" });
+    }
+    
+    if (!req.file) {
+      return res.status(400).json({ success: false, error: "No file uploaded" });
+    }
+    
+    try {
+      const userId = req.user!.id;
+      const caseId = parseInt(req.body.caseId, 10);
+      const category = req.body.category || 'general';
+      
+      // Verify the case belongs to the user
+      const probateCase = await storage.getProbateCase(caseId);
+      if (!probateCase || probateCase.userId !== userId) {
+        // Clean up the uploaded file
+        fs.unlinkSync(req.file.path);
+        return res.status(404).json({ success: false, error: "Probate case not found" });
+      }
+      
+      // Create a document record
+      const newDocument = await storage.createDocument({
+        filename: req.file.originalname,
+        caseId,
+        userId,
+        type: category,
+        status: 'processing',
+        storagePath: req.file.path,
+        fileSize: req.file.size,
+        fileType: req.file.mimetype,
+        notes: 'Uploaded and sent for processing',
+      });
+      
+      // Now send the file to the webhook for processing
+      const webhookUrl = 'http://0.0.0.0:5678/webhook/b432c369-ac65-41c9-9d46-c7c37fc23f82';
+      
+      // Send the file to the webhook asynchronously (don't wait for response)
+      (async () => {
+        try {
+          // Create a form data for axios
+          const formData = new FormData();
+          // We can't directly use fs.createReadStream with FormData in the browser
+          // so we'll use the file buffer instead
+          const fileBuffer = fs.readFileSync(req.file!.path);
+          const blob = new Blob([fileBuffer]);
+          
+          // Append the form data
+          formData.append('file', blob, req.file!.originalname);
+          formData.append('documentId', newDocument.id.toString());
+          formData.append('userId', userId.toString());
+          formData.append('caseId', caseId.toString());
+          formData.append('category', category);
+          
+          const webhookResponse = await axios.post(webhookUrl, formData, {
+            headers: {
+              'Content-Type': 'multipart/form-data',
+            },
+            maxContentLength: Infinity,
+            maxBodyLength: Infinity,
+          });
+          
+          console.log('Webhook response:', webhookResponse.data);
+          
+          // If the webhook responds immediately (not typical), update the document
+          if (webhookResponse.data) {
+            const updatedDoc = await storage.updateDocument(newDocument.id, {
+              status: 'processed',
+              notes: JSON.stringify(webhookResponse.data),
+            });
+            
+            // Broadcast the update to connected clients
+            broadcastDocumentUpdate(newDocument.id, 'processed', webhookResponse.data);
+          }
+        } catch (webhookError) {
+          console.error('Webhook error:', webhookError);
+          
+          // Mark the document as having an error
+          await storage.updateDocument(newDocument.id, {
+            status: 'error',
+            notes: 'Webhook processing failed',
+          });
+          
+          // Broadcast the error to connected clients
+          broadcastDocumentUpdate(newDocument.id, 'error', { error: 'Webhook processing failed' });
+        }
+      })();
+      
+      // Return success to the client with the document ID
+      res.status(201).json({
+        success: true,
+        documentId: newDocument.id,
+        message: 'Document uploaded and sent for processing'
+      });
+    } catch (error) {
+      console.error("Error uploading document:", error);
+      
+      // Clean up the uploaded file on error
+      if (req.file) {
+        fs.unlinkSync(req.file.path);
+      }
+      
+      res.status(500).json({
+        success: false,
+        error: error instanceof Error ? error.message : 'Failed to upload document'
+      });
+    }
+  });
+  
+  // Webhook endpoint to receive document processing results
+  app.post("/api/webhook/document-processed", async (req, res) => {
+    try {
+      const { documentId, status, metadata } = req.body;
+      
+      if (!documentId) {
+        return res.status(400).json({ error: "Missing documentId" });
+      }
+      
+      const document = await storage.getDocument(parseInt(documentId, 10));
+      if (!document) {
+        return res.status(404).json({ error: "Document not found" });
+      }
+      
+      // Update the document with the processing results
+      const updatedDoc = await storage.updateDocument(document.id, {
+        status: status || 'processed',
+        notes: metadata ? JSON.stringify(metadata) : 'Processed by webhook',
+      });
+      
+      // Broadcast the update to connected clients
+      broadcastDocumentUpdate(document.id, status || 'processed', metadata);
+      
+      res.status(200).json({ success: true });
+    } catch (error) {
+      console.error("Error processing webhook:", error);
+      res.status(500).json({ error: "Failed to process webhook" });
+    }
+  });
+  
+  app.delete("/api/documents/:id", async (req, res) => {
+    if (!req.isAuthenticated()) {
+      return res.status(401).json({ error: "Authentication required" });
+    }
+    
+    try {
+      const documentId = parseInt(req.params.id, 10);
+      const document = await storage.getDocument(documentId);
+      
+      if (!document) {
+        return res.status(404).json({ error: "Document not found" });
+      }
+      
+      // Verify the document belongs to a case owned by the user
+      const probateCase = await storage.getProbateCase(document.caseId);
+      if (!probateCase || probateCase.userId !== req.user!.id) {
+        return res.status(403).json({ error: "Not authorized to delete this document" });
+      }
+      
+      // Delete the file if it exists
+      if (document.storagePath && fs.existsSync(document.storagePath)) {
+        fs.unlinkSync(document.storagePath);
+      }
+      
+      // Update the document to mark it as deleted
+      // This ensures we keep a record but mark it as deleted
+      await storage.updateDocument(documentId, {
+        status: 'deleted',
+        notes: 'Document deleted by user',
+      });
+      
+      res.status(200).json({ success: true });
+    } catch (error) {
+      console.error("Error deleting document:", error);
+      res.status(500).json({ error: "Failed to delete document" });
+    }
+  });
 
-  const httpServer = createServer(app);
   return httpServer;
 }
