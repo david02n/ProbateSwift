@@ -1,4 +1,5 @@
 import React from "react";
+import logoWideFull from "@assets/logo_lite_wide_full.png";
 
 interface SwiftLogoProps {
   className?: string;
@@ -6,6 +7,7 @@ interface SwiftLogoProps {
   color?: string;
 }
 
+// Logo only component (swift bird)
 export const SwiftLogo: React.FC<SwiftLogoProps> = ({ 
   className = "", 
   size = 40,
@@ -31,18 +33,21 @@ export const SwiftLogo: React.FC<SwiftLogoProps> = ({
   );
 };
 
-// Also create a text+logo component for use in the header
-export const SwiftLogoWithText: React.FC<SwiftLogoProps> = ({
+// Logo with text component (using the provided image)
+export const SwiftLogoWithText: React.FC<SwiftLogoProps & { height?: number }> = ({
   className = "",
-  size = 40,
-  color = "#002B49"
+  height = 50
 }) => {
   return (
     <div className={`flex items-center ${className}`}>
-      <SwiftLogo size={size} color={color} />
-      <span className="ml-2 font-semibold text-lg" style={{ color }}>
-        ProbateSwift
-      </span>
+      <img 
+        src={logoWideFull} 
+        alt="ProbateSwift" 
+        style={{ 
+          height: `${height}px`,
+          width: 'auto',
+        }} 
+      />
     </div>
   );
 };
