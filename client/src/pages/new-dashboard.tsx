@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { getQueryFn, apiRequest, queryClient } from "@/lib/queryClient";
-import { AssessmentResult, ProbateCase, EstateAsset } from "@shared/schema";
+import { AssessmentResult, ProbateCase, EstateAsset, Executor } from "@shared/schema";
 import { useAuth } from "@/hooks/use-auth";
 import NewHeader from "@/components/layout/NewHeader";
 import Assessment from "@/components/sections/Assessment";
@@ -63,6 +63,16 @@ const NewDashboardPage: React.FC = () => {
     isLoading: isLoadingAssets
   } = useQuery<EstateAsset[]>({
     queryKey: ["/api/assets", activeCase?.id],
+    queryFn: activeCase ? getQueryFn({ on401: "returnNull" }) : () => Promise.resolve([]),
+    enabled: !!activeCase,
+  });
+  
+  // Fetch executors to check if any have been added
+  const {
+    data: executors = [],
+    isLoading: isLoadingExecutors
+  } = useQuery<Executor[]>({
+    queryKey: ["/api/executors", activeCase?.id],
     queryFn: activeCase ? getQueryFn({ on401: "returnNull" }) : () => Promise.resolve([]),
     enabled: !!activeCase,
   });
@@ -137,13 +147,16 @@ const NewDashboardPage: React.FC = () => {
     if (activeCase) {
       progressPercent += 5; // Case created
     }
+    if (executors.length > 0) {
+      progressPercent += 10; // Executors added
+    }
     if (assets.length > 0) {
       progressPercent += 5; // Some assets entered
     }
   }
   
   // Check if any data is still loading
-  const isLoading = isLoadingAssessment || isLoadingCases || isLoadingAssets || createCaseMutation.isPending;
+  const isLoading = isLoadingAssessment || isLoadingCases || isLoadingAssets || isLoadingExecutors || createCaseMutation.isPending;
   
   return (
     <div className="min-h-screen bg-gray-50">
@@ -332,23 +345,31 @@ const NewDashboardPage: React.FC = () => {
                             </div>
                           </div>
                           
-                          {/* Task 2 - Executor Info (Pending) */}
-                          <div className="border rounded-lg p-4 border-amber-200 bg-amber-50">
+                          {/* Task 2 - Executor Info */}
+                          <div className={`border rounded-lg p-4 ${executors.length > 0 ? '' : 'border-amber-200 bg-amber-50'}`}>
                             <div className="flex justify-between">
                               <div className="flex items-start">
                                 <div className="flex-shrink-0 mt-0.5">
-                                  <div className="h-5 w-5 rounded-full bg-amber-500 flex items-center justify-center">
-                                    <Circle className="h-3 w-3 text-white" />
+                                  <div className={`h-5 w-5 rounded-full ${executors.length > 0 ? 'bg-green-500' : 'bg-amber-500'} flex items-center justify-center`}>
+                                    {executors.length > 0 ? (
+                                      <CheckCheck className="h-3 w-3 text-white" />
+                                    ) : (
+                                      <Circle className="h-3 w-3 text-white" />
+                                    )}
                                   </div>
                                 </div>
                                 <div className="ml-3">
                                   <h4 className="font-medium">Enter Executor Info</h4>
                                   <p className="text-sm text-gray-600 mt-1">
-                                    Provide executor details including contact information and relationship to the deceased.
+                                    {executors.length > 0 
+                                      ? `Added ${executors.length} executor${executors.length > 1 ? 's' : ''}. You can add more executors as needed.`
+                                      : 'Add at least one executor with their contact information and details.'}
                                   </p>
                                 </div>
                               </div>
-                              <span className="text-xs bg-amber-100 text-amber-800 px-2.5 py-0.5 rounded-full h-fit">Pending</span>
+                              <span className={`text-xs ${executors.length > 0 ? 'bg-green-100 text-green-800' : 'bg-amber-100 text-amber-800'} px-2.5 py-0.5 rounded-full h-fit`}>
+                                {executors.length > 0 ? 'Complete' : 'Pending'}
+                              </span>
                             </div>
                             <div className="ml-8 mt-2">
                               <Button 
@@ -360,7 +381,7 @@ const NewDashboardPage: React.FC = () => {
                                   variant: "destructive"
                                 })}
                               >
-                                Start
+                                {executors.length > 0 ? 'Manage' : 'Start'}
                               </Button>
                             </div>
                           </div>
