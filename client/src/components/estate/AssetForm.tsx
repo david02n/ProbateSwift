@@ -9,7 +9,7 @@ import { Button } from '@/components/ui/button';
 import { Loader2 } from 'lucide-react';
 import { EstateAsset } from '@shared/schema';
 
-// Asset form schema
+// Asset form schema with strict types matching the database schema
 const assetFormSchema = z.object({
   type: z.enum(['property', 'bank_account', 'investment', 'vehicle', 'cash', 'other']),
   description: z.string().min(1, 'Description is required'),
@@ -17,6 +17,7 @@ const assetFormSchema = z.object({
   address: z.string().optional(),
   institution: z.string().optional(),
   accountNumber: z.string().optional(),
+  ownership: z.enum(['sole', 'joint']).optional(),
   notes: z.string().optional(),
 });
 
@@ -35,14 +36,15 @@ const AssetForm: React.FC<AssetFormProps> = ({
   isSubmitting = false,
   onCancel,
 }) => {
-  // Default form values
+  // Default form values with explicit type casting for safety
   const defaultValues: Partial<AssetFormValues> = {
-    type: initialData?.type || 'property',
+    type: (initialData?.type as 'property' | 'bank_account' | 'investment' | 'vehicle' | 'cash' | 'other') || 'property',
     description: initialData?.description || '',
     value: initialData?.value?.toString() || '',
     address: initialData?.address || '',
     institution: initialData?.institution || '',
     accountNumber: initialData?.accountNumber || '',
+    ownership: (initialData?.ownership as 'sole' | 'joint') || 'sole',
     notes: initialData?.notes || '',
   };
 

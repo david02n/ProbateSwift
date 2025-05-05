@@ -305,7 +305,7 @@ const EstatePage: React.FC = () => {
         type: data.type,
         description: data.description,
         amount: data.amount,
-        institution: data.institution,
+        creditor: data.creditor,
         accountNumber: data.accountNumber,
         notes: data.notes,
       });
@@ -359,6 +359,48 @@ const EstatePage: React.FC = () => {
   return (
     <div className="min-h-screen bg-gray-50">
       <NewHeader />
+      
+      {/* Asset Form Modal */}
+      <Dialog open={isAssetModalOpen} onOpenChange={setIsAssetModalOpen}>
+        <DialogContent className="sm:max-w-[600px]">
+          <DialogHeader>
+            <DialogTitle>{selectedAsset ? 'Edit Asset' : 'Add New Asset'}</DialogTitle>
+            <DialogDescription>
+              {selectedAsset 
+                ? 'Update the asset information below.' 
+                : 'Enter the details of the asset below.'
+              }
+            </DialogDescription>
+          </DialogHeader>
+          <AssetForm 
+            onSubmit={handleAssetSubmit}
+            initialData={selectedAsset}
+            isSubmitting={createAssetMutation.isPending}
+            onCancel={() => setIsAssetModalOpen(false)}
+          />
+        </DialogContent>
+      </Dialog>
+      
+      {/* Liability Form Modal */}
+      <Dialog open={isLiabilityModalOpen} onOpenChange={setIsLiabilityModalOpen}>
+        <DialogContent className="sm:max-w-[600px]">
+          <DialogHeader>
+            <DialogTitle>{selectedLiability ? 'Edit Liability' : 'Add New Liability'}</DialogTitle>
+            <DialogDescription>
+              {selectedLiability
+                ? 'Update the liability information below.'
+                : 'Enter the details of the liability below.'
+              }
+            </DialogDescription>
+          </DialogHeader>
+          <LiabilityForm 
+            onSubmit={handleLiabilitySubmit}
+            initialData={selectedLiability}
+            isSubmitting={createLiabilityMutation.isPending}
+            onCancel={() => setIsLiabilityModalOpen(false)}
+          />
+        </DialogContent>
+      </Dialog>
       
       <main className="container mx-auto px-4 py-8">
         <div className="max-w-6xl mx-auto">

@@ -9,12 +9,12 @@ import { Button } from '@/components/ui/button';
 import { Loader2 } from 'lucide-react';
 import { EstateLiability } from '@shared/schema';
 
-// Liability form schema
+// Liability form schema matching database schema
 const liabilityFormSchema = z.object({
   type: z.enum(['mortgage', 'loan', 'credit_card', 'utility', 'tax', 'other']),
   description: z.string().min(1, 'Description is required'),
   amount: z.string().min(1, 'Amount is required'),
-  institution: z.string().optional(),
+  creditor: z.string().optional(),
   accountNumber: z.string().optional(),
   notes: z.string().optional(),
 });
@@ -34,12 +34,12 @@ const LiabilityForm: React.FC<LiabilityFormProps> = ({
   isSubmitting = false,
   onCancel,
 }) => {
-  // Default form values
+  // Default form values with explicit type casting for safety
   const defaultValues: Partial<LiabilityFormValues> = {
-    type: initialData?.type || 'loan',
+    type: (initialData?.type as 'mortgage' | 'loan' | 'credit_card' | 'utility' | 'tax' | 'other') || 'loan',
     description: initialData?.description || '',
     amount: initialData?.amount?.toString() || '',
-    institution: initialData?.institution || '',
+    creditor: initialData?.creditor || '',
     accountNumber: initialData?.accountNumber || '',
     notes: initialData?.notes || '',
   };
@@ -133,12 +133,12 @@ const LiabilityForm: React.FC<LiabilityFormProps> = ({
           <>
             <FormField
               control={form.control}
-              name="institution"
+              name="creditor"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Institution</FormLabel>
+                  <FormLabel>Creditor/Institution</FormLabel>
                   <FormControl>
-                    <Input placeholder="Enter the financial institution" {...field} />
+                    <Input placeholder="Enter the creditor or financial institution" {...field} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
