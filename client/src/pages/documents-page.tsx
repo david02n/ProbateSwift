@@ -285,17 +285,7 @@ const DocumentsPage: React.FC = () => {
                 </CardContent>
               </Card>
               
-              {/* Specialized Document Upload Button */}
-              <div className="flex justify-end mb-4">
-                <Button 
-                  variant="outline"
-                  className="gap-2"
-                  onClick={() => setLocation('/document-upload')}
-                >
-                  <FileUp className="h-4 w-4" />
-                  Use Specialized Document Uploader
-                </Button>
-              </div>
+              {/* We've removed the Specialized Document Upload Button as we now handle this directly in the document cards */}
               
               {/* Document Categories */}
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-8">

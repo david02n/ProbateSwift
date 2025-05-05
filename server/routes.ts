@@ -600,8 +600,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // This is done in a separate async function that doesn't affect the response
       (async () => {
         try {
-          // Updated webhook URL provided by the user
-          const webhookUrl = 'https://n8n.probateswift.com/webhook/fileupload';
+          // Use specific webhook endpoint if provided, otherwise default
+          const webhookUrl = req.body.webhookTarget || 'https://n8n.probateswift.com/webhook/fileupload';
           
           console.log(`Attempting to send document ${newDocument.id} to webhook: ${webhookUrl}`);
           

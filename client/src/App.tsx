@@ -49,7 +49,6 @@ function Router() {
       <Route path="/" component={NewDashboardPage} />
       <Route path="/executors" component={ExecutorsPage} />
       <Route path="/estate" component={EstatePage} />
-      <Route path="/document-upload" component={DocumentUploadPage} />
       <Route path="/documents" component={DocumentsPage} />
       <Route component={NotFound} />
     </Switch>
