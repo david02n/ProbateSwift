@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { Link } from "wouter";
 import { Button } from "@/components/ui/button";
-import { SwiftLogo } from "@/assets/SwiftLogo";
+import { SwiftLogo, SwiftLogoWithText } from "@/components/ui/SwiftLogo";
 import { Menu, User, LogOut } from "lucide-react";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { useAuth } from "@/hooks/use-auth";
@@ -36,10 +36,7 @@ const Header: React.FC = () => {
         <div className="flex items-center">
           <Link href={currentUser ? "/dashboard" : "/"}>
             <div className="flex items-center cursor-pointer">
-              <div className="w-10 h-10 mr-3">
-                <SwiftLogo className="w-full h-full" />
-              </div>
-              <h1 className="text-2xl font-bold font-inter text-primary">ProbateSwift</h1>
+              <SwiftLogoWithText height={40} />
             </div>
           </Link>
         </div>
@@ -127,10 +124,7 @@ const Header: React.FC = () => {
             <SheetContent className="w-[250px] sm:w-[300px]">
               <div className="flex flex-col gap-6 pt-6">
                 <div className="flex items-center">
-                  <div className="w-8 h-8 mr-2">
-                    <SwiftLogo className="w-full h-full" />
-                  </div>
-                  <h2 className="text-xl font-bold text-primary">ProbateSwift</h2>
+                  <SwiftLogoWithText height={30} />
                 </div>
                 <nav className="flex flex-col gap-4">
                   {navItems.map((item, index) => (

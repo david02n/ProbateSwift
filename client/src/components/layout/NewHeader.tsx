@@ -41,15 +41,15 @@ export const NewHeader: React.FC<HeaderProps> = ({ className = "" }) => {
         <div className="flex justify-between items-center">
           {/* Logo Section */}
           <div className="flex items-center">
-            <div onClick={() => window.location.href = "/"} className="cursor-pointer">
-              <SwiftLogoWithText size={35} />
-            </div>
+            <Link href="/" className="cursor-pointer">
+              <SwiftLogoWithText height={35} />
+            </Link>
 
             {/* Navigation Links - Show only when authenticated */}
             {isAuthenticated && (
               <nav className="hidden md:flex ml-8 space-x-1">
                 {navLinks.map((link) => (
-                  <div key={link.path} onClick={() => window.location.href = link.path}>
+                  <Link key={link.path} href={link.path}>
                     <Button
                       variant={link.active ? "default" : "ghost"}
                       className={`rounded-full text-sm font-medium ${
@@ -60,7 +60,7 @@ export const NewHeader: React.FC<HeaderProps> = ({ className = "" }) => {
                     >
                       {link.name}
                     </Button>
-                  </div>
+                  </Link>
                 ))}
               </nav>
             )}
@@ -112,12 +112,12 @@ export const NewHeader: React.FC<HeaderProps> = ({ className = "" }) => {
             </div>
           ) : (
             <div className="flex items-center space-x-4">
-              <div onClick={() => window.location.href = "/auth"}>
+              <Link href="/auth">
                 <Button variant="outline">Log In</Button>
-              </div>
-              <div onClick={() => window.location.href = "/auth?tab=register"}>
+              </Link>
+              <Link href="/auth?tab=register">
                 <Button>Register</Button>
-              </div>
+              </Link>
             </div>
           )}
           

@@ -613,8 +613,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
             formData.append('file', blob, req.file!.originalname);
             
             // Add all the metadata parameters as well
-            Object.keys(webhookParams).forEach(key => {
-              formData.append(key, webhookParams[key]);
+            Object.entries(webhookParams).forEach(([key, value]) => {
+              formData.append(key, value);
             });
             
             // Make the POST request with the file

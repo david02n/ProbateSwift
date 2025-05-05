@@ -1,5 +1,5 @@
 import React from "react";
-import { SwiftLogo } from "@/assets/SwiftLogo";
+import { SwiftLogo, SwiftLogoWithText } from "@/components/ui/SwiftLogo";
 
 const Footer: React.FC = () => {
   const currentYear = new Date().getFullYear();
@@ -10,10 +10,7 @@ const Footer: React.FC = () => {
         <div className="grid grid-cols-1 md:grid-cols-4 gap-8 mb-12">
           <div>
             <div className="flex items-center mb-4">
-              <div className="w-8 h-8 mr-2">
-                <SwiftLogo className="w-full h-full text-white" />
-              </div>
-              <h3 className="text-xl font-bold font-inter">ProbateSwift</h3>
+              <SwiftLogoWithText height={35} className="brightness-0 invert" />
             </div>
             <p className="mb-4">Simplifying probate for families across the UK.</p>
             <div className="flex space-x-4">
