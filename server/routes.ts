@@ -460,6 +460,36 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
   // API routes for documents
+  
+  // Get all documents for the authenticated user
+  app.get("/api/documents", async (req, res) => {
+    if (!req.isAuthenticated()) {
+      return res.status(401).json({ error: "Authentication required" });
+    }
+    
+    try {
+      const userId = req.user!.id;
+      
+      // Get user's cases
+      const cases = await storage.getProbateCasesByUserId(userId);
+      
+      if (cases.length === 0) {
+        return res.json([]);
+      }
+      
+      // Get documents for the first case (default case)
+      const defaultCaseId = cases[0].id;
+      const documents = await storage.getDocumentsByCaseId(defaultCaseId);
+      
+      console.log(`Fetched ${documents.length} documents for user ${userId}, case ${defaultCaseId}`);
+      res.json(documents);
+    } catch (error) {
+      console.error("Error fetching documents:", error);
+      res.status(500).json({ error: "Failed to fetch documents" });
+    }
+  });
+  
+  // Get documents for a specific case
   app.get("/api/documents/:caseId", async (req, res) => {
     if (!req.isAuthenticated()) {
       return res.status(401).json({ error: "Authentication required" });
@@ -478,29 +508,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.json(documents);
     } catch (error) {
       console.error("Error fetching documents:", error);
-      res.status(500).json({ error: "Failed to fetch documents" });
-    }
-  });
-  
-  app.get("/api/documents/type/:caseId/:type", async (req, res) => {
-    if (!req.isAuthenticated()) {
-      return res.status(401).json({ error: "Authentication required" });
-    }
-    
-    try {
-      const caseId = parseInt(req.params.caseId, 10);
-      const type = req.params.type;
-      
-      // Verify the case belongs to the user
-      const probateCase = await storage.getProbateCase(caseId);
-      if (!probateCase || probateCase.userId !== req.user!.id) {
-        return res.status(404).json({ error: "Probate case not found" });
-      }
-      
-      const documents = await storage.getDocumentsByType(caseId, type);
-      res.json(documents);
-    } catch (error) {
-      console.error("Error fetching documents by type:", error);
       res.status(500).json({ error: "Failed to fetch documents" });
     }
   });
@@ -528,6 +535,29 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Error fetching document:", error);
       res.status(500).json({ error: "Failed to fetch document" });
+    }
+  });
+  
+  app.get("/api/documents/type/:caseId/:type", async (req, res) => {
+    if (!req.isAuthenticated()) {
+      return res.status(401).json({ error: "Authentication required" });
+    }
+    
+    try {
+      const caseId = parseInt(req.params.caseId, 10);
+      const type = req.params.type;
+      
+      // Verify the case belongs to the user
+      const probateCase = await storage.getProbateCase(caseId);
+      if (!probateCase || probateCase.userId !== req.user!.id) {
+        return res.status(404).json({ error: "Probate case not found" });
+      }
+      
+      const documents = await storage.getDocumentsByType(caseId, type);
+      res.json(documents);
+    } catch (error) {
+      console.error("Error fetching documents by type:", error);
+      res.status(500).json({ error: "Failed to fetch documents" });
     }
   });
   
