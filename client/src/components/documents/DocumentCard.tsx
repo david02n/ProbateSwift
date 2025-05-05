@@ -137,10 +137,11 @@ const DocumentCard: React.FC<DocumentCardProps> = ({ document, onDelete }) => {
       console.log("Processing document notes:", notes);
       
       // First try to parse the entire notes as JSON
+      let notesText = notes;
       try {
         const notesObj = JSON.parse(notes);
         if (notesObj.webhookResponse && notesObj.webhookResponse.content) {
-          notes = notesObj.webhookResponse.content;
+          notesText = notesObj.webhookResponse.content;
         }
       } catch (e) {
         // Not a valid JSON, continue with other parsing methods
@@ -148,12 +149,12 @@ const DocumentCard: React.FC<DocumentCardProps> = ({ document, onDelete }) => {
       }
       
       // Extract JSON data from markdown code blocks if present
-      let extractedData = null;
+      let extractedData: any = null;
       
       // Check for JSON code blocks
-      if (typeof notes === 'string' && notes.includes('```json')) {
+      if (typeof notesText === 'string' && notesText.includes('```json')) {
         console.log("Found JSON code block in notes");
-        const jsonMatch = notes.match(/```json\s*(\{[\s\S]*?\})\s*```/);
+        const jsonMatch = notesText.match(/```json\s*(\{[\s\S]*?\})\s*```/);
         if (jsonMatch && jsonMatch[1]) {
           try {
             extractedData = JSON.parse(jsonMatch[1]);
@@ -165,10 +166,10 @@ const DocumentCard: React.FC<DocumentCardProps> = ({ document, onDelete }) => {
       }
       
       // Check if it might be escaped JSON
-      if (!extractedData && typeof notes === 'string' && notes.includes('"type"')) {
+      if (!extractedData && typeof notesText === 'string' && notesText.includes('"type"')) {
         try {
           // Try to find a JSON-like structure by looking for opening and closing braces
-          const jsonCandidate = notes.replace(/\\"/g, '"').match(/\{[\s\S]*\}/);
+          const jsonCandidate = notesText.replace(/\\"/g, '"').match(/\{[\s\S]*\}/);
           if (jsonCandidate) {
             extractedData = JSON.parse(jsonCandidate[0]);
             console.log("Extracted data from potential JSON structure:", extractedData);
@@ -185,63 +186,121 @@ const DocumentCard: React.FC<DocumentCardProps> = ({ document, onDelete }) => {
             (extractedData.type && extractedData.type.toLowerCase().includes('death'))) {
           console.log("Rendering death certificate format");
           return (
-            <div className="space-y-3">
-              <div className="font-medium text-primary">Death Certificate Details</div>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                {(extractedData.firstName || extractedData.surname) && (
-                  <div className="flex items-start gap-2">
-                    <UserIcon className="h-4 w-4 text-muted-foreground mt-0.5" />
-                    <div>
-                      <div className="font-medium">Name</div>
-                      <div>{`${extractedData.firstName || ''} ${extractedData.surname || ''}`}</div>
-                    </div>
+            <div className="p-4 bg-gray-50">
+              {/* Top header with name and document properties */}
+              <div className="flex justify-between items-start">
+                <div>
+                  <h3 className="text-lg font-semibold">
+                    {`${extractedData.firstName || ''} ${extractedData.surname || ''}`}
+                  </h3>
+                  <div className="text-sm text-gray-600 mt-0.5 flex items-center">
+                    <span>Death Certificate</span>
+                    {document.fileSize && (
+                      <>
+                        <span className="mx-2">•</span>
+                        <span>{formatFileSize(document.fileSize)}</span>
+                      </>
+                    )}
+                    {document.createdAt && (
+                      <>
+                        <span className="mx-2">•</span>
+                        <span>Uploaded {new Date(document.createdAt).toLocaleDateString('en-GB')}</span>
+                      </>
+                    )}
                   </div>
-                )}
-                
+                </div>
+                <div className="flex items-center gap-2">
+                  <span className="bg-green-100 text-green-800 text-xs font-medium px-2.5 py-0.5 rounded-full">
+                    Processed
+                  </span>
+                  <div className="flex space-x-1">
+                    <a 
+                      href={`/api/documents/${document.id}/view`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                    >
+                      <Button 
+                        variant="ghost" 
+                        size="icon" 
+                        className="h-8 w-8 text-gray-500 hover:text-gray-900"
+                      >
+                        <Eye className="h-4 w-4" />
+                      </Button>
+                    </a>
+                    <a 
+                      href={`/api/documents/${document.id}/download`}
+                      download
+                    >
+                      <Button 
+                        variant="ghost" 
+                        size="icon" 
+                        className="h-8 w-8 text-gray-500 hover:text-gray-900"
+                      >
+                        <Download className="h-4 w-4" />
+                      </Button>
+                    </a>
+                    <Button 
+                      variant="ghost" 
+                      size="icon" 
+                      className="h-8 w-8 text-gray-500 hover:text-red-600"
+                      onClick={() => setDialogOpen(true)}
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </Button>
+                  </div>
+                </div>
+              </div>
+              
+              {/* Certificate details in clean grid layout */}
+              <div className="mt-6 grid grid-cols-2 gap-y-4 text-sm border-t border-gray-200 pt-4">
                 {extractedData.dateOfBirth && (
-                  <div className="flex items-start gap-2">
-                    <Calendar className="h-4 w-4 text-muted-foreground mt-0.5" />
-                    <div>
-                      <div className="font-medium">Date of Birth</div>
-                      <div>{formatDate(extractedData.dateOfBirth)}</div>
-                    </div>
-                  </div>
-                )}
-                
-                {extractedData.dateOfDeath && (
-                  <div className="flex items-start gap-2">
-                    <Calendar className="h-4 w-4 text-muted-foreground mt-0.5" />
-                    <div>
-                      <div className="font-medium">Date of Death</div>
-                      <div>{formatDate(extractedData.dateOfDeath)}</div>
+                  <div className="col-span-1">
+                    <div className="text-gray-500">date of birth:</div>
+                    <div className="font-medium mt-1">
+                      {new Date(extractedData.dateOfBirth).toLocaleDateString('en-GB', {
+                        day: 'numeric',
+                        month: 'long',
+                        year: 'numeric'
+                      })}
                     </div>
                   </div>
                 )}
                 
                 {extractedData.address && (
-                  <div className="flex items-start gap-2">
-                    <MapPin className="h-4 w-4 text-muted-foreground mt-0.5" />
-                    <div>
-                      <div className="font-medium">Address</div>
-                      <div>{extractedData.address}</div>
+                  <div className="col-span-1 row-span-2">
+                    <div className="text-gray-500">address:</div>
+                    <div className="font-medium mt-1">
+                      {extractedData.address.split(" ").slice(0, -1).join(" ").replace(/,\s*$/, "").split(' ').map((part: string, i: number, arr: string[]) => (
+                        <React.Fragment key={i}>
+                          {part}
+                          {i < arr.length - 1 && i % 2 === 1 ? <br /> : ' '}
+                        </React.Fragment>
+                      ))}
+                      <br />
+                      {extractedData.address.split(" ").slice(-1)}
+                    </div>
+                  </div>
+                )}
+                
+                {extractedData.dateOfDeath && (
+                  <div className="col-span-1">
+                    <div className="text-gray-500">date of death:</div>
+                    <div className="font-medium mt-1">
+                      {new Date(extractedData.dateOfDeath).toLocaleDateString('en-GB', {
+                        day: 'numeric',
+                        month: 'long',
+                        year: 'numeric'
+                      })}
                     </div>
                   </div>
                 )}
                 
                 {extractedData.applicationNumber && (
-                  <div className="flex items-start gap-2">
-                    <Hash className="h-4 w-4 text-muted-foreground mt-0.5" />
-                    <div>
-                      <div className="font-medium">Application Number</div>
-                      <div>{extractedData.applicationNumber}</div>
-                    </div>
+                  <div className="col-span-1">
+                    <div className="text-gray-500">application #:</div>
+                    <div className="font-medium mt-1">{extractedData.applicationNumber}</div>
                   </div>
                 )}
-              </div>
-              
-              <div className="flex gap-2 mt-3">
-                <Badge variant="outline" className="bg-blue-50">Extracted Data</Badge>
-                <Badge variant="outline" className="bg-green-50">Verified</Badge>
               </div>
             </div>
           );
@@ -289,6 +348,198 @@ const DocumentCard: React.FC<DocumentCardProps> = ({ document, onDelete }) => {
     }
   };
   
+  // Check if this is a death certificate with processed data so we can render a special card format
+  const isProcessedDeathCertificate = document.type === 'death_certificate' && 
+                                     document.status === 'processed' && 
+                                     document.notes;
+  
+  // Try to get the extracted data for death certificates (for the special format)
+  let extractedDeathCertData: any = null;
+  if (isProcessedDeathCertificate && document.notes) {
+    try {
+      const notesText = document.notes;
+      const jsonMatch = notesText.match(/```json\s*(\{[\s\S]*?\})\s*```/);
+      if (jsonMatch && jsonMatch[1]) {
+        extractedDeathCertData = JSON.parse(jsonMatch[1]);
+      }
+    } catch (e) {
+      console.error("Failed to parse death certificate data", e);
+    }
+  }
+  
+  // Render a special card for death certificates when we have extracted data
+  if (isProcessedDeathCertificate && extractedDeathCertData && 
+      (extractedDeathCertData.firstName || extractedDeathCertData.surname)) {
+    return (
+      <Card className="overflow-hidden">
+        <CardContent className="p-0">
+          <div className="p-4 bg-white">
+            <div className="flex items-start">
+              <div className="w-14 h-16 bg-gray-100 rounded-sm overflow-hidden mr-4 flex-shrink-0 border">
+                <img 
+                  src={`/api/documents/${document.id}/thumbnail`} 
+                  alt="Document thumbnail" 
+                  className="w-full h-full object-cover object-center"
+                  onError={(e) => {
+                    // Fallback to file icon if image fails to load
+                    e.currentTarget.style.display = 'none';
+                    if (e.currentTarget.parentElement) {
+                      e.currentTarget.parentElement.innerHTML = `<div class="w-full h-full flex items-center justify-center"><FileText class="h-6 w-6 text-gray-500" /></div>`;
+                    }
+                  }}
+                />
+              </div>
+              
+              <div className="flex-1">
+                <h3 className="text-lg font-semibold">
+                  {`${extractedDeathCertData.firstName || ''} ${extractedDeathCertData.surname || ''}`}
+                </h3>
+                <div className="text-sm text-gray-600 mt-0.5 flex items-center flex-wrap">
+                  <span>Death Certificate</span>
+                  {document.fileSize && (
+                    <>
+                      <span className="mx-2">•</span>
+                      <span>{formatFileSize(document.fileSize)}</span>
+                    </>
+                  )}
+                  {document.createdAt && (
+                    <>
+                      <span className="mx-2">•</span>
+                      <span>Uploaded {new Date(document.createdAt).toLocaleDateString('en-GB')}</span>
+                    </>
+                  )}
+                </div>
+              </div>
+              
+              <div className="flex items-center gap-2">
+                <span className="bg-green-100 text-green-800 text-xs font-medium px-2.5 py-0.5 rounded-full">
+                  Processed
+                </span>
+                <div className="flex space-x-1">
+                  <a 
+                    href={`/api/documents/${document.id}/view`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                  >
+                    <Button 
+                      variant="ghost" 
+                      size="icon" 
+                      className="h-8 w-8 text-gray-500 hover:text-gray-900"
+                    >
+                      <Eye className="h-4 w-4" />
+                    </Button>
+                  </a>
+                  <a 
+                    href={`/api/documents/${document.id}/download`}
+                    download
+                  >
+                    <Button 
+                      variant="ghost" 
+                      size="icon" 
+                      className="h-8 w-8 text-gray-500 hover:text-gray-900"
+                    >
+                      <Download className="h-4 w-4" />
+                    </Button>
+                  </a>
+                  <Button 
+                    variant="ghost" 
+                    size="icon" 
+                    className="h-8 w-8 text-gray-500 hover:text-red-600"
+                    onClick={() => setDialogOpen(true)}
+                  >
+                    <Trash2 className="h-4 w-4" />
+                  </Button>
+                </div>
+              </div>
+            </div>
+          </div>
+          
+          {/* Certificate details in clean grid layout */}
+          <div className="grid grid-cols-2 gap-y-4 text-sm border-t border-gray-200 p-4 bg-gray-50">
+            {extractedDeathCertData.dateOfBirth && (
+              <div className="col-span-1">
+                <div className="text-gray-500">date of birth:</div>
+                <div className="font-medium mt-1">
+                  {new Date(extractedDeathCertData.dateOfBirth).toLocaleDateString('en-GB', {
+                    day: 'numeric',
+                    month: 'long',
+                    year: 'numeric'
+                  })}
+                </div>
+              </div>
+            )}
+            
+            {extractedDeathCertData.address && (
+              <div className="col-span-1 row-span-2">
+                <div className="text-gray-500">address:</div>
+                <div className="font-medium mt-1">
+                  {extractedDeathCertData.address.split(" ").slice(0, -1).join(" ").replace(/,\s*$/, "").split(' ').map((part: string, i: number, arr: string[]) => (
+                    <React.Fragment key={i}>
+                      {part}
+                      {i < arr.length - 1 && i % 2 === 1 ? <br /> : ' '}
+                    </React.Fragment>
+                  ))}
+                  <br />
+                  {extractedDeathCertData.address.split(" ").slice(-1)}
+                </div>
+              </div>
+            )}
+            
+            {extractedDeathCertData.dateOfDeath && (
+              <div className="col-span-1">
+                <div className="text-gray-500">date of death:</div>
+                <div className="font-medium mt-1">
+                  {new Date(extractedDeathCertData.dateOfDeath).toLocaleDateString('en-GB', {
+                    day: 'numeric',
+                    month: 'long',
+                    year: 'numeric'
+                  })}
+                </div>
+              </div>
+            )}
+            
+            {extractedDeathCertData.applicationNumber && (
+              <div className="col-span-1">
+                <div className="text-gray-500">application #:</div>
+                <div className="font-medium mt-1">{extractedDeathCertData.applicationNumber}</div>
+              </div>
+            )}
+          </div>
+          
+          {/* Alert dialog for deletion confirmation */}
+          <AlertDialog open={dialogOpen} onOpenChange={setDialogOpen}>
+            <AlertDialogContent>
+              <AlertDialogHeader>
+                <AlertDialogTitle>Delete Document?</AlertDialogTitle>
+                <AlertDialogDescription>
+                  Are you sure you want to delete this Death Certificate? This action cannot be undone.
+                </AlertDialogDescription>
+              </AlertDialogHeader>
+              <AlertDialogFooter>
+                <AlertDialogCancel>Cancel</AlertDialogCancel>
+                <AlertDialogAction 
+                  onClick={handleDelete}
+                  disabled={isDeleting}
+                  className="bg-red-600 hover:bg-red-700 focus:ring-red-600"
+                >
+                  {isDeleting ? (
+                    <>
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      Deleting...
+                    </>
+                  ) : (
+                    'Delete'
+                  )}
+                </AlertDialogAction>
+              </AlertDialogFooter>
+            </AlertDialogContent>
+          </AlertDialog>
+        </CardContent>
+      </Card>
+    );
+  }
+  
+  // Regular document card for all other document types
   return (
     <Card className="overflow-hidden">
       <CardContent className="p-0">
@@ -386,7 +637,7 @@ const DocumentCard: React.FC<DocumentCardProps> = ({ document, onDelete }) => {
         </div>
         
         {/* Additional information section, e.g., extracted data or errors */}
-        {document.notes && document.status !== 'deleted' && (
+        {document.notes && document.status !== 'deleted' && !isProcessedDeathCertificate && (
           <div className="p-4 bg-gray-50 text-sm">
             {/* Try to parse the notes as JSON with extracted data */}
             {tryParseExtractedData(document.notes)}
