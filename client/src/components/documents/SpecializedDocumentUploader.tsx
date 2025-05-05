@@ -91,8 +91,24 @@ const SpecializedDocumentUploader: React.FC<SpecializedDocumentUploaderProps> = 
   // Get the active case ID (first case for now)
   const activeCaseId = probateCases && probateCases.length > 0 ? probateCases[0].id : undefined;
   
+  // Define form types for TypeScript type safety
+  type GeneralDocumentForm = {
+    file: FileList | undefined;
+    subject: string;
+    usage: string;
+  };
+  
+  type SpecificDocumentForm = {
+    file: FileList | undefined;
+  };
+  
+  // Type guard to check if values is a GeneralDocumentForm
+  function isGeneralDocumentForm(values: any): values is GeneralDocumentForm {
+    return 'subject' in values && 'usage' in values;
+  }
+  
   // Initialize form based on document type
-  const form = useForm({
+  const form = useForm<GeneralDocumentForm | SpecificDocumentForm>({
     resolver: zodResolver(isGeneralDocument ? generalDocumentSchema : specificDocumentSchema),
     defaultValues: isGeneralDocument 
       ? { file: undefined, subject: '', usage: '' } 
@@ -137,7 +153,7 @@ const SpecializedDocumentUploader: React.FC<SpecializedDocumentUploaderProps> = 
   });
   
   // Form submission handler
-  const onSubmit = (values: any) => {
+  const onSubmit = (values: GeneralDocumentForm | SpecificDocumentForm) => {
     if (!activeCaseId) {
       toast({
         title: 'No probate case',
@@ -147,7 +163,7 @@ const SpecializedDocumentUploader: React.FC<SpecializedDocumentUploaderProps> = 
       return;
     }
     
-    const fileInput = form.getValues('file');
+    const fileInput = form.getValues('file') as FileList | undefined;
     if (!fileInput || fileInput.length === 0) {
       toast({
         title: 'No file selected',
@@ -164,7 +180,7 @@ const SpecializedDocumentUploader: React.FC<SpecializedDocumentUploaderProps> = 
     formData.append('category', documentType);
     
     // Add additional fields for general documents
-    if (isGeneralDocument) {
+    if (isGeneralDocument && isGeneralDocumentForm(values)) {
       formData.append('subject', values.subject);
       formData.append('usage', values.usage);
     }
