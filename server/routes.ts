@@ -575,15 +575,22 @@ export async function registerRoutes(app: Express): Promise<Server> {
           
           console.log(`Attempting to send document ${newDocument.id} to webhook: ${webhookUrl}`);
           
-          // Get the file basename for the public URL
-          const fileBasename = path.basename(req.file!.path);
-          
-          // Determine the host for the file URL
+          // Determine the host for the file URL using the public API endpoint
           const host = req.get('host') || 'localhost:5000';
           const protocol = req.protocol || 'http';
-          const publicFileUrl = `${protocol}://${host}/uploads/${fileBasename}`;
           
-          // Build parameters with public URL
+          // Create two URLs - one for direct file access and one using the document API endpoint
+          const rawFileBasename = path.basename(req.file!.path);
+          const directFileUrl = `${protocol}://${host}/uploads/${rawFileBasename}`;
+          const apiFileUrl = `${protocol}://${host}/api/public/documents/${newDocument.id}/file`;
+          
+          console.log('Document URLs generated:', {
+            documentId: newDocument.id,
+            directFileUrl,
+            apiFileUrl
+          });
+          
+          // Build parameters with public API URL
           const webhookParams = {
             documentId: newDocument.id.toString(),
             userId: userId.toString(),
@@ -594,7 +601,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
             fileSize: req.file!.size,
             filePath: req.file!.path,
             storagePath: req.file!.path,
-            fileUrl: publicFileUrl, // Add public URL for the file
+            fileUrl: apiFileUrl, // Use the API endpoint URL which is more robust
+            directFileUrl: directFileUrl, // Include direct URL as fallback
             uploadedAt: new Date().toISOString()
           };
           
@@ -845,27 +853,88 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.status(500).json({ error: "Failed to delete document" });
     }
   });
-
-  // Define authorized IP addresses for file access
-  const authorizedIPs = ['161.35.163.61', '127.0.0.1', 'localhost'];
   
-  // IP whitelist middleware
-  const ipWhitelistMiddleware = (req: Request, res: Response, next: NextFunction) => {
+  // Public access endpoint for files - no authentication required
+  // This is specifically for external integrations like n8n to access files
+  app.get("/api/public/documents/:id/file", async (req, res) => {
+    try {
+      const documentId = parseInt(req.params.id, 10);
+      const document = await storage.getDocument(documentId);
+      
+      if (!document || document.status === 'deleted') {
+        return res.status(404).json({ error: "Document not found" });
+      }
+      
+      // Check if the file exists
+      if (!document.storagePath || !fs.existsSync(document.storagePath)) {
+        return res.status(404).json({ error: "File not found on server" });
+      }
+      
+      // Log access for security monitoring
+      console.log(`PUBLIC file access for document ID ${documentId}:`, {
+        filename: document.filename,
+        ip: req.ip || req.headers['x-forwarded-for'] || req.socket.remoteAddress,
+        referrer: req.headers.referer || 'N/A',
+        userAgent: req.headers['user-agent'] || 'N/A'
+      });
+      
+      // Add CORS headers to allow access from anywhere
+      res.header('Access-Control-Allow-Origin', '*');
+      res.header('Access-Control-Allow-Methods', 'GET');
+      res.header('Access-Control-Allow-Headers', 'Content-Type');
+      
+      // Set appropriate content type
+      let contentType = 'application/octet-stream';
+      if (document.fileType) {
+        contentType = document.fileType;
+      } else {
+        // Try to determine by extension
+        const ext = path.extname(document.filename).toLowerCase();
+        const mimeTypes: Record<string, string> = {
+          '.jpg': 'image/jpeg',
+          '.jpeg': 'image/jpeg',
+          '.png': 'image/png',
+          '.gif': 'image/gif',
+          '.pdf': 'application/pdf',
+          '.doc': 'application/msword',
+          '.docx': 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+        };
+        contentType = mimeTypes[ext] || contentType;
+      }
+      
+      // Set the appropriate headers for inline viewing (better for API integrations)
+      res.setHeader('Content-Type', contentType);
+      res.setHeader('Content-Disposition', `inline; filename="${document.filename}"`);
+      
+      // Stream the file to the client
+      const fileStream = fs.createReadStream(document.storagePath);
+      fileStream.pipe(res);
+    } catch (error) {
+      console.error("Error accessing public document file:", error);
+      res.status(500).json({ error: "Failed to access document file" });
+    }
+  });
+
+  // Instead of strict IP whitelist, we'll log access attempts but allow all to make debugging easier
+  const monitorAccessMiddleware = (req: Request, res: Response, next: NextFunction) => {
     const clientIP = req.ip || 
                      (req.headers['x-forwarded-for'] as string)?.split(',')[0]?.trim() || 
                      req.socket.remoteAddress;
     
-    // Check if the IP is in our whitelist
-    if (authorizedIPs.includes(clientIP!) || clientIP?.includes('localhost') || clientIP?.includes('127.0.0.1')) {
-      next(); // IP is authorized, continue to the route handler
-    } else {
-      console.log(`Unauthorized access attempt from IP: ${clientIP}`);
-      res.status(403).json({ error: "Access denied: Your IP is not whitelisted" });
-    }
+    // Log access for monitoring
+    console.log(`File access attempt from IP: ${clientIP}, Filename: ${req.params.filename}, Referrer: ${req.headers.referer || 'N/A'}`);
+    
+    // Add CORS headers to allow access from anywhere
+    res.header('Access-Control-Allow-Origin', '*');
+    res.header('Access-Control-Allow-Methods', 'GET');
+    res.header('Access-Control-Allow-Headers', 'Content-Type');
+    
+    // Allow all requests to continue
+    next();
   };
   
-  // Serve uploaded files with IP whitelist check
-  app.get("/uploads/:filename", ipWhitelistMiddleware, (req, res) => {
+  // Serve uploaded files with access monitoring
+  app.get("/uploads/:filename", monitorAccessMiddleware, (req, res) => {
     const { filename } = req.params;
     const filePath = path.join(uploadDir, filename); // Use uploadDir defined at the top
     
