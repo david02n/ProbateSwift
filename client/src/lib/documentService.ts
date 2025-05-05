@@ -1,5 +1,44 @@
 import axios from 'axios';
 
+// Document types and their corresponding webhook endpoints
+export const DOCUMENT_TYPES = {
+  death_certificate: {
+    name: 'Death Certificate',
+    description: 'The official death certificate issued by the registry office',
+    webhookEndpoint: 'https://n8n.probateswift.com/webhook/fileupload-dc',
+  },
+  identification: {
+    name: 'Identification Document',
+    description: 'Passport, driving license, or other official ID document',
+    webhookEndpoint: 'https://n8n.probateswift.com/webhook/fileupload-id',
+  },
+  will: {
+    name: 'Will & Codicils',
+    description: 'The original will and any codicils (amendments to the will)',
+    webhookEndpoint: 'https://n8n.probateswift.com/webhook/fileupload-will',
+  },
+  property: {
+    name: 'Property Document',
+    description: 'Property deeds, mortgage statements, or valuations',
+    webhookEndpoint: 'https://n8n.probateswift.com/webhook/fileupload-prop',
+  },
+  financial: {
+    name: 'Financial Document',
+    description: 'Bank statements, investment records, or pension details',
+    webhookEndpoint: 'https://n8n.probateswift.com/webhook/fileupload-fin',
+  },
+  tax: {
+    name: 'Tax Document',
+    description: 'Tax returns, HMRC correspondence, or inheritance tax forms',
+    webhookEndpoint: 'https://n8n.probateswift.com/webhook/fileupload-tax',
+  },
+  general: {
+    name: 'Other Document',
+    description: 'Any other document related to the estate',
+    webhookEndpoint: 'https://n8n.probateswift.com/webhook/fileupload-user-defined',
+  },
+};
+
 export interface DocumentUploadResponse {
   success: boolean;
   documentId?: number;
@@ -37,6 +76,12 @@ export async function uploadDocument(
     formData.append('file', file);
     formData.append('caseId', caseId.toString());
     formData.append('category', category);
+    
+    // Special handling for document types with dedicated webhooks
+    if (category in DOCUMENT_TYPES) {
+      const docType = category as keyof typeof DOCUMENT_TYPES;
+      formData.append('webhookTarget', DOCUMENT_TYPES[docType].webhookEndpoint);
+    }
     
     // Update progress to preparing
     if (onProgress) {
