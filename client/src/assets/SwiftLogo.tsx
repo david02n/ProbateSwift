@@ -1,22 +1,52 @@
 import React from "react";
+import logoPath from "./logo_lite_wide_full.png";
 
 interface SwiftLogoProps {
   className?: string;
   textColor?: string;
+  height?: number;
 }
 
-export const SwiftLogo: React.FC<SwiftLogoProps> = ({ className = "", textColor = "#2C6FB7" }) => {
+// Swift bird logo - using the same consistent SVG as in UI component 
+export const SwiftLogo: React.FC<SwiftLogoProps> = ({ 
+  className = "", 
+  textColor = "#2C6FB7" 
+}) => {
   return (
-    <svg viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg" className={className}>
+    <svg
+      width="100%"
+      height="100%"
+      viewBox="0 0 400 400"
+      fill="none"
+      xmlns="http://www.w3.org/2000/svg"
+      className={className}
+    >
+      {/* Swift bird silhouette */}
       <path
-        fill="currentColor"
-        d="M126.6,44.8c-1.4,0.4-2.8,0.8-4.1,1.5c-22.3,12-38.3,32.6-45.5,55.5c-0.6,1.9-1.1,3.8-1.6,5.7 c-0.2,0.8-0.6,1-1.4,0.9c-5.1-0.7-10.1-1.6-15.2-2.4c-13.8-2.2-27.6-4.4-41.4-6.5c-1.9-0.3-3.7-0.5-5.5-0.9c-0.8-0.2-0.9-0.5-0.4-1.1 c1.4-1.6,2.9-3.1,4.4-4.6c13.4-13.4,26.7-26.8,40.1-40.1c1.1-1.1,2.3-2.2,3.4-3.3c0.4-0.4,0.8-0.5,1.4-0.2c1.9,1.3,3.9,2.5,5.8,3.8 c10.7,7,21.4,14,32.1,21c0.5,0.3,0.9,0.4,1.4-0.1c2.1-1.9,4.2-3.8,6.4-5.7c6.9-6.1,13.8-12.3,20.7-18.4c0.5-0.4,0.6-0.7,0.1-1.3 C127.1,46.7,126.9,45.7,126.6,44.8z"
+        d="M244.8 88.2C289.7 111.3 334.5 155.9 311.6 177.1C303 184.9 290.1 187.2 277 186.5C256.4 185.5 236.1 178.6 217.5 170.7C192.9 160.2 168.5 147.9 138.4 152C132.3 152.9 126.1 154.3 120.3 156.9C114.3 159.5 108.7 163.6 104.4 168.9C100.1 174.2 97.2 180.7 96.1 187.5C95 194.4 95.8 201.7 98.3 208.3C106.1 228.6 128.1 242.8 150.9 252.1C173.7 261.4 199.3 266.3 224.7 269.3C235.1 270.5 245.5 271.4 256 271.4C266.5 271.4 277 270.4 287.3 268.6C297.5 266.8 307.5 264.2 317.2 260.8C63.1 309.5 69.8 174.8 68.7 153.3C67.6 131.8 84.2 105.3 114.3 117.1C136.8 125.8 159.3 148.8 159.3 148.8C159.3 148.8 111.6 74.3 244.8 88.2Z"
+        fill={textColor}
       />
-      <path
-        fill="currentColor"
-        d="M159.1,63c0.7,0.1,1.1,0.5,1.5,0.9c7.1,6.9,14.3,13.8,21.4,20.7c2.1,2,4.1,4,6.2,6.1 c0.4,0.4,0.5,0.7,0,1.2c-16.4,16.4-32.9,32.9-49.3,49.3c-1.8,1.8-3.5,3.5-5.3,5.3c-0.4,0.4-0.5,0.7-0.1,1.3c0.9,1.1,1.6,2.3,2.4,3.5 c2.1,3.2,4.2,6.4,6.3,9.6c0.7,1.1,0.7,1.1-0.6,1.2c-5.4,0.5-10.7,1.1-16.1,1.6c-14.6,1.5-29.2,2.9-43.9,4.4c-1.4,0.1-1.4,0.1-1.9-1.2 c-2.6-6.3-5.1-12.6-7.7-18.9c-5.9-14.5-11.9-29-17.8-43.5c-0.2-0.5-0.2-0.8,0.2-1.2c0.8-0.7,1.5-1.4,2.2-2.2c0.4-0.5,0.7-0.4,1.2-0.3 c13.8,2.2,27.7,4.4,41.5,6.6c5.4,0.9,10.8,1.7,16.3,2.6c0.7,0.1,1,0,1.2-0.7c4.5-14.1,13.1-25.3,25.3-33.7c3.5-2.4,7.2-4.4,11.1-6.1 C153.9,67.3,156.3,65,159.1,63z"
-      />
-      <ellipse fill="#FFFFFF" cx="148" cy="76" rx="4" ry="4" />
+      {/* Eye of the bird */}
+      <circle cx="282" cy="177" r="4" fill="white" />
     </svg>
+  );
+};
+
+// Logo with text component using directly imported image
+export const SwiftLogoWithText: React.FC<SwiftLogoProps> = ({
+  className = "",
+  height = 50
+}) => {
+  return (
+    <div className={`flex items-center ${className}`}>
+      <img 
+        src={logoPath} 
+        alt="ProbateSwift" 
+        style={{ 
+          height: `${height}px`,
+          width: 'auto',
+        }} 
+      />
+    </div>
   );
 };
