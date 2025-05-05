@@ -13,6 +13,7 @@ import NewDashboardPage from "@/pages/new-dashboard";
 import ExecutorsPage from "@/pages/executors-page";
 import EstatePage from "@/pages/estate-page";
 import DocumentsPage from "@/pages/documents-page";
+import DocumentUploadPage from "@/pages/document-upload-page";
 
 import { useAuth } from "@/hooks/use-auth";
 
@@ -49,6 +50,7 @@ function Router() {
       <Route path="/executors" component={ExecutorsPage} />
       <Route path="/estate" component={EstatePage} />
       <Route path="/documents" component={DocumentsPage} />
+      <Route path="/documents/upload" component={DocumentUploadPage} />
       <Route component={NotFound} />
     </Switch>
   );

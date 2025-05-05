@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useAuth } from "@/hooks/use-auth";
+import { useLocation } from "wouter";
 import NewHeader from "@/components/layout/NewHeader";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -15,7 +16,8 @@ import {
   Search,
   Trash2,
   Eye,
-  Loader2
+  Loader2,
+  FileUp
 } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import DocumentUploader from "@/components/documents/DocumentUploader";
@@ -26,6 +28,7 @@ import { DocumentAnalysisResult } from "@/lib/documentService";
 const DocumentsPage: React.FC = () => {
   const { user } = useAuth();
   const { toast } = useToast();
+  const [_, setLocation] = useLocation();
   
   // Define interfaces for documents and cases
   interface Document {
@@ -281,6 +284,18 @@ const DocumentsPage: React.FC = () => {
                   )}
                 </CardContent>
               </Card>
+              
+              {/* Specialized Document Upload Button */}
+              <div className="flex justify-end mb-4">
+                <Button 
+                  variant="outline"
+                  className="gap-2"
+                  onClick={() => setLocation('/documents/upload')}
+                >
+                  <FileUp className="h-4 w-4" />
+                  Use Specialized Document Uploader
+                </Button>
+              </div>
               
               {/* Document Categories */}
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-8">

@@ -54,14 +54,14 @@ const DOCUMENT_TYPES = {
 
 // Schema for general document upload form
 const generalDocumentSchema = z.object({
-  file: z.any().refine((file) => file?.length === 1, 'Please select a file'),
+  file: z.any().refine((files) => files instanceof FileList && files.length === 1, 'Please select a file'),
   subject: z.string().min(1, 'Please enter a document subject'),
   usage: z.string().min(1, 'Please describe what this document will be used for'),
 });
 
 // Schema for specific document upload form
 const specificDocumentSchema = z.object({
-  file: z.any().refine((file) => file?.length === 1, 'Please select a file'),
+  file: z.any().refine((files) => files instanceof FileList && files.length === 1, 'Please select a file'),
 });
 
 interface SpecializedDocumentUploaderProps {
@@ -105,11 +105,7 @@ const SpecializedDocumentUploader: React.FC<SpecializedDocumentUploaderProps> = 
       setIsUploading(true);
       setUploadProgress(0);
       
-      const res = await apiRequest('POST', '/api/documents/upload', formData, {
-        headers: {
-          // No Content-Type header - it will be set automatically with boundary for FormData
-        },
-      });
+      const res = await apiRequest('POST', '/api/documents/upload', formData);
       
       return await res.json();
     },
