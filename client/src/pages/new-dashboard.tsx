@@ -1,12 +1,13 @@
 import React, { useState, useEffect } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { getQueryFn, apiRequest, queryClient } from "@/lib/queryClient";
-import { AssessmentResult, ProbateCase, EstateAsset, Executor } from "@shared/schema";
+import { AssessmentResult, ProbateCase, EstateAsset, Executor, Document } from "@shared/schema";
 import { useAuth } from "@/hooks/use-auth";
 import NewHeader from "@/components/layout/NewHeader";
 import Assessment from "@/components/sections/Assessment";
 import { useToast } from "@/hooks/use-toast";
 import { useLocation } from "wouter";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
 // UI Components
 import { Card, CardContent } from "@/components/ui/card";
@@ -76,6 +77,16 @@ const NewDashboardPage: React.FC = () => {
     queryFn: activeCase ? getQueryFn({ on401: "returnNull" }) : () => Promise.resolve([]),
     enabled: !!activeCase,
   });
+  
+  // Fetch documents to check for death certificate and other required documents
+  const {
+    data: documents = [],
+    isLoading: isLoadingDocuments
+  } = useQuery<Document[]>({
+    queryKey: ["/api/documents", activeCase?.id],
+    queryFn: activeCase ? getQueryFn({ on401: "returnNull" }) : () => Promise.resolve([]),
+    enabled: !!activeCase,
+  });
 
   // Create probate case mutation
   const createCaseMutation = useMutation({
@@ -140,6 +151,16 @@ const NewDashboardPage: React.FC = () => {
     sixMonthsLater.toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' }) : 
     "Not yet determined";
 
+  // Check if death certificate has been uploaded
+  const hasDeathCertificate = documents.some(doc => 
+    doc.type === 'death_certificate' && doc.status === 'processed'
+  );
+  
+  // Find the death certificate document
+  const deathCertificate = documents.find(doc => 
+    doc.type === 'death_certificate' && doc.status === 'processed'
+  );
+
   // Calculate progress based on steps completed
   let progressPercent = 0;
   if (assessmentResult) {
@@ -153,10 +174,14 @@ const NewDashboardPage: React.FC = () => {
     if (assets.length > 0) {
       progressPercent += 5; // Some assets entered
     }
+    if (hasDeathCertificate) {
+      progressPercent += 15; // Death certificate uploaded and processed
+    }
   }
   
   // Check if any data is still loading
-  const isLoading = isLoadingAssessment || isLoadingCases || isLoadingAssets || isLoadingExecutors || createCaseMutation.isPending;
+  const isLoading = isLoadingAssessment || isLoadingCases || isLoadingAssets || 
+                   isLoadingExecutors || isLoadingDocuments || createCaseMutation.isPending;
   
   return (
     <div className="min-h-screen bg-gray-50">
@@ -386,33 +411,89 @@ const NewDashboardPage: React.FC = () => {
                             </div>
                           </div>
                           
-                          {/* Task 3 - Death Certificate (Not Started) */}
-                          <div className="border rounded-lg p-4">
+                          {/* Task 3 - Death Certificate */}
+                          <div className={`border rounded-lg p-4 ${hasDeathCertificate ? '' : 'border-amber-200 bg-amber-50'}`}>
                             <div className="flex justify-between">
                               <div className="flex items-start">
                                 <div className="flex-shrink-0 mt-0.5">
-                                  <div className="h-5 w-5 rounded-full bg-gray-300 flex items-center justify-center">
-                                    <Circle className="h-3 w-3 text-white" />
+                                  <div className={`h-5 w-5 rounded-full ${hasDeathCertificate ? 'bg-green-500' : 'bg-amber-500'} flex items-center justify-center`}>
+                                    {hasDeathCertificate ? (
+                                      <CheckCheck className="h-3 w-3 text-white" />
+                                    ) : (
+                                      <Circle className="h-3 w-3 text-white" />
+                                    )}
                                   </div>
                                 </div>
                                 <div className="ml-3">
                                   <h4 className="font-medium">Upload Death Certificate</h4>
                                   <p className="text-sm text-gray-500 mt-1">
-                                    Upload an official death certificate. This is required for the probate application.
+                                    {hasDeathCertificate 
+                                      ? "Death certificate successfully uploaded and processed." 
+                                      : "Upload an official death certificate. This is required for the probate application."}
                                   </p>
+                                  {hasDeathCertificate && deathCertificate && (
+                                    <div className="mt-2 p-2 bg-gray-50 rounded text-sm">
+                                      {deathCertificate.notes && deathCertificate.notes.includes("firstName") ? (
+                                        <TooltipProvider>
+                                          <Tooltip>
+                                            <TooltipTrigger asChild>
+                                              <span className="cursor-help underline decoration-dotted underline-offset-2">
+                                                View extracted details
+                                              </span>
+                                            </TooltipTrigger>
+                                            <TooltipContent className="w-80 p-2">
+                                              <p className="text-xs">
+                                                {(() => {
+                                                  try {
+                                                    // Try to extract JSON from notes
+                                                    const notesText = deathCertificate.notes;
+                                                    // Look for JSON within code blocks or directly parse
+                                                    const jsonMatch = notesText.match(/```json\s*(\{[\s\S]*?\})\s*```/);
+                                                    const jsonContent = jsonMatch ? jsonMatch[1] : notesText;
+                                                    const extractedData = JSON.parse(jsonContent);
+                                                    
+                                                    // Format extracted data for display
+                                                    return (
+                                                      <div>
+                                                        <div><strong>Name:</strong> {extractedData.firstName} {extractedData.surname}</div>
+                                                        <div><strong>Born:</strong> {new Date(extractedData.dateOfBirth).toLocaleDateString('en-GB')}</div>
+                                                        <div><strong>Died:</strong> {new Date(extractedData.dateOfDeath).toLocaleDateString('en-GB')}</div>
+                                                        <div><strong>Address:</strong> {extractedData.address}</div>
+                                                      </div>
+                                                    );
+                                                  } catch (e) {
+                                                    return "Extracted data available but couldn't be parsed. View document for details.";
+                                                  }
+                                                })()}
+                                              </p>
+                                            </TooltipContent>
+                                          </Tooltip>
+                                        </TooltipProvider>
+                                      ) : "Document uploaded and processed successfully."}
+                                    </div>
+                                  )}
                                 </div>
                               </div>
-                              <span className="text-xs bg-gray-100 text-gray-600 px-2.5 py-0.5 rounded-full h-fit">Not Started</span>
+                              <span className={`text-xs ${hasDeathCertificate ? 'bg-green-100 text-green-800' : 'bg-amber-100 text-amber-800'} px-2.5 py-0.5 rounded-full h-fit`}>
+                                {hasDeathCertificate ? 'Complete' : 'Required'}
+                              </span>
                             </div>
                             <div className="ml-8 mt-2">
                               <Button 
                                 size="sm" 
-                                className="text-xs h-7" 
-                                variant="outline"
+                                className={`text-xs h-7 ${hasDeathCertificate ? 'bg-gray-100 hover:bg-gray-200 text-gray-700' : 'bg-[#002B49] hover:bg-[#002B49]/90 text-white'}`}
+                                variant={hasDeathCertificate ? "outline" : "default"}
                                 disabled={!activeCase}
-                                onClick={() => activeCase ? navigate("/documents") : null}
+                                onClick={() => {
+                                  if (!activeCase) return;
+                                  if (hasDeathCertificate && deathCertificate) {
+                                    window.open(`/api/documents/${deathCertificate.id}/view`, '_blank');
+                                  } else {
+                                    navigate("/documents");
+                                  }
+                                }}
                               >
-                                Upload
+                                {hasDeathCertificate ? 'View' : 'Upload'}
                               </Button>
                             </div>
                           </div>
