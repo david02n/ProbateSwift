@@ -153,7 +153,7 @@ export const NewHeader: React.FC<HeaderProps> = ({ className = "" }) => {
           <nav className="md:hidden mt-2 pt-2 border-t">
             <div className="flex flex-col space-y-2">
               {navLinks.map((link) => (
-                <div key={link.path} onClick={() => window.location.href = link.path}>
+                <Link key={link.path} href={link.path}>
                   <Button
                     variant={link.active ? "default" : "ghost"}
                     className={`w-full justify-start ${
@@ -162,7 +162,7 @@ export const NewHeader: React.FC<HeaderProps> = ({ className = "" }) => {
                   >
                     {link.name}
                   </Button>
-                </div>
+                </Link>
               ))}
               <Button onClick={handleLogout} variant="ghost" className="w-full justify-start">
                 <LogOut className="mr-2 h-4 w-4" />
