@@ -569,9 +569,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // This is done in a separate async function that doesn't affect the response
       (async () => {
         try {
-          // Webhook URL provided by the user (GET request as specified)
-          // Important: The URL format could change depending on the environment
-          let webhookUrl = 'http://0.0.0.0:5678/webhook/b432c369-ac65-41c9-9d46-c7c37fc23f82';
+          // Updated webhook URL provided by the user
+          const webhookUrl = 'https://n8n.probateswift.com/webhook/fileupload';
           
           console.log(`Attempting to send document ${newDocument.id} to webhook: ${webhookUrl}`);
           
@@ -584,33 +583,50 @@ export async function registerRoutes(app: Express): Promise<Server> {
             filename: req.file!.originalname,
             fileType: req.file!.mimetype,
             fileSize: req.file!.size,
-            filePath: req.file!.path
+            filePath: req.file!.path,
+            storagePath: req.file!.path,
+            uploadedAt: new Date().toISOString()
           };
           
-          // Try both URLs to see which one works
+          // Send to the production webhook endpoint
           let webhookResponse;
           
+          // First, try sending just the metadata using GET
           try {
-            // First attempt with 0.0.0.0
+            // Make the webhook request with just the metadata
             webhookResponse = await axios.get(webhookUrl, {
               params: webhookParams,
-              timeout: 5000 // 5 second timeout
+              timeout: 10000 // 10 second timeout for external API
+            });
+          } catch (getError) {
+            console.log('GET webhook request failed, attempting POST with file data');
+            
+            // If GET fails, try sending the actual file with a POST request
+            // Create a FormData object to send the file
+            const formData = new FormData();
+            
+            // Read the file and create a blob
+            const fileBuffer = fs.readFileSync(req.file!.path);
+            const blob = new Blob([fileBuffer], { type: req.file!.mimetype });
+            
+            // Add the file to the form data
+            formData.append('file', blob, req.file!.originalname);
+            
+            // Add all the metadata parameters as well
+            Object.keys(webhookParams).forEach(key => {
+              formData.append(key, webhookParams[key]);
             });
             
-            console.log('Webhook response successful with 0.0.0.0');
-          } catch (err) {
-            // If that fails, try with localhost instead of 0.0.0.0
-            console.log('First webhook attempt failed, trying localhost');
-            webhookUrl = 'http://localhost:5678/webhook/b432c369-ac65-41c9-9d46-c7c37fc23f82';
-            
-            // Second attempt with alternate URL
-            webhookResponse = await axios.get(webhookUrl, {
-              params: webhookParams,
-              timeout: 5000
+            // Make the POST request with the file
+            webhookResponse = await axios.post(webhookUrl, formData, {
+              headers: {
+                'Content-Type': 'multipart/form-data',
+              },
+              timeout: 15000, // 15 second timeout for file upload
             });
-            
-            console.log('Webhook response successful with localhost');
           }
+          
+          console.log('Webhook response successful');
           
           // Process successful webhook response
           if (webhookResponse && webhookResponse.data) {
