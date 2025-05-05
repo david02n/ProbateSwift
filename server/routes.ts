@@ -1,4 +1,4 @@
-import type { Express, Request, Response } from "express";
+import type { Express, Request, Response, NextFunction } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
 import { setupAuth } from "./auth";
@@ -7,6 +7,7 @@ import * as fs from "fs";
 import * as path from "path";
 import axios from "axios";
 import { WebSocketServer, WebSocket } from "ws";
+
 
 // Set up multer for file uploads
 const uploadDir = path.join(process.cwd(), "uploads");
@@ -574,7 +575,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
           
           console.log(`Attempting to send document ${newDocument.id} to webhook: ${webhookUrl}`);
           
-          // Build parameters
+          // Get the file basename for the public URL
+          const fileBasename = path.basename(req.file!.path);
+          
+          // Determine the host for the file URL
+          const host = req.get('host') || 'localhost:5000';
+          const protocol = req.protocol || 'http';
+          const publicFileUrl = `${protocol}://${host}/uploads/${fileBasename}`;
+          
+          // Build parameters with public URL
           const webhookParams = {
             documentId: newDocument.id.toString(),
             userId: userId.toString(),
@@ -585,6 +594,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
             fileSize: req.file!.size,
             filePath: req.file!.path,
             storagePath: req.file!.path,
+            fileUrl: publicFileUrl, // Add public URL for the file
             uploadedAt: new Date().toISOString()
           };
           
@@ -836,10 +846,28 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Serve uploaded files publicly
-  app.get("/uploads/:filename", (req, res) => {
+  // Define authorized IP addresses for file access
+  const authorizedIPs = ['161.35.163.61', '127.0.0.1', 'localhost'];
+  
+  // IP whitelist middleware
+  const ipWhitelistMiddleware = (req: Request, res: Response, next: NextFunction) => {
+    const clientIP = req.ip || 
+                     (req.headers['x-forwarded-for'] as string)?.split(',')[0]?.trim() || 
+                     req.socket.remoteAddress;
+    
+    // Check if the IP is in our whitelist
+    if (authorizedIPs.includes(clientIP!) || clientIP?.includes('localhost') || clientIP?.includes('127.0.0.1')) {
+      next(); // IP is authorized, continue to the route handler
+    } else {
+      console.log(`Unauthorized access attempt from IP: ${clientIP}`);
+      res.status(403).json({ error: "Access denied: Your IP is not whitelisted" });
+    }
+  };
+  
+  // Serve uploaded files with IP whitelist check
+  app.get("/uploads/:filename", ipWhitelistMiddleware, (req, res) => {
     const { filename } = req.params;
-    const filePath = path.join(uploadsDir, filename);
+    const filePath = path.join(uploadDir, filename); // Use uploadDir defined at the top
     
     // Check if file exists
     if (!fs.existsSync(filePath)) {
@@ -847,7 +875,42 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
     
     // Set appropriate headers based on file type
-    const contentType = req.query.contentType || mime.lookup(filePath) || 'application/octet-stream';
+    let contentType = req.query.contentType as string || 'application/octet-stream';
+    
+    // Try to determine content type based on file extension if not provided
+    if (!req.query.contentType) {
+      const ext = path.extname(filePath).toLowerCase();
+      // Common mime types mapping
+      const mimeTypes: Record<string, string> = {
+        '.jpg': 'image/jpeg',
+        '.jpeg': 'image/jpeg',
+        '.png': 'image/png',
+        '.gif': 'image/gif',
+        '.pdf': 'application/pdf',
+        '.doc': 'application/msword',
+        '.docx': 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+        '.xls': 'application/vnd.ms-excel',
+        '.xlsx': 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+        '.txt': 'text/plain',
+        '.csv': 'text/csv',
+        '.html': 'text/html',
+        '.htm': 'text/html',
+        '.json': 'application/json',
+        '.xml': 'application/xml',
+        '.zip': 'application/zip',
+        '.rar': 'application/x-rar-compressed',
+        '.tar': 'application/x-tar',
+        '.7z': 'application/x-7z-compressed',
+        '.mp3': 'audio/mpeg',
+        '.mp4': 'video/mp4',
+        '.avi': 'video/x-msvideo',
+        '.mov': 'video/quicktime',
+        '.wmv': 'video/x-ms-wmv'
+      };
+      
+      contentType = mimeTypes[ext] || contentType;
+    }
+    
     res.setHeader('Content-Type', contentType);
     res.setHeader('Content-Disposition', `inline; filename="${path.basename(filePath)}"`);
     
