@@ -290,7 +290,7 @@ const DocumentsPage: React.FC = () => {
                 <Button 
                   variant="outline"
                   className="gap-2"
-                  onClick={() => setLocation('/documents/upload')}
+                  onClick={() => setLocation('/document-upload')}
                 >
                   <FileUp className="h-4 w-4" />
                   Use Specialized Document Uploader

@@ -49,17 +49,8 @@ function Router() {
       <Route path="/" component={NewDashboardPage} />
       <Route path="/executors" component={ExecutorsPage} />
       <Route path="/estate" component={EstatePage} />
-      <Route path="/documents/upload" component={DocumentUploadPage} />
-      <Route path="/documents/:rest*">
-        {params => {
-          // If there are no additional path segments, show the DocumentsPage
-          if (!params.rest) {
-            return <DocumentsPage />;
-          }
-          // Otherwise, return NotFound for invalid subpaths
-          return <NotFound />;
-        }}
-      </Route>
+      <Route path="/document-upload" component={DocumentUploadPage} />
+      <Route path="/documents" component={DocumentsPage} />
       <Route component={NotFound} />
     </Switch>
   );
