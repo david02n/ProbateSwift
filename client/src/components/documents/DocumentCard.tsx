@@ -12,7 +12,8 @@ import {
   Copy,
   ChevronsUpDown,
   Plus,
-  Minus
+  Minus,
+  Check
 } from 'lucide-react';
 import { Switch } from "@/components/ui/switch";
 import { Button } from '@/components/ui/button';
@@ -62,6 +63,9 @@ const DocumentCard: React.FC<DocumentCardProps> = ({ document, onDelete }) => {
   const [detailsDialogOpen, setDetailsDialogOpen] = useState(false);
   const [includeInEstate, setIncludeInEstate] = useState(false);
   const [isAddingToEstate, setIsAddingToEstate] = useState(false);
+  
+  // For API error handling
+  const [apiError, setApiError] = useState<string | null>(null);
   
   // Function to copy text to clipboard
   const copyToClipboard = (text: string, fieldName: string) => {
@@ -1022,9 +1026,9 @@ const DocumentCard: React.FC<DocumentCardProps> = ({ document, onDelete }) => {
                         <div className="flex justify-between items-center mb-2">
                           <div>
                             <span className="text-sm font-medium">Classification: </span>
-                            <Badge variant={extractedData.classification.toLowerCase() === 'asset' ? 'success' : 'destructive'}>
+                            <span className={`px-2 py-1 rounded-full text-xs font-medium ${extractedData.classification.toLowerCase() === 'asset' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}>
                               {extractedData.classification}
-                            </Badge>
+                            </span>
                           </div>
                           <div className="flex items-center space-x-2">
                             <span className="text-sm text-gray-600">Include in estate valuation</span>
