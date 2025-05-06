@@ -753,6 +753,12 @@ export class DatabaseStorage implements IStorage {
       .returning();
     return updatedLiability;
   }
+  
+  async deleteEstateLiability(id: number): Promise<void> {
+    await db
+      .delete(estateLiabilities)
+      .where(eq(estateLiabilities.id, id));
+  }
 
   // Document methods
   async getDocument(id: number): Promise<Document | undefined> {

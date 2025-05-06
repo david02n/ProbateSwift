@@ -129,6 +129,50 @@ const EstatePage: React.FC = () => {
     },
   });
   
+  // Delete asset mutation
+  const deleteAssetMutation = useMutation({
+    mutationFn: async (assetId: number) => {
+      const res = await apiRequest("DELETE", `/api/assets/${assetId}`);
+      return res.ok;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/assets", activeCaseId] });
+      toast({
+        title: "Asset deleted",
+        description: "The asset has been removed successfully",
+      });
+    },
+    onError: (error: Error) => {
+      toast({
+        title: "Error deleting asset",
+        description: error.message,
+        variant: "destructive",
+      });
+    },
+  });
+  
+  // Delete liability mutation
+  const deleteLiabilityMutation = useMutation({
+    mutationFn: async (liabilityId: number) => {
+      const res = await apiRequest("DELETE", `/api/liabilities/${liabilityId}`);
+      return res.ok;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/liabilities", activeCaseId] });
+      toast({
+        title: "Liability deleted",
+        description: "The liability has been removed successfully",
+      });
+    },
+    onError: (error: Error) => {
+      toast({
+        title: "Error deleting liability",
+        description: error.message,
+        variant: "destructive",
+      });
+    },
+  });
+  
   // Process assets with icons
   const processedAssets: Asset[] = assets.map(asset => {
     let icon;
@@ -243,6 +287,13 @@ const EstatePage: React.FC = () => {
     setIsAssetModalOpen(true);
   };
   
+  // Handle delete asset
+  const handleDeleteAsset = (asset: EstateAsset) => {
+    if (confirm(`Are you sure you want to delete the ${asset.description || 'asset'}?`)) {
+      deleteAssetMutation.mutate(asset.id);
+    }
+  };
+  
   // Handle asset form submission
   const handleAssetSubmit = (data: any) => {
     if (!activeCaseId) return;
@@ -290,6 +341,13 @@ const EstatePage: React.FC = () => {
   const handleEditLiability = (liability: EstateLiability) => {
     setSelectedLiability(liability);
     setIsLiabilityModalOpen(true);
+  };
+  
+  // Handle delete liability
+  const handleDeleteLiability = (liability: EstateLiability) => {
+    if (confirm(`Are you sure you want to delete the ${liability.description || 'liability'}?`)) {
+      deleteLiabilityMutation.mutate(liability.id);
+    }
   };
   
   // Handle liability form submission
