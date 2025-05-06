@@ -985,8 +985,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Get the current metadata or initialize if not present
       const currentMetadata = document.metadata || {};
       
+      // Extract metadata from request body - it might be nested under 'metadata' key
+      const newMetadata = req.body.metadata || req.body;
+      
       // Merge the existing metadata with the new metadata
-      const updatedMetadata = { ...currentMetadata, ...req.body };
+      const updatedMetadata = { ...currentMetadata, ...newMetadata };
+      
+      console.log("Updating document metadata:", {
+        documentId,
+        currentMetadata,
+        newMetadata,
+        updatedMetadata
+      });
       
       // If toggling off includedInEstate, we need to clean up related estate items
       if (currentMetadata.includedInEstate === true && updatedMetadata.includedInEstate === false) {
