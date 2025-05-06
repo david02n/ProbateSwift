@@ -149,31 +149,73 @@ const DocumentCard: React.FC<DocumentCardProps> = ({ document, onDelete }) => {
   let extractedData: any = null;
   if (hasExtractableData && document.notes) {
     try {
-      // Try to parse JSON from notes
-      if (document.notes.includes('```json')) {
-        const jsonMatch = document.notes.match(/```json\s*(\{[\s\S]*?\})\s*```/);
-        if (jsonMatch && jsonMatch[1]) {
-          extractedData = JSON.parse(jsonMatch[1]);
-        }
-      } else if (document.notes.includes('"type"')) {
-        const jsonCandidate = document.notes.replace(/\\"/g, '"').match(/\{[\s\S]*\}/);
-        if (jsonCandidate) {
-          extractedData = JSON.parse(jsonCandidate[0]);
-        }
-      } else {
-        try {
-          extractedData = JSON.parse(document.notes);
-          if (extractedData.webhookResponse && extractedData.webhookResponse.content) {
-            const content = extractedData.webhookResponse.content;
-            if (content.includes('```json')) {
-              const jsonMatch = content.match(/```json\s*(\{[\s\S]*?\})\s*```/);
-              if (jsonMatch && jsonMatch[1]) {
-                extractedData = JSON.parse(jsonMatch[1]);
-              }
+      console.log("Processing document notes:", document.notes);
+      
+      // First try to parse the notes as direct JSON
+      try {
+        // Try parsing the entire document.notes as JSON
+        const parsedNotes = JSON.parse(document.notes);
+        
+        // Check if it's an array with content property (common webhook response format)
+        if (Array.isArray(parsedNotes) && parsedNotes[0] && parsedNotes[0].content) {
+          const content = parsedNotes[0].content;
+          
+          // Check if content contains a JSON code block
+          if (content.includes('```json')) {
+            const jsonMatch = content.match(/```json\s*(\{[\s\S]*?\})\s*```/);
+            if (jsonMatch && jsonMatch[1]) {
+              extractedData = JSON.parse(jsonMatch[1]);
+              console.log("Extracted data from array with JSON code block:", extractedData);
             }
           }
-        } catch (e) {
-          console.log("Failed to parse notes as JSON");
+        } 
+        // Check if it has webhookResponse (another common format)
+        else if (parsedNotes.webhookResponse && parsedNotes.webhookResponse.content) {
+          const content = parsedNotes.webhookResponse.content;
+          if (content.includes('```json')) {
+            const jsonMatch = content.match(/```json\s*(\{[\s\S]*?\})\s*```/);
+            if (jsonMatch && jsonMatch[1]) {
+              extractedData = JSON.parse(jsonMatch[1]);
+              console.log("Extracted data from webhookResponse:", extractedData);
+            }
+          }
+        }
+        // If parsed JSON is already the data we want
+        else if (parsedNotes.type && (parsedNotes.firstName || parsedNotes.surname)) {
+          extractedData = parsedNotes;
+          console.log("Notes were already valid structured data:", extractedData);
+        }
+      } catch (e) {
+        console.log("Notes are not directly valid JSON, trying other parsing methods");
+      }
+      
+      // If we still don't have data, try direct code block extraction
+      if (!extractedData && typeof document.notes === 'string') {
+        // Check for JSON code blocks
+        if (document.notes.includes('```json')) {
+          console.log("Found JSON code block in string notes");
+          const jsonMatch = document.notes.match(/```json\s*(\{[\s\S]*?\})\s*```/);
+          if (jsonMatch && jsonMatch[1]) {
+            try {
+              extractedData = JSON.parse(jsonMatch[1]);
+              console.log("Extracted data from direct JSON code block:", extractedData);
+            } catch (e) {
+              console.error("Failed to parse JSON from code block:", e);
+            }
+          }
+        }
+        // Check if it might be escaped JSON
+        else if (document.notes.includes('"type"')) {
+          try {
+            // Try to find a JSON-like structure by looking for opening and closing braces
+            const jsonCandidate = document.notes.replace(/\\"/g, '"').match(/\{[\s\S]*\}/);
+            if (jsonCandidate) {
+              extractedData = JSON.parse(jsonCandidate[0]);
+              console.log("Extracted data from potential JSON structure:", extractedData);
+            }
+          } catch (e) {
+            console.error("Failed to parse potential JSON structure:", e);
+          }
         }
       }
     } catch (e) {
