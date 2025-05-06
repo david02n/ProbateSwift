@@ -700,6 +700,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         fileSize: req.file.size,
         fileType: req.file.mimetype,
         notes: `Uploaded and stored locally at ${req.file.path}`,
+        metadata: {}, // Initialize with empty metadata
       });
       
       // Still attempt to send to webhook but don't wait for it or fail if it's not available
@@ -868,6 +869,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const updatedDoc = await storage.updateDocument(document.id, {
         status: status || 'processed',
         notes: metadata ? JSON.stringify(metadata) : 'Processed by webhook',
+        metadata: document.metadata || {}, // Initialize metadata if it doesn't exist
       });
       
       // Broadcast the update to connected clients
@@ -960,6 +962,60 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Update document metadata - specifically for the "includedInEstate" flag
+  app.patch("/api/documents/:id/metadata", async (req, res) => {
+    if (!req.isAuthenticated()) {
+      return res.status(401).json({ error: "Authentication required" });
+    }
+    
+    try {
+      const documentId = parseInt(req.params.id, 10);
+      const document = await storage.getDocument(documentId);
+      
+      if (!document) {
+        return res.status(404).json({ error: "Document not found" });
+      }
+      
+      // Verify the document belongs to a case owned by the user
+      const probateCase = await storage.getProbateCase(document.caseId);
+      if (!probateCase || probateCase.userId !== req.user!.id) {
+        return res.status(403).json({ error: "Not authorized to update this document" });
+      }
+      
+      // Get the current metadata or initialize if not present
+      const currentMetadata = document.metadata || {};
+      
+      // Merge the existing metadata with the new metadata
+      const updatedMetadata = { ...currentMetadata, ...req.body };
+      
+      // If toggling off includedInEstate, we need to clean up related estate items
+      if (currentMetadata.includedInEstate === true && updatedMetadata.includedInEstate === false) {
+        // Find and delete any associated assets or liabilities
+        if (currentMetadata.estateItemType === 'asset' && currentMetadata.estateItemId) {
+          console.log(`Removing asset #${currentMetadata.estateItemId} from estate as document was toggled off`);
+          await storage.deleteEstateAsset(currentMetadata.estateItemId);
+        } else if (currentMetadata.estateItemType === 'liability' && currentMetadata.estateItemId) {
+          console.log(`Removing liability #${currentMetadata.estateItemId} from estate as document was toggled off`);
+          await storage.deleteEstateLiability(currentMetadata.estateItemId);
+        }
+      }
+      
+      // Update the document with the new metadata
+      const updatedDocument = await storage.updateDocument(documentId, {
+        metadata: updatedMetadata,
+      });
+      
+      res.status(200).json({ 
+        success: true, 
+        document: updatedDocument,
+        message: 'Document metadata updated successfully' 
+      });
+    } catch (error) {
+      console.error("Error updating document metadata:", error);
+      res.status(500).json({ error: "Failed to update document metadata" });
+    }
+  });
+  
   app.delete("/api/documents/:id", async (req, res) => {
     if (!req.isAuthenticated()) {
       return res.status(401).json({ error: "Authentication required" });
