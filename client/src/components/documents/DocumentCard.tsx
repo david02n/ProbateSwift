@@ -1015,6 +1015,49 @@ const DocumentCard: React.FC<DocumentCardProps> = ({ document, onDelete }) => {
                         </div>
                       </div>
                     )}
+                    
+                    {/* Classification and Add to Estate Option (for financial documents) */}
+                    {extractedData.balance !== undefined && extractedData.classification && (
+                      <div className="flex flex-col space-y-1 border-t border-gray-200 pt-3 mt-3">
+                        <div className="flex justify-between items-center mb-2">
+                          <div>
+                            <span className="text-sm font-medium">Classification: </span>
+                            <Badge variant={extractedData.classification.toLowerCase() === 'asset' ? 'success' : 'destructive'}>
+                              {extractedData.classification}
+                            </Badge>
+                          </div>
+                          <div className="flex items-center space-x-2">
+                            <span className="text-sm text-gray-600">Include in estate valuation</span>
+                            <Switch 
+                              checked={includeInEstate} 
+                              onCheckedChange={(checked) => {
+                                if (checked) {
+                                  const isAsset = extractedData.classification.toLowerCase() === 'asset';
+                                  handleAddToEstate(isAsset);
+                                } else {
+                                  setIncludeInEstate(false);
+                                }
+                              }}
+                              disabled={isAddingToEstate || includeInEstate}
+                            />
+                          </div>
+                        </div>
+                        {isAddingToEstate && (
+                          <div className="flex items-center justify-center space-x-2 py-2">
+                            <Loader2 className="h-4 w-4 animate-spin" />
+                            <span className="text-sm text-gray-600">Adding to estate...</span>
+                          </div>
+                        )}
+                        {includeInEstate && !isAddingToEstate && (
+                          <div className="flex items-center justify-center py-2 text-green-600">
+                            <Check className="h-4 w-4 mr-2" />
+                            <span className="text-sm">
+                              Added to estate as {extractedData.classification.toLowerCase() === 'asset' ? 'asset' : 'liability'}
+                            </span>
+                          </div>
+                        )}
+                      </div>
+                    )}
 
                     {extractedData.estimatedValue !== undefined && (
                       <div className="flex flex-col space-y-1">
