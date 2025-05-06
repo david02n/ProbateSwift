@@ -306,7 +306,7 @@ const DocumentCard: React.FC<DocumentCardProps> = ({ document, onDelete }) => {
             <CollapsibleContent className="mt-2">
               {extractedData ? (
                 <div className="bg-gray-50 rounded-md p-4 overflow-x-auto">
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4 min-w-[300px]">
+                  <div className="grid grid-cols-1 gap-4 min-w-[250px]">
                     {/* Document Type */}
                     <div className="flex flex-col space-y-1">
                       <div className="text-xs text-gray-500">Type</div>
@@ -324,6 +324,7 @@ const DocumentCard: React.FC<DocumentCardProps> = ({ document, onDelete }) => {
                           )}
                         >
                           <Copy className="h-3 w-3" />
+                            <span>Copy</span>
                         </Button>
                       </div>
                     </div>
@@ -348,6 +349,7 @@ const DocumentCard: React.FC<DocumentCardProps> = ({ document, onDelete }) => {
                             )}
                           >
                             <Copy className="h-3 w-3" />
+                            <span>Copy</span>
                           </Button>
                         </div>
                       </div>
@@ -371,6 +373,7 @@ const DocumentCard: React.FC<DocumentCardProps> = ({ document, onDelete }) => {
                             )}
                           >
                             <Copy className="h-3 w-3" />
+                            <span>Copy</span>
                           </Button>
                         </div>
                       </div>
@@ -394,6 +397,7 @@ const DocumentCard: React.FC<DocumentCardProps> = ({ document, onDelete }) => {
                             )}
                           >
                             <Copy className="h-3 w-3" />
+                            <span>Copy</span>
                           </Button>
                         </div>
                       </div>
@@ -417,6 +421,7 @@ const DocumentCard: React.FC<DocumentCardProps> = ({ document, onDelete }) => {
                             )}
                           >
                             <Copy className="h-3 w-3" />
+                            <span>Copy</span>
                           </Button>
                         </div>
                       </div>
@@ -440,6 +445,7 @@ const DocumentCard: React.FC<DocumentCardProps> = ({ document, onDelete }) => {
                             )}
                           >
                             <Copy className="h-3 w-3" />
+                            <span>Copy</span>
                           </Button>
                         </div>
                       </div>
@@ -463,6 +469,7 @@ const DocumentCard: React.FC<DocumentCardProps> = ({ document, onDelete }) => {
                             )}
                           >
                             <Copy className="h-3 w-3" />
+                            <span>Copy</span>
                           </Button>
                         </div>
                       </div>
@@ -486,6 +493,7 @@ const DocumentCard: React.FC<DocumentCardProps> = ({ document, onDelete }) => {
                             )}
                           >
                             <Copy className="h-3 w-3" />
+                            <span>Copy</span>
                           </Button>
                         </div>
                       </div>
@@ -509,6 +517,7 @@ const DocumentCard: React.FC<DocumentCardProps> = ({ document, onDelete }) => {
                             )}
                           >
                             <Copy className="h-3 w-3" />
+                            <span>Copy</span>
                           </Button>
                         </div>
                       </div>
@@ -532,6 +541,7 @@ const DocumentCard: React.FC<DocumentCardProps> = ({ document, onDelete }) => {
                             )}
                           >
                             <Copy className="h-3 w-3" />
+                            <span>Copy</span>
                           </Button>
                         </div>
                       </div>
@@ -555,6 +565,7 @@ const DocumentCard: React.FC<DocumentCardProps> = ({ document, onDelete }) => {
                             )}
                           >
                             <Copy className="h-3 w-3" />
+                            <span>Copy</span>
                           </Button>
                         </div>
                       </div>
@@ -578,6 +589,7 @@ const DocumentCard: React.FC<DocumentCardProps> = ({ document, onDelete }) => {
                             )}
                           >
                             <Copy className="h-3 w-3" />
+                            <span>Copy</span>
                           </Button>
                         </div>
                       </div>
@@ -601,6 +613,7 @@ const DocumentCard: React.FC<DocumentCardProps> = ({ document, onDelete }) => {
                             )}
                           >
                             <Copy className="h-3 w-3" />
+                            <span>Copy</span>
                           </Button>
                         </div>
                       </div>
@@ -608,7 +621,7 @@ const DocumentCard: React.FC<DocumentCardProps> = ({ document, onDelete }) => {
                     
                     {/* Address */}
                     {extractedData.address && (
-                      <div className="flex flex-col space-y-1 col-span-2">
+                      <div className="flex flex-col space-y-1">
                         <div className="text-xs text-gray-500">Address</div>
                         <div className="flex items-center justify-between flex-wrap gap-y-1 w-full">
                           <div className="font-medium break-words pr-2 max-w-[80%]">
@@ -624,6 +637,7 @@ const DocumentCard: React.FC<DocumentCardProps> = ({ document, onDelete }) => {
                             )}
                           >
                             <Copy className="h-3 w-3" />
+                            <span>Copy</span>
                           </Button>
                         </div>
                       </div>
@@ -631,7 +645,7 @@ const DocumentCard: React.FC<DocumentCardProps> = ({ document, onDelete }) => {
 
                     {/* Property Address */}
                     {extractedData.propertyAddress && (
-                      <div className="flex flex-col space-y-1 col-span-2">
+                      <div className="flex flex-col space-y-1">
                         <div className="text-xs text-gray-500">Property Address</div>
                         <div className="flex items-center justify-between flex-wrap gap-y-1 w-full">
                           <div className="font-medium break-words pr-2 max-w-[80%]">
@@ -647,6 +661,7 @@ const DocumentCard: React.FC<DocumentCardProps> = ({ document, onDelete }) => {
                             )}
                           >
                             <Copy className="h-3 w-3" />
+                            <span>Copy</span>
                           </Button>
                         </div>
                       </div>
@@ -670,6 +685,7 @@ const DocumentCard: React.FC<DocumentCardProps> = ({ document, onDelete }) => {
                             )}
                           >
                             <Copy className="h-3 w-3" />
+                            <span>Copy</span>
                           </Button>
                         </div>
                       </div>
@@ -693,6 +709,7 @@ const DocumentCard: React.FC<DocumentCardProps> = ({ document, onDelete }) => {
                             )}
                           >
                             <Copy className="h-3 w-3" />
+                            <span>Copy</span>
                           </Button>
                         </div>
                       </div>
@@ -716,6 +733,7 @@ const DocumentCard: React.FC<DocumentCardProps> = ({ document, onDelete }) => {
                             )}
                           >
                             <Copy className="h-3 w-3" />
+                            <span>Copy</span>
                           </Button>
                         </div>
                       </div>
@@ -739,6 +757,7 @@ const DocumentCard: React.FC<DocumentCardProps> = ({ document, onDelete }) => {
                             )}
                           >
                             <Copy className="h-3 w-3" />
+                            <span>Copy</span>
                           </Button>
                         </div>
                       </div>
@@ -762,6 +781,7 @@ const DocumentCard: React.FC<DocumentCardProps> = ({ document, onDelete }) => {
                             )}
                           >
                             <Copy className="h-3 w-3" />
+                            <span>Copy</span>
                           </Button>
                         </div>
                       </div>
@@ -785,6 +805,7 @@ const DocumentCard: React.FC<DocumentCardProps> = ({ document, onDelete }) => {
                             )}
                           >
                             <Copy className="h-3 w-3" />
+                            <span>Copy</span>
                           </Button>
                         </div>
                       </div>
@@ -808,6 +829,7 @@ const DocumentCard: React.FC<DocumentCardProps> = ({ document, onDelete }) => {
                             )}
                           >
                             <Copy className="h-3 w-3" />
+                            <span>Copy</span>
                           </Button>
                         </div>
                       </div>
@@ -831,6 +853,7 @@ const DocumentCard: React.FC<DocumentCardProps> = ({ document, onDelete }) => {
                             )}
                           >
                             <Copy className="h-3 w-3" />
+                            <span>Copy</span>
                           </Button>
                         </div>
                       </div>
@@ -854,6 +877,7 @@ const DocumentCard: React.FC<DocumentCardProps> = ({ document, onDelete }) => {
                             )}
                           >
                             <Copy className="h-3 w-3" />
+                            <span>Copy</span>
                           </Button>
                         </div>
                       </div>
@@ -877,6 +901,7 @@ const DocumentCard: React.FC<DocumentCardProps> = ({ document, onDelete }) => {
                             )}
                           >
                             <Copy className="h-3 w-3" />
+                            <span>Copy</span>
                           </Button>
                         </div>
                       </div>
@@ -900,6 +925,7 @@ const DocumentCard: React.FC<DocumentCardProps> = ({ document, onDelete }) => {
                             )}
                           >
                             <Copy className="h-3 w-3" />
+                            <span>Copy</span>
                           </Button>
                         </div>
                       </div>
@@ -929,6 +955,7 @@ const DocumentCard: React.FC<DocumentCardProps> = ({ document, onDelete }) => {
                             )}
                           >
                             <Copy className="h-3 w-3" />
+                            <span>Copy</span>
                           </Button>
                         </div>
                       </div>
@@ -957,6 +984,7 @@ const DocumentCard: React.FC<DocumentCardProps> = ({ document, onDelete }) => {
                             )}
                           >
                             <Copy className="h-3 w-3" />
+                            <span>Copy</span>
                           </Button>
                         </div>
                       </div>
@@ -985,6 +1013,7 @@ const DocumentCard: React.FC<DocumentCardProps> = ({ document, onDelete }) => {
                             )}
                           >
                             <Copy className="h-3 w-3" />
+                            <span>Copy</span>
                           </Button>
                         </div>
                       </div>
@@ -992,7 +1021,7 @@ const DocumentCard: React.FC<DocumentCardProps> = ({ document, onDelete }) => {
 
                     {/* Array fields */}
                     {extractedData.beneficiaries && extractedData.beneficiaries.length > 0 && (
-                      <div className="flex flex-col space-y-1 col-span-2">
+                      <div className="flex flex-col space-y-1">
                         <div className="text-xs text-gray-500">Beneficiaries</div>
                         <div className="flex items-center justify-between flex-wrap gap-y-1 w-full">
                           <div className="font-medium break-words pr-2 max-w-[80%]">
@@ -1008,13 +1037,14 @@ const DocumentCard: React.FC<DocumentCardProps> = ({ document, onDelete }) => {
                             )}
                           >
                             <Copy className="h-3 w-3" />
+                            <span>Copy</span>
                           </Button>
                         </div>
                       </div>
                     )}
 
                     {extractedData.executors && extractedData.executors.length > 0 && (
-                      <div className="flex flex-col space-y-1 col-span-2">
+                      <div className="flex flex-col space-y-1">
                         <div className="text-xs text-gray-500">Executors</div>
                         <div className="flex items-center justify-between flex-wrap gap-y-1 w-full">
                           <div className="font-medium break-words pr-2 max-w-[80%]">
@@ -1030,13 +1060,14 @@ const DocumentCard: React.FC<DocumentCardProps> = ({ document, onDelete }) => {
                             )}
                           >
                             <Copy className="h-3 w-3" />
+                            <span>Copy</span>
                           </Button>
                         </div>
                       </div>
                     )}
 
                     {extractedData.witnesses && extractedData.witnesses.length > 0 && (
-                      <div className="flex flex-col space-y-1 col-span-2">
+                      <div className="flex flex-col space-y-1">
                         <div className="text-xs text-gray-500">Witnesses</div>
                         <div className="flex items-center justify-between flex-wrap gap-y-1 w-full">
                           <div className="font-medium break-words pr-2 max-w-[80%]">
@@ -1052,13 +1083,14 @@ const DocumentCard: React.FC<DocumentCardProps> = ({ document, onDelete }) => {
                             )}
                           >
                             <Copy className="h-3 w-3" />
+                            <span>Copy</span>
                           </Button>
                         </div>
                       </div>
                     )}
 
                     {extractedData.codicilDates && extractedData.codicilDates.length > 0 && (
-                      <div className="flex flex-col space-y-1 col-span-2">
+                      <div className="flex flex-col space-y-1">
                         <div className="text-xs text-gray-500">Codicil Dates</div>
                         <div className="flex items-center justify-between flex-wrap gap-y-1 w-full">
                           <div className="font-medium break-words pr-2 max-w-[80%]">
@@ -1078,6 +1110,7 @@ const DocumentCard: React.FC<DocumentCardProps> = ({ document, onDelete }) => {
                             )}
                           >
                             <Copy className="h-3 w-3" />
+                            <span>Copy</span>
                           </Button>
                         </div>
                       </div>
@@ -1112,6 +1145,7 @@ const DocumentCard: React.FC<DocumentCardProps> = ({ document, onDelete }) => {
                             )}
                           >
                             <Copy className="h-3 w-3" />
+                            <span>Copy</span>
                           </Button>
                         </div>
                       </div>
@@ -1197,6 +1231,7 @@ const DocumentCard: React.FC<DocumentCardProps> = ({ document, onDelete }) => {
                           )}
                         >
                           <Copy className="h-3 w-3" />
+                            <span>Copy</span>
                           <span className="text-xs">Copy</span>
                         </Button>
                       </div>
