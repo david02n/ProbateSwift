@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import {
   FileText,
@@ -53,6 +53,11 @@ export interface DocumentCardProps {
     name?: string; // For backward compatibility
     caseId?: number; // Added for connecting to a specific case
     userId?: number; // Added for user association
+    metadata?: {
+      includedInEstate?: boolean;
+      estateItemType?: string;
+      estateItemId?: number;
+    } | null;
   };
   onDelete?: (documentId: number) => void;
 }
@@ -164,6 +169,61 @@ const DocumentCard: React.FC<DocumentCardProps> = ({ document, onDelete }) => {
   
   // Handle adding financial document to estate
   const queryClient = useQueryClient();
+  // Handle toggling include in estate
+  const handleIncludeInEstateToggle = async (checked: boolean) => {
+    // Don't update if we're already in the correct state
+    if (checked === !!document?.metadata?.includedInEstate) return;
+    
+    try {
+      // Prepare metadata
+      const metadata = {
+        ...(document.metadata || {}),
+        includedInEstate: checked,
+      };
+      
+      if (!checked && document.metadata?.estateItemId) {
+        // We're removing from estate - let the API handle the deletion
+        // The API will use these values to know what to delete
+        metadata.estateItemType = document.metadata.estateItemType;
+        metadata.estateItemId = document.metadata.estateItemId;
+      }
+      
+      // Update in UI immediately for a responsive feel
+      setIncludeInEstate(checked);
+      
+      // Make API request to update document metadata
+      const response = await apiRequest('PATCH', `/api/documents/${document.id}/metadata`, { metadata });
+      
+      if (!response.ok) {
+        // If update fails, revert UI state
+        setIncludeInEstate(!checked);
+        throw new Error('Failed to update document metadata');
+      }
+      
+      // Successfully updated
+      toast({
+        title: checked ? 'Added to estate valuation' : 'Removed from estate valuation',
+        description: checked 
+          ? 'This document will now be included in estate calculations.'
+          : document.metadata?.estateItemId 
+            ? 'This document and its associated estate item have been removed from calculations.'
+            : 'This document has been removed from estate calculations.',
+      });
+      
+      // Refresh estate assets and liabilities
+      queryClient.invalidateQueries({ queryKey: ['/api/assets'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/liabilities'] });
+      
+    } catch (error) {
+      console.error('Error updating document metadata:', error);
+      toast({
+        title: 'Error',
+        description: 'Failed to update document inclusion status',
+        variant: 'destructive',
+      });
+    }
+  };
+  
   const handleAddToEstate = async (isAsset: boolean) => {
     if (!extractedData || isAddingToEstate) return;
     
@@ -197,6 +257,8 @@ const DocumentCard: React.FC<DocumentCardProps> = ({ document, onDelete }) => {
       const response = await apiRequest('POST', endpoint, itemData);
       
       if (response.ok) {
+        const data = await response.json();
+        
         // Success - show toast and invalidate the appropriate query
         toast({
           title: `${isAsset ? 'Asset' : 'Liability'} added`,
@@ -210,8 +272,27 @@ const DocumentCard: React.FC<DocumentCardProps> = ({ document, onDelete }) => {
           queryClient.invalidateQueries({ queryKey: ['/api/liabilities'] });
         }
         
-        // Mark as included in estate
-        setIncludeInEstate(true);
+        // Update document metadata with the new estate item info
+        try {
+          // Get the created item ID from the response
+          const itemId = data.id;
+          // Prepare metadata update
+          const metadata = {
+            ...(document.metadata || {}),
+            includedInEstate: true,
+            estateItemType: isAsset ? 'asset' : 'liability',
+            estateItemId: itemId
+          };
+          
+          // Update document metadata
+          await apiRequest('PATCH', `/api/documents/${document.id}/metadata`, { metadata });
+          
+          // Mark as included in estate locally
+          setIncludeInEstate(true);
+        } catch (metadataError) {
+          console.error("Error updating document metadata:", metadataError);
+          // We still continue since the asset/liability was created successfully
+        }
       } else {
         // Handle error response
         try {
@@ -1076,13 +1157,20 @@ const DocumentCard: React.FC<DocumentCardProps> = ({ document, onDelete }) => {
                               checked={includeInEstate} 
                               onCheckedChange={(checked) => {
                                 if (checked) {
-                                  const isAsset = extractedData.classification.toLowerCase() === 'asset';
-                                  handleAddToEstate(isAsset);
+                                  // Adding to estate - use special handler for financial documents
+                                  if (extractedData && extractedData.classification) {
+                                    const isAsset = extractedData.classification.toLowerCase() === 'asset';
+                                    handleAddToEstate(isAsset);
+                                  } else {
+                                    // Generic inclusion in estate (no asset/liability created)
+                                    handleIncludeInEstateToggle(checked);
+                                  }
                                 } else {
-                                  setIncludeInEstate(false);
+                                  // Removing from estate
+                                  handleIncludeInEstateToggle(checked);
                                 }
                               }}
-                              disabled={isAddingToEstate || includeInEstate}
+                              disabled={isAddingToEstate}
                             />
                           </div>
                         </div>
