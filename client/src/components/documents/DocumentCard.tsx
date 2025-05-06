@@ -75,7 +75,7 @@ const DocumentCard: React.FC<DocumentCardProps> = ({ document, onDelete }) => {
   useEffect(() => {
     // Explicitly set to true or false based on the current document metadata
     const isIncluded = document.metadata && document.metadata.includedInEstate === true;
-    setIncludeInEstate(isIncluded);
+    setIncludeInEstate(!!isIncluded); // Convert to boolean with double negation
   }, [document.metadata]);
   
   // For API error handling
@@ -210,9 +210,10 @@ const DocumentCard: React.FC<DocumentCardProps> = ({ document, onDelete }) => {
             : 'This document has been removed from estate calculations.',
       });
       
-      // Refresh estate assets and liabilities
+      // Refresh estate assets and liabilities and documents
       queryClient.invalidateQueries({ queryKey: ['/api/assets'] });
       queryClient.invalidateQueries({ queryKey: ['/api/liabilities'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/documents'] });
       
     } catch (error) {
       console.error('Error updating document metadata:', error);
@@ -271,6 +272,8 @@ const DocumentCard: React.FC<DocumentCardProps> = ({ document, onDelete }) => {
         } else {
           queryClient.invalidateQueries({ queryKey: ['/api/liabilities'] });
         }
+        // Also invalidate documents to ensure toggle state is updated everywhere
+        queryClient.invalidateQueries({ queryKey: ['/api/documents'] });
         
         // Update document metadata with the new estate item info
         try {
