@@ -379,11 +379,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       // Convert document_id to documentId for client use
       const formattedAssets = assets.map(asset => {
-        if (asset.document_id !== null && asset.document_id !== undefined) {
+        // Type safety for document_id - convert snake_case to camelCase
+        const assetAny = asset as any; // Use 'any' to bypass type checking temporarily
+        if (assetAny.document_id !== null && assetAny.document_id !== undefined) {
+          const { document_id, ...rest } = assetAny;
           return {
-            ...asset,
-            documentId: asset.document_id,
-            document_id: undefined // Remove the snake_case version
+            ...rest,
+            documentId: document_id
           };
         }
         return asset;
@@ -420,7 +422,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
         ...(documentId && { document_id: documentId }) // Only include if documentId is present
       });
       
-      res.status(201).json(newAsset);
+      // Convert document_id back to documentId in the response
+      const newAssetAny = newAsset as any;
+      if (newAssetAny.document_id !== null && newAssetAny.document_id !== undefined) {
+        const { document_id, ...rest } = newAssetAny;
+        res.status(201).json({
+          ...rest,
+          documentId: document_id
+        });
+      } else {
+        res.status(201).json(newAsset);
+      }
     } catch (error) {
       console.error("Error creating asset:", error);
       res.status(500).json({ error: "Failed to create asset" });
@@ -477,11 +489,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       // Convert document_id to documentId for client use
       const formattedLiabilities = liabilities.map(liability => {
-        if (liability.document_id !== null && liability.document_id !== undefined) {
+        // Type safety for document_id - convert snake_case to camelCase
+        const liabilityAny = liability as any; // Use 'any' to bypass type checking temporarily
+        if (liabilityAny.document_id !== null && liabilityAny.document_id !== undefined) {
+          const { document_id, ...rest } = liabilityAny;
           return {
-            ...liability,
-            documentId: liability.document_id,
-            document_id: undefined // Remove the snake_case version
+            ...rest,
+            documentId: document_id
           };
         }
         return liability;
@@ -518,7 +532,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
         ...(documentId && { document_id: documentId }) // Only include if documentId is present
       });
       
-      res.status(201).json(newLiability);
+      // Convert document_id back to documentId in the response
+      const newLiabilityAny = newLiability as any;
+      if (newLiabilityAny.document_id !== null && newLiabilityAny.document_id !== undefined) {
+        const { document_id, ...rest } = newLiabilityAny;
+        res.status(201).json({
+          ...rest,
+          documentId: document_id
+        });
+      } else {
+        res.status(201).json(newLiability);
+      }
     } catch (error) {
       console.error("Error creating liability:", error);
       res.status(500).json({ error: "Failed to create liability" });
