@@ -51,6 +51,8 @@ export interface DocumentCardProps {
     fileType?: string;
     notes?: string;
     name?: string; // For backward compatibility
+    caseId?: number; // Added for connecting to a specific case
+    userId?: number; // Added for user association
   };
   onDelete?: (documentId: number) => void;
 }
@@ -159,10 +161,15 @@ const DocumentCard: React.FC<DocumentCardProps> = ({ document, onDelete }) => {
     if (!extractedData || isAddingToEstate) return;
     
     setIsAddingToEstate(true);
+    setApiError(null);
+    
     try {
+      // Get case ID from the document
+      const caseId = document.caseId || 1; // Default to 1 if not available
+      
       // Prepare data based on classification
       const itemData = {
-        caseId: 1, // Assuming case ID 1 for now
+        caseId,
         name: extractedData.accountType || 'Financial Item',
         description: `From document: ${document.name || document.filename}`,
         value: extractedData.balance || 0,
@@ -173,31 +180,55 @@ const DocumentCard: React.FC<DocumentCardProps> = ({ document, onDelete }) => {
         documentId: document.id
       };
       
-      let endpoint = isAsset ? '/api/estate/assets' : '/api/estate/liabilities';
+      // Determine which endpoint to use based on the classification
+      const endpoint = isAsset ? '/api/estate/assets' : '/api/estate/liabilities';
       
+      // Make the API request
+      console.log(`Sending request to ${endpoint} with data:`, itemData);
       const response = await apiRequest('POST', endpoint, itemData);
-      const result = await response.json();
       
       if (response.ok) {
+        // Success - show toast and invalidate the appropriate query
         toast({
           title: `${isAsset ? 'Asset' : 'Liability'} added`,
-          description: `Document has been added to the estate as ${isAsset ? 'an asset' : 'a liability'}.`,
+          description: `Financial document has been added to the estate as ${isAsset ? 'an asset' : 'a liability'}.`,
         });
-        // Invalidate the assets or liabilities query to refresh the list
-        queryClient.invalidateQueries({ queryKey: [isAsset ? '/api/assets' : '/api/liabilities'] });
+        
+        // Invalidate the correct query endpoints to refresh the lists
+        if (isAsset) {
+          queryClient.invalidateQueries({ queryKey: ['/api/assets'] });
+        } else {
+          queryClient.invalidateQueries({ queryKey: ['/api/liabilities'] });
+        }
+        
+        // Mark as included in estate
+        setIncludeInEstate(true);
       } else {
-        throw new Error(result.message || 'An error occurred');
+        // Handle error response
+        try {
+          const errorData = await response.json();
+          setApiError(errorData.message || 'Server returned an error');
+          throw new Error(errorData.message || 'Server returned an error');
+        } catch (parseError) {
+          setApiError(`Error: ${response.status} ${response.statusText}`);
+          throw new Error(`Error: ${response.status} ${response.statusText}`);
+        }
       }
     } catch (error) {
+      // Log the error for debugging
       console.error("Error adding to estate:", error);
+      
+      // Show error toast
       toast({
-        title: 'Error',
-        description: 'Failed to add document to estate',
+        title: 'Error adding to estate',
+        description: apiError || 'Failed to add financial document to estate valuation',
         variant: 'destructive',
       });
+      
+      // Reset inclusion state on error
+      setIncludeInEstate(false);
     } finally {
       setIsAddingToEstate(false);
-      setIncludeInEstate(true); // Mark as included
     }
   };
   
