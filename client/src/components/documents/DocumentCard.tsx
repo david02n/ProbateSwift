@@ -226,13 +226,13 @@ const DocumentCard: React.FC<DocumentCardProps> = ({ document, onDelete }) => {
   return (
     <Card>
       <CardContent className="p-4">
-        <div className="flex justify-between">
+        <div className="flex flex-col sm:flex-row sm:justify-between gap-3">
           <div className="flex">
-            <div className={`h-10 w-10 rounded-md ${getStatusColorClass()} flex items-center justify-center mr-3`}>
+            <div className={`h-10 w-10 rounded-md ${getStatusColorClass()} flex items-center justify-center mr-3 flex-shrink-0`}>
               {getStatusIcon()}
             </div>
-            <div>
-              <h4 className="font-medium">{document.name || document.filename}</h4>
+            <div className="min-w-0 flex-1">
+              <h4 className="font-medium truncate pr-2">{document.name || document.filename}</h4>
               <div className="text-xs text-gray-500 flex items-center flex-wrap gap-x-2">
                 <span>{formatDocumentType(document.type)}</span>
                 {document.fileSize && <span>• {formatFileSize(document.fileSize)}</span>}
@@ -242,7 +242,7 @@ const DocumentCard: React.FC<DocumentCardProps> = ({ document, onDelete }) => {
           </div>
           
           {/* Status badge and actions */}
-          <div className="flex items-center">
+          <div className="flex items-center flex-shrink-0">
             <Badge variant="outline" className={`mr-2 ${getStatusColorClass()}`}>
               {document.status.charAt(0).toUpperCase() + document.status.slice(1)}
             </Badge>
@@ -305,13 +305,13 @@ const DocumentCard: React.FC<DocumentCardProps> = ({ document, onDelete }) => {
             
             <CollapsibleContent className="mt-2">
               {extractedData ? (
-                <div className="bg-gray-50 rounded-md p-4">
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="bg-gray-50 rounded-md p-4 overflow-x-auto">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4 min-w-[300px]">
                     {/* Document Type */}
                     <div className="flex flex-col space-y-1">
                       <div className="text-xs text-gray-500">Type</div>
-                      <div className="flex items-center justify-between">
-                        <div className="font-medium">
+                      <div className="flex items-center justify-between flex-wrap gap-y-1 w-full">
+                        <div className="font-medium break-words pr-2 max-w-[80%]">
                           {extractedData.type || formatDocumentType(document.type)}
                         </div>
                         <Button 
@@ -334,8 +334,8 @@ const DocumentCard: React.FC<DocumentCardProps> = ({ document, onDelete }) => {
                     {(extractedData.firstName || extractedData.surname) && (
                       <div className="flex flex-col space-y-1">
                         <div className="text-xs text-gray-500">Full Name</div>
-                        <div className="flex items-center justify-between">
-                          <div className="font-medium">
+                        <div className="flex items-center justify-between flex-wrap gap-y-1 w-full">
+                          <div className="font-medium break-words pr-2 max-w-[80%]">
                             {`${extractedData.firstName || ''} ${extractedData.surname || ''}`}
                           </div>
                           <Button 
@@ -357,8 +357,8 @@ const DocumentCard: React.FC<DocumentCardProps> = ({ document, onDelete }) => {
                     {extractedData.testatorName && (
                       <div className="flex flex-col space-y-1">
                         <div className="text-xs text-gray-500">Testator</div>
-                        <div className="flex items-center justify-between">
-                          <div className="font-medium">
+                        <div className="flex items-center justify-between flex-wrap gap-y-1 w-full">
+                          <div className="font-medium break-words pr-2 max-w-[80%]">
                             {extractedData.testatorName}
                           </div>
                           <Button 
@@ -380,8 +380,8 @@ const DocumentCard: React.FC<DocumentCardProps> = ({ document, onDelete }) => {
                     {extractedData.accountHolder && (
                       <div className="flex flex-col space-y-1">
                         <div className="text-xs text-gray-500">Account Holder</div>
-                        <div className="flex items-center justify-between">
-                          <div className="font-medium">
+                        <div className="flex items-center justify-between flex-wrap gap-y-1 w-full">
+                          <div className="font-medium break-words pr-2 max-w-[80%]">
                             {extractedData.accountHolder}
                           </div>
                           <Button 
@@ -403,8 +403,8 @@ const DocumentCard: React.FC<DocumentCardProps> = ({ document, onDelete }) => {
                     {extractedData.ownerName && (
                       <div className="flex flex-col space-y-1">
                         <div className="text-xs text-gray-500">Owner</div>
-                        <div className="flex items-center justify-between">
-                          <div className="font-medium">
+                        <div className="flex items-center justify-between flex-wrap gap-y-1 w-full">
+                          <div className="font-medium break-words pr-2 max-w-[80%]">
                             {extractedData.ownerName}
                           </div>
                           <Button 
@@ -426,8 +426,8 @@ const DocumentCard: React.FC<DocumentCardProps> = ({ document, onDelete }) => {
                     {extractedData.taxpayerName && (
                       <div className="flex flex-col space-y-1">
                         <div className="text-xs text-gray-500">Taxpayer</div>
-                        <div className="flex items-center justify-between">
-                          <div className="font-medium">
+                        <div className="flex items-center justify-between flex-wrap gap-y-1 w-full">
+                          <div className="font-medium break-words pr-2 max-w-[80%]">
                             {extractedData.taxpayerName}
                           </div>
                           <Button 
@@ -449,8 +449,8 @@ const DocumentCard: React.FC<DocumentCardProps> = ({ document, onDelete }) => {
                     {extractedData.dateOfBirth && (
                       <div className="flex flex-col space-y-1">
                         <div className="text-xs text-gray-500">Date of Birth</div>
-                        <div className="flex items-center justify-between">
-                          <div className="font-medium">
+                        <div className="flex items-center justify-between flex-wrap gap-y-1 w-full">
+                          <div className="font-medium break-words pr-2 max-w-[80%]">
                             {new Date(extractedData.dateOfBirth).toLocaleDateString('en-GB')}
                           </div>
                           <Button 
@@ -472,8 +472,8 @@ const DocumentCard: React.FC<DocumentCardProps> = ({ document, onDelete }) => {
                     {extractedData.dateOfDeath && (
                       <div className="flex flex-col space-y-1">
                         <div className="text-xs text-gray-500">Date of Death</div>
-                        <div className="flex items-center justify-between">
-                          <div className="font-medium">
+                        <div className="flex items-center justify-between flex-wrap gap-y-1 w-full">
+                          <div className="font-medium break-words pr-2 max-w-[80%]">
                             {new Date(extractedData.dateOfDeath).toLocaleDateString('en-GB')}
                           </div>
                           <Button 
@@ -495,8 +495,8 @@ const DocumentCard: React.FC<DocumentCardProps> = ({ document, onDelete }) => {
                     {extractedData.dateOfWill && (
                       <div className="flex flex-col space-y-1">
                         <div className="text-xs text-gray-500">Date of Will</div>
-                        <div className="flex items-center justify-between">
-                          <div className="font-medium">
+                        <div className="flex items-center justify-between flex-wrap gap-y-1 w-full">
+                          <div className="font-medium break-words pr-2 max-w-[80%]">
                             {new Date(extractedData.dateOfWill).toLocaleDateString('en-GB')}
                           </div>
                           <Button 
@@ -518,8 +518,8 @@ const DocumentCard: React.FC<DocumentCardProps> = ({ document, onDelete }) => {
                     {extractedData.valuationDate && (
                       <div className="flex flex-col space-y-1">
                         <div className="text-xs text-gray-500">Valuation Date</div>
-                        <div className="flex items-center justify-between">
-                          <div className="font-medium">
+                        <div className="flex items-center justify-between flex-wrap gap-y-1 w-full">
+                          <div className="font-medium break-words pr-2 max-w-[80%]">
                             {new Date(extractedData.valuationDate).toLocaleDateString('en-GB')}
                           </div>
                           <Button 
@@ -541,8 +541,8 @@ const DocumentCard: React.FC<DocumentCardProps> = ({ document, onDelete }) => {
                     {extractedData.statementDate && (
                       <div className="flex flex-col space-y-1">
                         <div className="text-xs text-gray-500">Statement Date</div>
-                        <div className="flex items-center justify-between">
-                          <div className="font-medium">
+                        <div className="flex items-center justify-between flex-wrap gap-y-1 w-full">
+                          <div className="font-medium break-words pr-2 max-w-[80%]">
                             {new Date(extractedData.statementDate).toLocaleDateString('en-GB')}
                           </div>
                           <Button 
@@ -564,8 +564,8 @@ const DocumentCard: React.FC<DocumentCardProps> = ({ document, onDelete }) => {
                     {extractedData.submissionDate && (
                       <div className="flex flex-col space-y-1">
                         <div className="text-xs text-gray-500">Submission Date</div>
-                        <div className="flex items-center justify-between">
-                          <div className="font-medium">
+                        <div className="flex items-center justify-between flex-wrap gap-y-1 w-full">
+                          <div className="font-medium break-words pr-2 max-w-[80%]">
                             {new Date(extractedData.submissionDate).toLocaleDateString('en-GB')}
                           </div>
                           <Button 
@@ -587,8 +587,8 @@ const DocumentCard: React.FC<DocumentCardProps> = ({ document, onDelete }) => {
                     {extractedData.expiryDate && (
                       <div className="flex flex-col space-y-1">
                         <div className="text-xs text-gray-500">Expiry Date</div>
-                        <div className="flex items-center justify-between">
-                          <div className="font-medium">
+                        <div className="flex items-center justify-between flex-wrap gap-y-1 w-full">
+                          <div className="font-medium break-words pr-2 max-w-[80%]">
                             {new Date(extractedData.expiryDate).toLocaleDateString('en-GB')}
                           </div>
                           <Button 
@@ -610,8 +610,8 @@ const DocumentCard: React.FC<DocumentCardProps> = ({ document, onDelete }) => {
                     {extractedData.address && (
                       <div className="flex flex-col space-y-1 col-span-2">
                         <div className="text-xs text-gray-500">Address</div>
-                        <div className="flex items-center justify-between">
-                          <div className="font-medium">
+                        <div className="flex items-center justify-between flex-wrap gap-y-1 w-full">
+                          <div className="font-medium break-words pr-2 max-w-[80%]">
                             {extractedData.address}
                           </div>
                           <Button 
@@ -633,8 +633,8 @@ const DocumentCard: React.FC<DocumentCardProps> = ({ document, onDelete }) => {
                     {extractedData.propertyAddress && (
                       <div className="flex flex-col space-y-1 col-span-2">
                         <div className="text-xs text-gray-500">Property Address</div>
-                        <div className="flex items-center justify-between">
-                          <div className="font-medium">
+                        <div className="flex items-center justify-between flex-wrap gap-y-1 w-full">
+                          <div className="font-medium break-words pr-2 max-w-[80%]">
                             {extractedData.propertyAddress}
                           </div>
                           <Button 
@@ -656,8 +656,8 @@ const DocumentCard: React.FC<DocumentCardProps> = ({ document, onDelete }) => {
                     {extractedData.applicationNumber && (
                       <div className="flex flex-col space-y-1">
                         <div className="text-xs text-gray-500">Application Number</div>
-                        <div className="flex items-center justify-between">
-                          <div className="font-medium">
+                        <div className="flex items-center justify-between flex-wrap gap-y-1 w-full">
+                          <div className="font-medium break-words pr-2 max-w-[80%]">
                             {extractedData.applicationNumber}
                           </div>
                           <Button 
@@ -679,8 +679,8 @@ const DocumentCard: React.FC<DocumentCardProps> = ({ document, onDelete }) => {
                     {extractedData.documentNumber && (
                       <div className="flex flex-col space-y-1">
                         <div className="text-xs text-gray-500">Document Number</div>
-                        <div className="flex items-center justify-between">
-                          <div className="font-medium">
+                        <div className="flex items-center justify-between flex-wrap gap-y-1 w-full">
+                          <div className="font-medium break-words pr-2 max-w-[80%]">
                             {extractedData.documentNumber}
                           </div>
                           <Button 
@@ -702,8 +702,8 @@ const DocumentCard: React.FC<DocumentCardProps> = ({ document, onDelete }) => {
                     {extractedData.documentType && (
                       <div className="flex flex-col space-y-1">
                         <div className="text-xs text-gray-500">Document Type</div>
-                        <div className="flex items-center justify-between">
-                          <div className="font-medium">
+                        <div className="flex items-center justify-between flex-wrap gap-y-1 w-full">
+                          <div className="font-medium break-words pr-2 max-w-[80%]">
                             {extractedData.documentType}
                           </div>
                           <Button 
@@ -725,8 +725,8 @@ const DocumentCard: React.FC<DocumentCardProps> = ({ document, onDelete }) => {
                     {extractedData.issuingCountry && (
                       <div className="flex flex-col space-y-1">
                         <div className="text-xs text-gray-500">Issuing Country</div>
-                        <div className="flex items-center justify-between">
-                          <div className="font-medium">
+                        <div className="flex items-center justify-between flex-wrap gap-y-1 w-full">
+                          <div className="font-medium break-words pr-2 max-w-[80%]">
                             {extractedData.issuingCountry}
                           </div>
                           <Button 
@@ -748,8 +748,8 @@ const DocumentCard: React.FC<DocumentCardProps> = ({ document, onDelete }) => {
                     {extractedData.institutionName && (
                       <div className="flex flex-col space-y-1">
                         <div className="text-xs text-gray-500">Institution</div>
-                        <div className="flex items-center justify-between">
-                          <div className="font-medium">
+                        <div className="flex items-center justify-between flex-wrap gap-y-1 w-full">
+                          <div className="font-medium break-words pr-2 max-w-[80%]">
                             {extractedData.institutionName}
                           </div>
                           <Button 
@@ -771,8 +771,8 @@ const DocumentCard: React.FC<DocumentCardProps> = ({ document, onDelete }) => {
                     {extractedData.accountNumber && (
                       <div className="flex flex-col space-y-1">
                         <div className="text-xs text-gray-500">Account Number</div>
-                        <div className="flex items-center justify-between">
-                          <div className="font-medium">
+                        <div className="flex items-center justify-between flex-wrap gap-y-1 w-full">
+                          <div className="font-medium break-words pr-2 max-w-[80%]">
                             {extractedData.accountNumber}
                           </div>
                           <Button 
@@ -794,8 +794,8 @@ const DocumentCard: React.FC<DocumentCardProps> = ({ document, onDelete }) => {
                     {extractedData.accountType && (
                       <div className="flex flex-col space-y-1">
                         <div className="text-xs text-gray-500">Account Type</div>
-                        <div className="flex items-center justify-between">
-                          <div className="font-medium">
+                        <div className="flex items-center justify-between flex-wrap gap-y-1 w-full">
+                          <div className="font-medium break-words pr-2 max-w-[80%]">
                             {extractedData.accountType}
                           </div>
                           <Button 
@@ -817,8 +817,8 @@ const DocumentCard: React.FC<DocumentCardProps> = ({ document, onDelete }) => {
                     {extractedData.landRegistryNumber && (
                       <div className="flex flex-col space-y-1">
                         <div className="text-xs text-gray-500">Land Registry Number</div>
-                        <div className="flex items-center justify-between">
-                          <div className="font-medium">
+                        <div className="flex items-center justify-between flex-wrap gap-y-1 w-full">
+                          <div className="font-medium break-words pr-2 max-w-[80%]">
                             {extractedData.landRegistryNumber}
                           </div>
                           <Button 
@@ -840,8 +840,8 @@ const DocumentCard: React.FC<DocumentCardProps> = ({ document, onDelete }) => {
                     {extractedData.taxYear && (
                       <div className="flex flex-col space-y-1">
                         <div className="text-xs text-gray-500">Tax Year</div>
-                        <div className="flex items-center justify-between">
-                          <div className="font-medium">
+                        <div className="flex items-center justify-between flex-wrap gap-y-1 w-full">
+                          <div className="font-medium break-words pr-2 max-w-[80%]">
                             {extractedData.taxYear}
                           </div>
                           <Button 
@@ -863,8 +863,8 @@ const DocumentCard: React.FC<DocumentCardProps> = ({ document, onDelete }) => {
                     {extractedData.referenceNumber && (
                       <div className="flex flex-col space-y-1">
                         <div className="text-xs text-gray-500">Reference Number</div>
-                        <div className="flex items-center justify-between">
-                          <div className="font-medium">
+                        <div className="flex items-center justify-between flex-wrap gap-y-1 w-full">
+                          <div className="font-medium break-words pr-2 max-w-[80%]">
                             {extractedData.referenceNumber}
                           </div>
                           <Button 
@@ -886,8 +886,8 @@ const DocumentCard: React.FC<DocumentCardProps> = ({ document, onDelete }) => {
                     {extractedData.currency && (
                       <div className="flex flex-col space-y-1">
                         <div className="text-xs text-gray-500">Currency</div>
-                        <div className="flex items-center justify-between">
-                          <div className="font-medium">
+                        <div className="flex items-center justify-between flex-wrap gap-y-1 w-full">
+                          <div className="font-medium break-words pr-2 max-w-[80%]">
                             {extractedData.currency}
                           </div>
                           <Button 
@@ -909,8 +909,8 @@ const DocumentCard: React.FC<DocumentCardProps> = ({ document, onDelete }) => {
                     {extractedData.balance !== undefined && (
                       <div className="flex flex-col space-y-1">
                         <div className="text-xs text-gray-500">Balance</div>
-                        <div className="flex items-center justify-between">
-                          <div className="font-medium">
+                        <div className="flex items-center justify-between flex-wrap gap-y-1 w-full">
+                          <div className="font-medium break-words pr-2 max-w-[80%]">
                             {typeof extractedData.balance === 'number' 
                               ? new Intl.NumberFormat('en-GB', { 
                                   style: 'currency', 
@@ -937,8 +937,8 @@ const DocumentCard: React.FC<DocumentCardProps> = ({ document, onDelete }) => {
                     {extractedData.estimatedValue !== undefined && (
                       <div className="flex flex-col space-y-1">
                         <div className="text-xs text-gray-500">Estimated Value</div>
-                        <div className="flex items-center justify-between">
-                          <div className="font-medium">
+                        <div className="flex items-center justify-between flex-wrap gap-y-1 w-full">
+                          <div className="font-medium break-words pr-2 max-w-[80%]">
                             {typeof extractedData.estimatedValue === 'number' 
                               ? new Intl.NumberFormat('en-GB', { 
                                   style: 'currency', 
@@ -965,8 +965,8 @@ const DocumentCard: React.FC<DocumentCardProps> = ({ document, onDelete }) => {
                     {extractedData.totalTaxDue !== undefined && (
                       <div className="flex flex-col space-y-1">
                         <div className="text-xs text-gray-500">Total Tax Due</div>
-                        <div className="flex items-center justify-between">
-                          <div className="font-medium">
+                        <div className="flex items-center justify-between flex-wrap gap-y-1 w-full">
+                          <div className="font-medium break-words pr-2 max-w-[80%]">
                             {typeof extractedData.totalTaxDue === 'number' 
                               ? new Intl.NumberFormat('en-GB', { 
                                   style: 'currency', 
@@ -994,8 +994,8 @@ const DocumentCard: React.FC<DocumentCardProps> = ({ document, onDelete }) => {
                     {extractedData.beneficiaries && extractedData.beneficiaries.length > 0 && (
                       <div className="flex flex-col space-y-1 col-span-2">
                         <div className="text-xs text-gray-500">Beneficiaries</div>
-                        <div className="flex items-center justify-between">
-                          <div className="font-medium">
+                        <div className="flex items-center justify-between flex-wrap gap-y-1 w-full">
+                          <div className="font-medium break-words pr-2 max-w-[80%]">
                             {extractedData.beneficiaries.join(', ')}
                           </div>
                           <Button 
@@ -1016,8 +1016,8 @@ const DocumentCard: React.FC<DocumentCardProps> = ({ document, onDelete }) => {
                     {extractedData.executors && extractedData.executors.length > 0 && (
                       <div className="flex flex-col space-y-1 col-span-2">
                         <div className="text-xs text-gray-500">Executors</div>
-                        <div className="flex items-center justify-between">
-                          <div className="font-medium">
+                        <div className="flex items-center justify-between flex-wrap gap-y-1 w-full">
+                          <div className="font-medium break-words pr-2 max-w-[80%]">
                             {extractedData.executors.join(', ')}
                           </div>
                           <Button 
@@ -1038,8 +1038,8 @@ const DocumentCard: React.FC<DocumentCardProps> = ({ document, onDelete }) => {
                     {extractedData.witnesses && extractedData.witnesses.length > 0 && (
                       <div className="flex flex-col space-y-1 col-span-2">
                         <div className="text-xs text-gray-500">Witnesses</div>
-                        <div className="flex items-center justify-between">
-                          <div className="font-medium">
+                        <div className="flex items-center justify-between flex-wrap gap-y-1 w-full">
+                          <div className="font-medium break-words pr-2 max-w-[80%]">
                             {extractedData.witnesses.join(', ')}
                           </div>
                           <Button 
@@ -1060,8 +1060,8 @@ const DocumentCard: React.FC<DocumentCardProps> = ({ document, onDelete }) => {
                     {extractedData.codicilDates && extractedData.codicilDates.length > 0 && (
                       <div className="flex flex-col space-y-1 col-span-2">
                         <div className="text-xs text-gray-500">Codicil Dates</div>
-                        <div className="flex items-center justify-between">
-                          <div className="font-medium">
+                        <div className="flex items-center justify-between flex-wrap gap-y-1 w-full">
+                          <div className="font-medium break-words pr-2 max-w-[80%]">
                             {extractedData.codicilDates.map((date: string) => 
                               new Date(date).toLocaleDateString('en-GB')
                             ).join(', ')}
@@ -1098,8 +1098,8 @@ const DocumentCard: React.FC<DocumentCardProps> = ({ document, onDelete }) => {
                         <div className="text-xs text-gray-500">
                           {key.replace(/([A-Z])/g, ' $1').replace(/^./, str => str.toUpperCase())}
                         </div>
-                        <div className="flex items-center justify-between">
-                          <div className="font-medium truncate max-w-xs">
+                        <div className="flex items-center justify-between flex-wrap gap-y-1 w-full">
+                          <div className="font-medium break-words pr-2 max-w-[80%]">
                             {Array.isArray(value) ? value.join(', ') : String(value)}
                           </div>
                           <Button 
@@ -1179,8 +1179,8 @@ const DocumentCard: React.FC<DocumentCardProps> = ({ document, onDelete }) => {
                       <div className="text-sm text-gray-500 mb-1">
                         {key.replace(/([A-Z])/g, ' $1').replace(/^./, str => str.toUpperCase())}
                       </div>
-                      <div className="flex items-center justify-between">
-                        <div className="font-medium">
+                      <div className="flex items-center justify-between flex-wrap gap-y-1 w-full">
+                        <div className="font-medium break-words pr-2 max-w-[80%]">
                           {typeof value === 'string' && (value.includes('-') || value.includes('/')) && 
                            !isNaN(Date.parse(value)) ? 
                             new Date(value).toLocaleDateString('en-GB') : 
