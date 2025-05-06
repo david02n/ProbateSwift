@@ -80,10 +80,12 @@ const DocumentsPage: React.FC = () => {
     enabled: !!defaultCaseId,
   });
   
-  // Update local documents state when API data changes
+  // Update local documents state when API data changes, filtering out deleted documents
   useEffect(() => {
     if (documentsData) {
-      setDocuments(documentsData);
+      // Filter out documents with 'deleted' status
+      const filteredDocuments = documentsData.filter(doc => doc.status !== 'deleted');
+      setDocuments(filteredDocuments);
     }
   }, [documentsData]);
   
