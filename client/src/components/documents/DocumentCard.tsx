@@ -184,7 +184,7 @@ const DocumentCard: React.FC<DocumentCardProps> = ({ document, onDelete }) => {
           description: `Document has been added to the estate as ${isAsset ? 'an asset' : 'a liability'}.`,
         });
         // Invalidate the assets or liabilities query to refresh the list
-        queryClient.invalidateQueries({ queryKey: [isAsset ? '/api/estate/assets' : '/api/estate/liabilities'] });
+        queryClient.invalidateQueries({ queryKey: [isAsset ? '/api/assets' : '/api/liabilities'] });
       } else {
         throw new Error(result.message || 'An error occurred');
       }
