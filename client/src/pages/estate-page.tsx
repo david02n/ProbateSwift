@@ -136,7 +136,10 @@ const EstatePage: React.FC = () => {
       return res.ok;
     },
     onSuccess: () => {
+      // Invalidate assets list
       queryClient.invalidateQueries({ queryKey: ["/api/assets", activeCaseId] });
+      // Also invalidate documents to reflect the toggle state change
+      queryClient.invalidateQueries({ queryKey: ["/api/documents"] });
       toast({
         title: "Asset deleted",
         description: "The asset has been removed successfully",
@@ -158,7 +161,10 @@ const EstatePage: React.FC = () => {
       return res.ok;
     },
     onSuccess: () => {
+      // Invalidate liabilities list
       queryClient.invalidateQueries({ queryKey: ["/api/liabilities", activeCaseId] });
+      // Also invalidate documents to reflect the toggle state change
+      queryClient.invalidateQueries({ queryKey: ["/api/documents"] });
       toast({
         title: "Liability deleted",
         description: "The liability has been removed successfully",
