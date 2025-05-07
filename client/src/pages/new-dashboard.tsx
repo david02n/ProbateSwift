@@ -135,11 +135,19 @@ const NewDashboardPage: React.FC = () => {
 
   // Calculate estate value from assets
   const totalAssets = assets.reduce((sum, asset) => {
+    // Get the document associated with this asset to check for inclusion
+    const assetDoc = asset.documentId ? documents.find(doc => doc.id === asset.documentId) : null;
+    // Check if this asset is excluded from estate calculation via metadata.includedInEstate
+    if (assetDoc?.metadata && assetDoc.metadata.includedInEstate === false) return sum;
     return sum + (asset.value ? parseFloat(asset.value.toString()) : 0);
   }, 0);
   
   // Calculate total liabilities
   const totalLiabilities = liabilities.reduce((sum, liability) => {
+    // Get the document associated with this liability to check for inclusion
+    const liabilityDoc = liability.documentId ? documents.find(doc => doc.id === liability.documentId) : null;
+    // Check if this liability is excluded from estate calculation via metadata.includedInEstate
+    if (liabilityDoc?.metadata && liabilityDoc.metadata.includedInEstate === false) return sum;
     return sum + (liability.amount ? parseFloat(liability.amount.toString()) : 0);
   }, 0);
   
@@ -274,9 +282,9 @@ const NewDashboardPage: React.FC = () => {
             {/* Estate Value */}
             <Card>
               <CardContent className="p-6">
-                <h3 className="text-gray-600 font-medium mb-1">Estate Value</h3>
+                <h3 className="text-gray-600 font-medium mb-1">Net Estate Value</h3>
                 <div className="text-3xl font-bold text-[#16A34A]">{estateValue}</div>
-                <div className="text-sm text-gray-500 mt-1">estimated</div>
+                <div className="text-sm text-gray-500 mt-1">assets minus liabilities</div>
               </CardContent>
             </Card>
             
