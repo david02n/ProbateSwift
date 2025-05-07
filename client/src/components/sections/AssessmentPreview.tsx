@@ -1,11 +1,12 @@
 import React, { useState, useEffect } from "react";
 import { Link } from "wouter";
 import { Button } from "@/components/ui/button";
-import { ArrowRight, ArrowLeft, AlertCircle, CheckCircle, Info } from "lucide-react";
+import { ArrowRight, ArrowLeft, AlertCircle, CheckCircle, Info, X } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Label } from "@/components/ui/label";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 
 interface QuestionProps {
   number: number;
@@ -204,6 +205,7 @@ const AssessmentPreview: React.FC = () => {
     }
   ];
 
+  const [assessmentOpen, setAssessmentOpen] = useState(false);
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
   const [answers, setAnswers] = useState<Record<string, string>>({});
   const [result, setResult] = useState<{
@@ -360,6 +362,17 @@ const AssessmentPreview: React.FC = () => {
     setQuestionHistory([]);
   };
   
+  const openAssessment = () => {
+    setAssessmentOpen(true);
+    if (result) {
+      restartAssessment();
+    }
+  };
+  
+  const closeAssessment = () => {
+    setAssessmentOpen(false);
+  };
+  
   const currentQuestion = assessmentQuestions[currentQuestionIndex];
 
   return (
@@ -372,8 +385,92 @@ const AssessmentPreview: React.FC = () => {
           </p>
         </div>
         
-        <Card className="max-w-2xl mx-auto bg-white p-8 rounded-xl shadow-md border border-lavender/30">
-          <CardContent className="p-0">
+        <div className="max-w-2xl mx-auto text-center">
+          <Card className="bg-white p-8 rounded-xl shadow-md border border-lavender/30">
+            <CardContent className="p-0 flex flex-col items-center">
+              <div className="mb-6 w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center">
+                <CheckCircle className="h-8 w-8 text-primary" />
+              </div>
+              <h3 className="text-xl font-semibold mb-4">Start Your Probate Assessment</h3>
+              <p className="text-charcoal/80 mb-6">
+                Answer a few simple questions to determine if probate is required for your specific situation. Our intelligent assessment will guide you through the process.
+              </p>
+              <Button
+                className="bg-primary text-white hover:bg-primary/90 px-6"
+                onClick={openAssessment}
+              >
+                Begin Assessment
+              </Button>
+            </CardContent>
+          </Card>
+          
+          {/* Result summary if previously completed */}
+          {result && (
+            <div className="mt-6 p-4 bg-muted rounded-lg">
+              <div className="flex items-center mb-2">
+                {result.type === "probate-required" ? (
+                  <CheckCircle className="h-5 w-5 text-success mr-2" />
+                ) : result.type === "end-flow" ? (
+                  <AlertCircle className="h-5 w-5 text-amber mr-2" />
+                ) : (
+                  <Info className="h-5 w-5 text-primary mr-2" />
+                )}
+                <h4 className="font-medium">{result.title}</h4>
+              </div>
+              <p className="text-sm text-charcoal/80">{result.description}</p>
+              <Button 
+                variant="link" 
+                className="text-primary p-0 h-auto mt-2"
+                onClick={openAssessment}
+              >
+                Start Again
+              </Button>
+            </div>
+          )}
+          
+          <p className="mt-6 text-mid-grey">
+            Want to save your assessment progress?{" "}
+            <Link href="/auth?tab=register" className="text-primary hover:underline font-medium">
+              Create a free account
+            </Link>
+          </p>
+        </div>
+      </div>
+      
+      {/* Assessment Modal */}
+      <Dialog open={assessmentOpen} onOpenChange={setAssessmentOpen}>
+        <DialogContent className="sm:max-w-[550px] p-0">
+          <div className="p-6 relative">
+            <button 
+              onClick={closeAssessment} 
+              className="absolute top-4 right-4 text-gray-500 hover:text-gray-800"
+            >
+              <X size={20} />
+            </button>
+            
+            <DialogHeader className="mb-6">
+              <DialogTitle className="text-center text-xl">Probate Assessment</DialogTitle>
+              <DialogDescription className="text-center text-sm text-gray-600">
+                Answer the following questions to determine if probate is needed
+              </DialogDescription>
+            </DialogHeader>
+            
+            {/* Progress indicators */}
+            <div className="flex justify-center mb-8">
+              {assessmentQuestions.map((q, index) => (
+                <div 
+                  key={q.id}
+                  className={`h-2.5 w-2.5 rounded-full mx-1.5 ${
+                    index < currentQuestionIndex 
+                      ? "bg-green-500" 
+                      : index === currentQuestionIndex 
+                        ? "bg-amber-500" 
+                        : "bg-gray-300"
+                  }`}
+                />
+              ))}
+            </div>
+            
             {result ? (
               <Result 
                 type={result.type}
@@ -393,14 +490,9 @@ const AssessmentPreview: React.FC = () => {
                 showBackButton={questionHistory.length > 0}
               />
             )}
-          </CardContent>
-        </Card>
-        
-        <div className="mt-8 text-center">
-          <p className="text-mid-grey">Want to save your assessment progress?</p>
-          <Link href="/auth?tab=register" className="text-primary hover:underline font-medium">Create a free account</Link>
-        </div>
-      </div>
+          </div>
+        </DialogContent>
+      </Dialog>
     </section>
   );
 };

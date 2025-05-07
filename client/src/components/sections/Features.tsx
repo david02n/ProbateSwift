@@ -1,14 +1,18 @@
 import React from "react";
 import { 
   Compass, 
-  Search, 
+  ClipboardList, 
   Calculator, 
   Receipt, 
-  FileText, 
+  FileCheck, 
   ListChecks, 
-  HandCoins, 
-  LifeBuoy, 
-  TrendingUp 
+  Users, 
+  BrainCircuit, 
+  LineChart,
+  Building,
+  CreditCard,
+  File,
+  Database
 } from "lucide-react";
 
 interface FeatureProps {
@@ -37,48 +41,63 @@ const Features: React.FC = () => {
   const features = [
     {
       icon: <Compass className="h-5 w-5" />,
-      title: "Initial Triage & Guidance",
-      description: "A friendly Q&A flow that determines if probate is required and guides you to the correct path."
+      title: "Smart Probate Assessment",
+      description: "Interactive assessment to determine if probate is required, guiding you to the right process based on your specific situation."
     },
     {
-      icon: <Search className="h-5 w-5" />,
-      title: "Will Discovery & Verification",
-      description: "Tools to help confirm a valid will exists and identify who can legally apply."
+      icon: <ClipboardList className="h-5 w-5" />,
+      title: "Dashboard & Task Management",
+      description: "Centralized dashboard with clear progress tracking and personalized task list to guide you through each step of the probate journey."
     },
     {
-      icon: <Calculator className="h-5 w-5" />,
-      title: "Estate Valuation Tool",
-      description: "Structured data entry for assets and liabilities with a live estate value calculator."
+      icon: <Users className="h-5 w-5" />,
+      title: "Executor Management",
+      description: "Tools to add, edit, and manage multiple executors, including role assignment and contact information tracking."
+    },
+    {
+      icon: <FileCheck className="h-5 w-5" />,
+      title: "Document & Certificate Storage",
+      description: "Secure digital storage for all relevant documents with clear organization by type and purpose."
+    },
+    {
+      icon: <BrainCircuit className="h-5 w-5" />,
+      title: "AI-Powered Document Extraction",
+      description: "Automatically extract and classify key information from uploaded documents like death certificates, bank statements, and property deeds."
+    },
+    {
+      icon: <Building className="h-5 w-5" />,
+      title: "Property & Real Estate Tools",
+      description: "Special handling for property assets with address validation, mortgage tracking, and ownership verification."
+    },
+    {
+      icon: <CreditCard className="h-5 w-5" />,
+      title: "Financial Account Management",
+      description: "Track and organize all bank accounts, investments, and financial instruments belonging to the estate."
+    },
+    {
+      icon: <Database className="h-5 w-5" />,
+      title: "Estate Valuation Engine",
+      description: "Real-time calculation of estate value with automatic updates when assets and liabilities are added, modified, or removed."
+    },
+    {
+      icon: <File className="h-5 w-5" />,
+      title: "Document Classification",
+      description: "Intelligent document tagging system that automatically categorizes uploads as assets, liabilities, or general documents."
     },
     {
       icon: <Receipt className="h-5 w-5" />,
-      title: "Tax Handling Assistant",
-      description: "Simplifies the inheritance tax process with automated form generation and guidance."
+      title: "HMRC & IHT Preparation",
+      description: "Tools to calculate inheritance tax thresholds and prepare the required tax forms with data from your existing estate inventory."
     },
     {
-      icon: <FileText className="h-5 w-5" />,
-      title: "Application Pack Generator",
-      description: "Creates all required application materials with auto-filled data from earlier steps."
+      icon: <Calculator className="h-5 w-5" />,
+      title: "Estate Net Value Calculator",
+      description: "Automatic calculation of the estate's net value by deducting liabilities from assets with clear visual reporting."
     },
     {
-      icon: <ListChecks className="h-5 w-5" />,
-      title: "Tracking & Document Hub",
-      description: "Central dashboard to track progress and store important documents securely."
-    },
-    {
-      icon: <HandCoins className="h-5 w-5" />,
-      title: "Estate Administration Toolkit",
-      description: "Tools for post-grant duties including asset release tracking and beneficiary distributions."
-    },
-    {
-      icon: <LifeBuoy className="h-5 w-5" />,
-      title: "Edge Case & Help Centre",
-      description: "Support for unusual situations with quick guides and expert assistance options."
-    },
-    {
-      icon: <TrendingUp className="h-5 w-5" />,
-      title: "Completion Confidence",
-      description: "Tracks your progress with a completion score to ensure nothing is missed."
+      icon: <LineChart className="h-5 w-5" />,
+      title: "Progress Monitoring",
+      description: "Visual tracking of your probate application progress with completion percentages and next step guidance."
     }
   ];
 
@@ -88,7 +107,7 @@ const Features: React.FC = () => {
         <div className="text-center mb-16">
           <h2 className="text-3xl font-bold font-inter mb-4">Comprehensive Features</h2>
           <p className="text-lg text-charcoal/80 max-w-2xl mx-auto">
-            Everything you need to handle probate from start to finish.
+            Our intelligent platform simplifies every aspect of the probate process
           </p>
         </div>
         
