@@ -133,21 +133,15 @@ const NewDashboardPage: React.FC = () => {
     }
   }, [assessmentResult, probateCases, user, isLoadingCases]);
 
-  // Calculate estate value from assets
+  // Calculate total value of all assets (both manual entries and from documents)
   const totalAssets = assets.reduce((sum, asset) => {
-    // Get the document associated with this asset to check for inclusion
-    const assetDoc = asset.documentId ? documents.find(doc => doc.id === asset.documentId) : null;
-    // Check if this asset is excluded from estate calculation via metadata.includedInEstate
-    if (assetDoc?.metadata && assetDoc.metadata.includedInEstate === false) return sum;
+    // Include all assets regardless of source (manual or document)
     return sum + (asset.value ? parseFloat(asset.value.toString()) : 0);
   }, 0);
   
-  // Calculate total liabilities
+  // Calculate total value of all liabilities (both manual entries and from documents)
   const totalLiabilities = liabilities.reduce((sum, liability) => {
-    // Get the document associated with this liability to check for inclusion
-    const liabilityDoc = liability.documentId ? documents.find(doc => doc.id === liability.documentId) : null;
-    // Check if this liability is excluded from estate calculation via metadata.includedInEstate
-    if (liabilityDoc?.metadata && liabilityDoc.metadata.includedInEstate === false) return sum;
+    // Include all liabilities regardless of source (manual or document)
     return sum + (liability.amount ? parseFloat(liability.amount.toString()) : 0);
   }, 0);
   
