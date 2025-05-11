@@ -12,7 +12,7 @@ import CTA from "@/components/sections/CTA";
 
 const Home: React.FC = () => {
   return (
-    <div className="min-h-screen flex flex-col bg-cream">
+    <div className="min-h-screen flex flex-col bg-white">
       <Header />
       <main className="flex-grow pt-24 md:pt-28">
         <Hero />

@@ -11,7 +11,7 @@ const Hero: React.FC = () => {
   return (
     <section className="py-20 md:py-28 bg-white relative overflow-hidden">
       {/* Background gradient */}
-      <div className="absolute top-0 left-0 w-full h-full bg-gradient-to-br from-cream to-white opacity-70 -z-10"></div>
+      <div className="absolute top-0 left-0 w-full h-full bg-gradient-to-br from-white to-white opacity-70 -z-10"></div>
       
       {/* Assessment Modal */}
       <Assessment isOpen={isAssessmentOpen} onClose={() => setIsAssessmentOpen(false)} />
