@@ -75,8 +75,19 @@ const processAuthResult = async (result: any) => {
     
     console.log('Sending Google auth data to backend...');
     
+    // Get the current origin for checking if we need to prepend a base URL
+    const currentOrigin = window.location.origin;
+    const isProbateSwiftApp = currentOrigin.includes('probateswift');
+    
+    // Determine the API URL - may need absolute URL for cross-domain scenarios in production
+    const apiUrl = isProbateSwiftApp && currentOrigin.includes('replit.app') 
+      ? '/api/auth/google'  // Use relative URL for normal cases 
+      : '/api/auth/google';
+      
+    console.log('Using API URL:', apiUrl);
+    
     // Send the token to our backend to create/authenticate the user
-    const response = await apiRequest('POST', '/api/auth/google', {
+    const response = await apiRequest('POST', apiUrl, {
       idToken,
       email: user.email,
       displayName: user.displayName,
