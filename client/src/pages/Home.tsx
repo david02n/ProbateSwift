@@ -19,11 +19,11 @@ const Home: React.FC = () => {
       <main className="flex-grow pt-24 md:pt-28">
         <Hero />
         <KeyFeatures />
+        <Pricing />
         <Benefits />
         <HowItWorks />
         <Features />
         <AssessmentPreview />
-        <Pricing />
         {/* Testimonials temporarily hidden */}
         <FAQ />
         <CTA />

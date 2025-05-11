@@ -59,7 +59,16 @@ const Hero: React.FC = () => {
             </div>
           </div>
           
-          <p className="text-sm text-charcoal/60 -mt-8 mb-4 hidden sm:block">No credit card required</p>
+          <p className="text-sm text-charcoal/60 -mt-8 mb-8 hidden sm:block">No credit card required</p>
+          
+          {/* Logo at the bottom */}
+          <div className="flex justify-center mt-8">
+            <img 
+              src="/assets/logo_lite.png" 
+              alt="ProbateSwift Logo" 
+              className="w-16 h-16 opacity-80"
+            />
+          </div>
         </div>
       </div>
     </section>
