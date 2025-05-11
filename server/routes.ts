@@ -74,11 +74,29 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Google Authentication endpoint
   app.post('/api/auth/google', async (req: Request, res: Response) => {
     try {
-      const { email, firstName, lastName, firebaseUid, photoURL } = req.body;
+      const { idToken, email, displayName, photoURL } = req.body;
       
       if (!email) {
         return res.status(400).json({ error: 'Email is required' });
       }
+      
+      // Extract first and last name from displayName if available
+      let firstName = null;
+      let lastName = null;
+      
+      if (displayName) {
+        const nameParts = displayName.split(' ');
+        if (nameParts.length >= 1) {
+          firstName = nameParts[0];
+          
+          if (nameParts.length >= 2) {
+            lastName = nameParts.slice(1).join(' ');
+          }
+        }
+      }
+      
+      // Use the token as the Firebase UID
+      const firebaseUid = idToken ? `google:${email}` : null;
       
       // Check if user exists
       let user = await storage.getUserByEmail(email);
@@ -87,12 +105,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
         // Update existing user with Firebase details
         user = await storage.updateUser(user.id, {
           firebaseUid,
-          lastLogin: new Date(),
+          photoURL,
           // Only update these if they don't exist already
           firstName: user.firstName || firstName,
-          lastName: user.lastName || lastName,
-          photoURL: user.photoURL || photoURL
+          lastName: user.lastName || lastName
         });
+        
+        // Update last login
+        await storage.updateUserLastLogin(user.id);
       } else {
         // Create new user
         user = await storage.createUser({
@@ -102,15 +122,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
           firebaseUid,
           photoURL,
           password: '', // Not used with Firebase auth
-          isGuest: false,
-          createdAt: new Date(),
-          lastLogin: new Date()
+          isGuest: false
         });
       }
       
       // Log the user in
       req.login(user, (err) => {
         if (err) {
+          console.error('Login error:', err);
           return res.status(500).json({ error: 'Failed to login' });
         }
         return res.status(200).json(user);

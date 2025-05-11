@@ -51,8 +51,10 @@ const GoogleLoginButton: React.FC<GoogleLoginButtonProps> = ({
   const handleGoogleLogin = async () => {
     try {
       setIsLoading(true);
+      console.log('Starting Google sign-in process...');
       await signInWithGoogle();
       // The redirect result handler will take care of updating the state
+      // We won't reach here because of the redirect
     } catch (error: any) {
       console.error('Google sign-in error:', error);
       toast({
