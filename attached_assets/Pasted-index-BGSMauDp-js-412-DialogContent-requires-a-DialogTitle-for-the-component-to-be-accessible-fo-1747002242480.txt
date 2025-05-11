@@ -1,0 +1,115 @@
+index-BGSMauDp.js:412 `DialogContent` requires a `DialogTitle` for the component to be accessible for screen reader users.
+
+If you want to hide the `DialogTitle`, you can wrap it with our VisuallyHidden component.
+
+For more information, see https://radix-ui.com/primitives/docs/components/dialog
+(anonymous)	@	index-BGSMauDp.js:412
+rf	@	index-BGSMauDp.js:40
+_o	@	index-BGSMauDp.js:40
+kA	@	index-BGSMauDp.js:40
+oi	@	index-BGSMauDp.js:40
+nw	@	index-BGSMauDp.js:40
+ei	@	index-BGSMauDp.js:38
+(anonymous)	@	index-BGSMauDp.js:40
+
+index-BGSMauDp.js:412 Warning: Missing `Description` or `aria-describedby={undefined}` for {DialogContent}.
+(anonymous)	@	index-BGSMauDp.js:412
+rf	@	index-BGSMauDp.js:40
+_o	@	index-BGSMauDp.js:40
+kA	@	index-BGSMauDp.js:40
+oi	@	index-BGSMauDp.js:40
+nw	@	index-BGSMauDp.js:40
+ei	@	index-BGSMauDp.js:38
+(anonymous)	@	index-BGSMauDp.js:40
+index-BGSMauDp.js:1822 GoogleLoginButton: Checking for redirect result
+index-BGSMauDp.js:1822 Checking for redirect result...
+index-BGSMauDp.js:1822 No redirect result found
+index-BGSMauDp.js:1822 GoogleLoginButton: No redirect result found
+index-BGSMauDp.js:1822 GoogleLoginButton: Starting Google sign-in process
+index-BGSMauDp.js:1822 Attempting Google sign-in with popup...
+index-BGSMauDp.js:1612 Cross-Origin-Opener-Policy policy would block the window.closed call.
+t	@	index-BGSMauDp.js:1612
+index-BGSMauDp.js:1612 Cross-Origin-Opener-Policy policy would block the window.closed call.
+t	@	index-BGSMauDp.js:1612
+index-BGSMauDp.js:1732 Cross-Origin-Opener-Policy policy would block the window.close call.
+close	@	index-BGSMauDp.js:1732
+cleanUp	@	index-BGSMauDp.js:1612
+unregisterAndCleanUp	@	index-BGSMauDp.js:1597
+resolve	@	index-BGSMauDp.js:1597
+onAuthEvent	@	index-BGSMauDp.js:1597
+index-BGSMauDp.js:1732 Cross-Origin-Opener-Policy policy would block the window.close call.
+close	@	index-BGSMauDp.js:1732
+cleanUp	@	index-BGSMauDp.js:1612
+unregisterAndCleanUp	@	index-BGSMauDp.js:1597
+resolve	@	index-BGSMauDp.js:1597
+onAuthEvent	@	index-BGSMauDp.js:1597
+index-BGSMauDp.js:1822 Popup sign-in successful, user: david.w.barnes86@gmail.com
+index-BGSMauDp.js:1822 Sending Google auth data to backend...
+index-BGSMauDp.js:1822 Backend authentication successful
+index-BGSMauDp.js:1822 GoogleLoginButton: Popup auth successful
+index-BGSMauDp.js:48 
+ GET https://probateswift.replit.app/api/user 401 (Unauthorized)
+(anonymous)	@	index-BGSMauDp.js:48
+i	@	index-BGSMauDp.js:48
+x	@	index-BGSMauDp.js:48
+start	@	index-BGSMauDp.js:48
+fetch	@	index-BGSMauDp.js:48
+(anonymous)	@	index-BGSMauDp.js:48
+(anonymous)	@	index-BGSMauDp.js:48
+batch	@	index-BGSMauDp.js:48
+refetchQueries	@	index-BGSMauDp.js:48
+(anonymous)	@	index-BGSMauDp.js:48
+batch	@	index-BGSMauDp.js:48
+invalidateQueries	@	index-BGSMauDp.js:48
+a	@	index-BGSMauDp.js:1822
+await in a		
+G2	@	index-BGSMauDp.js:37
+Q2	@	index-BGSMauDp.js:37
+Z2	@	index-BGSMauDp.js:37
+Cx	@	index-BGSMauDp.js:37
+kN	@	index-BGSMauDp.js:37
+(anonymous)	@	index-BGSMauDp.js:37
+qg	@	index-BGSMauDp.js:40
+Xb	@	index-BGSMauDp.js:37
+Nh	@	index-BGSMauDp.js:37
+wg	@	index-BGSMauDp.js:37
+fR	@	index-BGSMauDp.js:37
+index-BGSMauDp.js:48 
+ GET https://probateswift.replit.app/api/assessment 401 (Unauthorized)
+(anonymous)	@	index-BGSMauDp.js:48
+i	@	index-BGSMauDp.js:48
+x	@	index-BGSMauDp.js:48
+start	@	index-BGSMauDp.js:48
+fetch	@	index-BGSMauDp.js:48
+Ga	@	index-BGSMauDp.js:48
+onSubscribe	@	index-BGSMauDp.js:48
+subscribe	@	index-BGSMauDp.js:48
+(anonymous)	@	index-BGSMauDp.js:48
+HN	@	index-BGSMauDp.js:38
+rf	@	index-BGSMauDp.js:40
+_o	@	index-BGSMauDp.js:40
+kA	@	index-BGSMauDp.js:40
+oi	@	index-BGSMauDp.js:40
+nw	@	index-BGSMauDp.js:40
+ei	@	index-BGSMauDp.js:38
+(anonymous)	@	index-BGSMauDp.js:40
+setTimeout		
+s	@	index-BGSMauDp.js:48
+a	@	index-BGSMauDp.js:48
+batch	@	index-BGSMauDp.js:48
+Rr	@	index-BGSMauDp.js:48
+setData	@	index-BGSMauDp.js:48
+setQueryData	@	index-BGSMauDp.js:48
+a	@	index-BGSMauDp.js:1822
+await in a		
+G2	@	index-BGSMauDp.js:37
+Q2	@	index-BGSMauDp.js:37
+Z2	@	index-BGSMauDp.js:37
+Cx	@	index-BGSMauDp.js:37
+kN	@	index-BGSMauDp.js:37
+(anonymous)	@	index-BGSMauDp.js:37
+qg	@	index-BGSMauDp.js:40
+Xb	@	index-BGSMauDp.js:37
+Nh	@	index-BGSMauDp.js:37
+wg	@	index-BGSMauDp.js:37
+fR	@	index-BGSMauDp.js:37

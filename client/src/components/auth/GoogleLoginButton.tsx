@@ -66,8 +66,9 @@ const GoogleLoginButton: React.FC<GoogleLoginButtonProps> = ({
       // For popup flow, we might get a result directly
       if (result) {
         console.log('GoogleLoginButton: Popup auth successful');
+        // Force reload the user data
         queryClient.setQueryData(['/api/user'], result);
-        queryClient.invalidateQueries({ queryKey: ['/api/user'] });
+        await queryClient.invalidateQueries({ queryKey: ['/api/user'] });
         
         toast({
           title: 'Successfully signed in',
@@ -75,6 +76,12 @@ const GoogleLoginButton: React.FC<GoogleLoginButtonProps> = ({
             ? `Welcome ${result.firstName}!` 
             : 'Welcome to ProbateSwift!',
         });
+        
+        // For cross-domain issues, a full page redirect is the most reliable
+        if (window.location.pathname !== '/') {
+          console.log('Redirecting to dashboard after successful login');
+          window.location.href = '/';
+        }
       }
       
       // For redirect flow, the redirect handler will take care of it

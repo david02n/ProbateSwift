@@ -29,9 +29,14 @@ export const signInWithGoogle = async () => {
   provider.addScope('profile');
   provider.addScope('email');
   
+  // Determine the current origin for redirect
+  const origin = window.location.origin;
+  
   // Set custom parameters
   provider.setCustomParameters({
-    prompt: 'select_account'
+    prompt: 'select_account',
+    // Ensure the return URL is on the same domain
+    redirect_uri: `${origin}/auth`
   });
   
   try {

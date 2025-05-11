@@ -13,10 +13,12 @@ const corsOptions = {
     /127\.0\.0\.1:\d+$/,
     // Replit domains
     /\.replit\.dev$/,
+    /\.replit\.app$/,
     /\.us-east-1\.csb\.app$/,
     // Production domains
     /\.probateswift\.com$/,
-    'https://probateswift.com'
+    'https://probateswift.com',
+    'https://probateswift.replit.app'
   ],
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],

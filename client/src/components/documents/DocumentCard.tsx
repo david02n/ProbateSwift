@@ -1426,6 +1426,9 @@ const DocumentCard: React.FC<DocumentCardProps> = ({ document, onDelete }) => {
       <Dialog open={detailsDialogOpen} onOpenChange={setDetailsDialogOpen}>
         <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
+            <DialogTitle>Document Details</DialogTitle>
+          </DialogHeader>
+          <DialogHeader>
             <DialogTitle>Document Details: {document.name || document.filename}</DialogTitle>
           </DialogHeader>
           {extractedData ? (

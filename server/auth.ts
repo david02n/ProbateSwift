@@ -78,6 +78,21 @@ async function comparePasswords(supplied: string, stored: string): Promise<boole
 
 export function setupAuth(app: Express) {
   // Session configuration
+  // Determine appropriate cookie domain based on request host
+  const getDynamicCookieDomain = (req: any) => {
+    const host = req.get('host') || '';
+    console.log('Request host:', host);
+    
+    if (host.includes('probateswift.com')) {
+      return '.probateswift.com';
+    } else if (host.includes('replit.app')) {
+      return '.replit.app';
+    }
+    
+    // For local development, don't set a domain
+    return undefined;
+  };
+
   const sessionSettings: session.SessionOptions = {
     secret: process.env.SESSION_SECRET || "probate-swift-session-secret",
     resave: false,
@@ -87,13 +102,30 @@ export function setupAuth(app: Express) {
       secure: process.env.NODE_ENV === "production",
       maxAge: 1000 * 60 * 60 * 24 * 7, // 1 week
       sameSite: 'lax', // Allow cross-site cookies for authentication
-      domain: process.env.NODE_ENV === "production" ? '.probateswift.com' : undefined,
     }
   };
 
   // Set up session and passport middleware
   app.set("trust proxy", 1);
-  app.use(session(sessionSettings));
+  
+  // Use the session middleware with dynamic cookie domain
+  app.use((req, res, next) => {
+    // Clone the session settings
+    const currentSettings = { ...sessionSettings };
+    
+    // Add dynamic domain to cookie settings if available
+    if (currentSettings.cookie) {
+      const domain = getDynamicCookieDomain(req);
+      if (domain) {
+        currentSettings.cookie.domain = domain;
+        console.log('Using cookie domain:', domain);
+      }
+    }
+    
+    // Create and use session with the appropriate settings
+    session(currentSettings)(req, res, next);
+  });
+  
   app.use(passport.initialize());
   app.use(passport.session());
 
