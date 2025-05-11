@@ -92,7 +92,6 @@ const Hero: React.FC = () => {
         
         <div className="md:w-1/2">
           <Card className="bg-white p-6 md:p-8 rounded-xl shadow-lg">
-            <h4 className="font-medium mb-3 text-center text-lg">Already know probate is required?</h4>
             <p className="text-charcoal/80 mb-5 text-center">
               Register to start using our advanced document processing and estate management tools
             </p>
