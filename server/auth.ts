@@ -81,28 +81,45 @@ export function setupAuth(app: Express) {
   // Determine appropriate cookie domain based on request host
   const getDynamicCookieDomain = (req: any) => {
     const host = req.get('host') || '';
-    console.log('Request host:', host);
+    console.log('Auth module - Request host:', host);
     
+    // For production domain
     if (host.includes('probateswift.com')) {
       return '.probateswift.com';
-    } else if (host.includes('replit.app')) {
+    } 
+    
+    // For Replit domains - special handling for development
+    if (host.includes('replit.app')) {
+      // For specific replit subdomains, we need to be more precise
+      if (host.match(/[a-f0-9]+-[a-f0-9]+-[a-f0-9]+-[a-f0-9]+-[a-f0-9]+/)) {
+        // This is a full replit.dev domain with UUID, return the exact domain
+        return host;
+      }
+      // Otherwise return .replit.app for shared domains
       return '.replit.app';
     }
     
+    // For replit.dev domains (development)
+    if (host.includes('replit.dev')) {
+      // For ephemeral dev domains, return the exact domain
+      return host;
+    }
+    
     // For local development, don't set a domain
+    console.log('Using no domain for cookies (local development)');
     return undefined;
   };
 
-  const sessionSettings: session.SessionOptions = {
-    secret: process.env.SESSION_SECRET || "probate-swift-session-secret",
-    resave: false,
-    saveUninitialized: false,
-    store: storage.sessionStore,
-    cookie: {
-      secure: process.env.NODE_ENV === "production",
-      maxAge: 1000 * 60 * 60 * 24 * 7, // 1 week
-      sameSite: 'lax', // Allow cross-site cookies for authentication
-    }
+  // Get appropriate cookie security settings based on environment and request
+  const getCookieSecureSettings = (req: any) => {
+    // Check if the request is over HTTPS
+    const isSecure = req.secure || req.headers['x-forwarded-proto'] === 'https';
+    
+    // For production, always require secure cookies
+    const isProduction = process.env.NODE_ENV === 'production';
+    
+    // In production, enforce secure cookies. In development, match the request protocol.
+    return isProduction ? true : isSecure;
   };
 
   // Set up session and passport middleware
@@ -110,22 +127,57 @@ export function setupAuth(app: Express) {
   
   // Use the session middleware with dynamic cookie domain
   app.use((req, res, next) => {
-    // Clone the session settings
-    const currentSettings = { ...sessionSettings };
+    // Create session settings for this specific request
+    const host = req.get('host') || '';
+    const isReplit = host.includes('replit');
+    const isProbateSwift = host.includes('probateswift.com');
+    const domain = getDynamicCookieDomain(req);
+    const secure = getCookieSecureSettings(req);
     
-    // Add dynamic domain to cookie settings if available
-    if (currentSettings.cookie) {
-      const domain = getDynamicCookieDomain(req);
-      if (domain) {
-        currentSettings.cookie.domain = domain;
-        console.log('Using cookie domain:', domain);
-      }
+    // Get the referer and origin for debugging cross-domain issues
+    const referer = req.headers.referer || 'none';
+    const origin = req.headers.origin || 'none';
+    
+    // Enhanced logging on important routes
+    if (req.path === '/api/login' || req.path === '/api/auth/google' || req.path === '/api/user') {
+      console.log('AUTH DEBUG:');
+      console.log(`Path: ${req.path}`);
+      console.log(`Host: ${host}`);
+      console.log(`Origin: ${origin}`);
+      console.log(`Referer: ${referer}`);
+      console.log(`Using cookie domain: ${domain || 'none'}`);
+      console.log(`Secure cookies: ${secure}`);
+      console.log(`SameSite: none (for cross-domain support)`);
     }
+    
+    // Configure cookie settings for this request
+    const cookieSettings: session.CookieOptions = {
+      secure: secure,
+      maxAge: 1000 * 60 * 60 * 24 * 7, // 1 week
+      sameSite: 'none', // Allow cross-site cookies for authentication
+      httpOnly: true,
+    };
+    
+    // Add domain if available
+    if (domain) {
+      cookieSettings.domain = domain;
+    }
+    
+    // Create session settings with the appropriate cookie configuration
+    const currentSettings: session.SessionOptions = {
+      secret: process.env.SESSION_SECRET || "probate-swift-session-secret",
+      resave: false,
+      saveUninitialized: false,
+      store: storage.sessionStore,
+      cookie: cookieSettings,
+      name: isProbateSwift ? 'probswft.sid' : (isReplit ? 'rpltsid' : 'connect.sid'),
+    };
     
     // Create and use session with the appropriate settings
     session(currentSettings)(req, res, next);
   });
   
+  // Initialize passport after session is established
   app.use(passport.initialize());
   app.use(passport.session());
 
@@ -241,6 +293,11 @@ export function setupAuth(app: Express) {
 
   // Login route
   app.post("/api/login", (req, res, next) => {
+    // Log debugging information for the login attempt
+    console.log(`Login attempt from host: ${req.headers.host}`);
+    console.log(`Origin: ${req.headers.origin || 'none'}`);
+    console.log(`Credentials: ${req.headers['x-requested-with'] ? 'yes' : 'no'}`);
+    
     passport.authenticate("local", (err: Error, user: Express.User, info: any) => {
       if (err) return next(err);
       if (!user) {
@@ -249,6 +306,35 @@ export function setupAuth(app: Express) {
       
       req.login(user, (loginErr) => {
         if (loginErr) return next(loginErr);
+        
+        // On successful login, ensure client knows cookies changed
+        res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
+        res.setHeader('Pragma', 'no-cache');
+        
+        // Set an additional cookie as a backup method
+        const host = req.get('host') || '';
+        if (host.includes('probateswift.com')) {
+          // For production domain, set a visible cookie to test
+          res.cookie('probswft_check', 'ok', {
+            httpOnly: false, // Make visible to JavaScript for debugging
+            secure: true,
+            sameSite: 'none',
+            domain: '.probateswift.com',
+            maxAge: 1000 * 60 * 60 * 24 // 1 day
+          });
+          console.log('Set probswft_check cookie for .probateswift.com');
+        } else if (host.includes('replit.app')) {
+          // For Replit domains
+          res.cookie('rpltsft_check', 'ok', {
+            httpOnly: false,
+            secure: true,
+            sameSite: 'none',
+            domain: host.includes('probateswift') ? 'probateswift.replit.app' : undefined,
+            maxAge: 1000 * 60 * 60 * 24
+          });
+          console.log(`Set rpltsft_check cookie for ${host.includes('probateswift') ? 'probateswift.replit.app' : 'current host'}`);
+        }
+        
         return res.json(user);
       });
     })(req, res, next);

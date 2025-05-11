@@ -33,14 +33,34 @@ export async function apiRequest(
       console.log(`[API Request] Using absolute URL: ${requestUrl}`);
     }
     
-    const res = await fetch(requestUrl, {
+    // Customize fetch options for cross-domain requests in production
+    const fetchOptions: RequestInit = {
       method,
-      headers: data ? { "Content-Type": "application/json" } : {},
+      headers: data ? { 
+        "Content-Type": "application/json",
+        // Add headers to support CORS with credentials
+        "Accept": "application/json",
+        "X-Requested-With": "XMLHttpRequest"
+      } : {},
       body: data ? JSON.stringify(data) : undefined,
-      credentials: "include",
-    });
+      credentials: "include", // Always include cookies
+      mode: "cors", // Enable CORS
+    };
     
+    // Log the request configuration
+    console.log(`[API Request] Credentials mode: ${fetchOptions.credentials}`);
+    console.log(`[API Request] CORS mode: ${fetchOptions.mode}`);
+    
+    const res = await fetch(requestUrl, fetchOptions);
+    
+    // Log detailed response information
     console.log(`[API Response] Status: ${res.status} ${res.statusText}`);
+    console.log(`[API Response] URL: ${res.url}`);
+    
+    // Check if cookies were actually sent (can be checked in browser devtools)
+    if (origin.includes('replit.app') || origin.includes('probateswift.com')) {
+      console.log(`[API Response] WARNING: Check if cookies are visible in the request headers in your browser devtools`);
+    }
     
     await throwIfResNotOk(res);
     return res;
@@ -76,11 +96,28 @@ export const getQueryFn: <T>(options: {
         console.log(`[Query] Using absolute URL: ${requestUrl}`);
       }
       
-      const res = await fetch(requestUrl, {
-        credentials: "include",
-      });
+      // Configure fetch options with explicit CORS and credentials settings
+      const fetchOptions: RequestInit = {
+        method: 'GET',
+        headers: {
+          'Accept': 'application/json',
+          'X-Requested-With': 'XMLHttpRequest'
+        },
+        credentials: "include", // Always include cookies
+        mode: "cors", // Enable CORS for cross-domain requests
+      };
       
+      // In certain browsers, SameSite=None cookies require secure flag
+      // Log detailed configuration info for debugging
+      console.log(`[Query] Request URL: ${requestUrl}`);
+      console.log(`[Query] Credentials mode: ${fetchOptions.credentials}`);
+      console.log(`[Query] CORS mode: ${fetchOptions.mode}`);
+      
+      const res = await fetch(requestUrl, fetchOptions);
+      
+      // Log detailed response info
       console.log(`[Query Response] Status: ${res.status} ${res.statusText}`);
+      console.log(`[Query Response] URL: ${res.url}`);
       
       if (unauthorizedBehavior === "returnNull" && res.status === 401) {
         console.log(`[Query] Unauthorized access to ${url}, returning null as configured`);
@@ -88,7 +125,17 @@ export const getQueryFn: <T>(options: {
       }
 
       await throwIfResNotOk(res);
-      return await res.json();
+      
+      try {
+        return await res.json();
+      } catch (parseError) {
+        // Handle empty or non-JSON responses
+        console.error(`[Query Error] Failed to parse JSON response from ${url}:`, parseError);
+        if (res.status === 204) { // No Content
+          return null;
+        }
+        throw new Error(`Invalid JSON response from server: ${parseError.message}`);
+      }
     } catch (error) {
       console.error(`[Query Error] GET ${queryKey[0]} failed:`, error);
       throw error;

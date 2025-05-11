@@ -18,6 +18,16 @@ const corsOptions = {
     // Log the origin for debugging purposes
     log(`CORS: Request from origin: ${origin}`);
     
+    // For the Replit and ProbateSwift domains, always allow
+    if (
+      origin.includes('probateswift.com') || 
+      origin.includes('replit.app') || 
+      origin.includes('replit.dev')
+    ) {
+      log(`CORS: Explicitly allowing ${origin}`);
+      return callback(null, true);
+    }
+    
     // Check against our allowed origins
     const allowedOrigins = [
       // Local development domains
@@ -46,24 +56,36 @@ const corsOptions = {
       }
     }
     
-    // Allow all replit.app domains for development
-    if (origin.includes('replit.app')) {
-      log('CORS: Allowing replit.app domain');
-      allowed = true;
-    }
-    
     if (allowed) {
       log(`CORS: Origin ${origin} is allowed`);
       callback(null, true);
     } else {
-      log(`CORS: Origin ${origin} is not allowed`);
-      // Still allow but warn
+      log(`CORS: Origin ${origin} is not allowed but allowing anyway for debugging`);
+      // Still allow but warn - this can be changed to deny in production
       callback(null, true);
     }
   },
-  credentials: true,
+  credentials: true, // CRITICAL: Allow cookies to be sent with requests
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'Origin', 'Accept'],
+  allowedHeaders: [
+    'Content-Type', 
+    'Authorization', 
+    'X-Requested-With',
+    'X-CSRF-Token',
+    'X-XSRF-Token',
+    'Origin', 
+    'Accept', 
+    'Accept-Language',
+    'Access-Control-Allow-Origin',
+    'Cookie',
+    'Cache-Control',
+    'Connection'
+  ],
+  exposedHeaders: [
+    'Access-Control-Allow-Origin',
+    'Access-Control-Allow-Credentials',
+    'Set-Cookie'
+  ],
   maxAge: 86400 // Cache preflight requests for 24 hours
 };
 
