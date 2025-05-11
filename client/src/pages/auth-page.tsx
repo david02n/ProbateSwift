@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { useAuth } from "@/hooks/use-auth";
 import { Redirect } from "wouter";
+import GoogleLoginButton from "@/components/auth/GoogleLoginButton";
 
 // Extend Window interface to include our shared functions
 declare global {
@@ -179,7 +180,7 @@ const AuthPage: React.FC = () => {
                         )}
                       />
                     </CardContent>
-                    <CardFooter>
+                    <CardFooter className="flex flex-col space-y-4">
                       <Button 
                         type="submit" 
                         className="w-full bg-primary hover:bg-primary/90"
@@ -192,6 +193,21 @@ const AuthPage: React.FC = () => {
                         )}
                         Login
                       </Button>
+                      
+                      <div className="relative w-full">
+                        <div className="absolute inset-0 flex items-center">
+                          <span className="w-full border-t" />
+                        </div>
+                        <div className="relative flex justify-center text-xs uppercase">
+                          <span className="bg-background px-2 text-muted-foreground">
+                            Or continue with
+                          </span>
+                        </div>
+                      </div>
+                      
+                      <GoogleLoginButton 
+                        className="w-full" 
+                      />
                     </CardFooter>
                   </form>
                 </Form>
@@ -277,7 +293,7 @@ const AuthPage: React.FC = () => {
                         )}
                       />
                     </CardContent>
-                    <CardFooter>
+                    <CardFooter className="flex flex-col space-y-4">
                       <Button 
                         type="submit" 
                         className="w-full bg-primary hover:bg-primary/90"
@@ -290,6 +306,21 @@ const AuthPage: React.FC = () => {
                         )}
                         Create Account
                       </Button>
+                      
+                      <div className="relative w-full">
+                        <div className="absolute inset-0 flex items-center">
+                          <span className="w-full border-t" />
+                        </div>
+                        <div className="relative flex justify-center text-xs uppercase">
+                          <span className="bg-background px-2 text-muted-foreground">
+                            Or continue with
+                          </span>
+                        </div>
+                      </div>
+                      
+                      <GoogleLoginButton 
+                        className="w-full" 
+                      />
                     </CardFooter>
                   </form>
                 </Form>

@@ -1,36 +1,40 @@
-import { initializeApp } from "firebase/app";
-import { getAuth, GoogleAuthProvider } from "firebase/auth";
-import { getAnalytics, isSupported } from "firebase/analytics";
+import { initializeApp } from 'firebase/app';
 
+// Firebase configuration using environment variables
 const firebaseConfig = {
   apiKey: import.meta.env.VITE_FIREBASE_API_KEY,
   authDomain: `${import.meta.env.VITE_FIREBASE_PROJECT_ID}.firebaseapp.com`,
   projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID,
-  storageBucket: `${import.meta.env.VITE_FIREBASE_PROJECT_ID}.firebasestorage.app`,
-  messagingSenderId: "321971954611",
+  storageBucket: `${import.meta.env.VITE_FIREBASE_PROJECT_ID}.appspot.com`,
   appId: import.meta.env.VITE_FIREBASE_APP_ID,
-  measurementId: import.meta.env.VITE_GA_MEASUREMENT_ID
 };
 
 // Initialize Firebase
-const app = initializeApp(firebaseConfig);
+export const FirebaseApp = initializeApp(firebaseConfig);
 
-// Initialize Firebase Authentication and get a reference to the service
-export const auth = getAuth(app);
-export const googleProvider = new GoogleAuthProvider();
-
-// Initialize Analytics conditionally (not available in all environments)
-export const initAnalytics = async () => {
-  try {
-    const analyticsSupported = await isSupported();
-    if (analyticsSupported) {
-      return getAnalytics(app);
-    }
-    return null;
-  } catch (error) {
-    console.error("Analytics failed to initialize:", error);
-    return null;
+// Validate Firebase configuration
+const validateFirebaseConfig = () => {
+  const requiredVars = [
+    'VITE_FIREBASE_API_KEY', 
+    'VITE_FIREBASE_PROJECT_ID', 
+    'VITE_FIREBASE_APP_ID'
+  ];
+  
+  const missingVars = requiredVars.filter(varName => !import.meta.env[varName]);
+  
+  if (missingVars.length > 0) {
+    console.error(`Firebase initialization failed: Missing environment variables: ${missingVars.join(', ')}`);
+    return false;
   }
+  
+  return true;
 };
 
-export default app;
+// Log validation result
+const isConfigValid = validateFirebaseConfig();
+
+if (!isConfigValid) {
+  console.error('Firebase is not properly configured. Google authentication may not work.');
+}
+
+export default FirebaseApp;

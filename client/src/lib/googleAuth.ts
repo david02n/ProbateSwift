@@ -1,86 +1,80 @@
-import { 
-  GoogleAuthProvider, 
-  signInWithPopup, 
-  signInWithRedirect, 
-  getRedirectResult 
-} from "firebase/auth";
-import { auth, googleProvider } from "./firebase";
-import { apiRequest } from "./queryClient";
+import { getAuth, GoogleAuthProvider, signInWithRedirect, getRedirectResult } from 'firebase/auth';
+import { apiRequest } from './queryClient';
+import FirebaseApp from './firebase';
 
-// Function to handle sign in with Google via popup
-export const signInWithGoogle = async () => {
-  try {
-    const result = await signInWithPopup(auth, googleProvider);
-    const user = result.user;
-    
-    // Get Google access token
-    const credential = GoogleAuthProvider.credentialFromResult(result);
-    const token = credential?.accessToken;
-    
-    // Send the user info to our backend
-    await handleFirebaseUser(user);
-    
-    return { user, token };
-  } catch (error: any) {
-    const errorCode = error.code;
-    const errorMessage = error.message;
-    console.error(`Error signing in with Google: ${errorCode} - ${errorMessage}`);
-    throw error;
+// Initialize auth and provider
+const auth = getAuth(FirebaseApp);
+const provider = new GoogleAuthProvider();
+
+// Custom error subclass
+class GoogleAuthError extends Error {
+  constructor(message: string) {
+    super(message);
+    this.name = 'GoogleAuthError';
   }
+}
+
+/**
+ * Initiates the Google sign-in flow, redirecting the user to the Google login page
+ */
+export const signInWithGoogle = async (): Promise<void> => {
+  // Add scopes if needed
+  provider.addScope('profile');
+  provider.addScope('email');
+  
+  // Set custom parameters
+  provider.setCustomParameters({
+    prompt: 'select_account'
+  });
+  
+  await signInWithRedirect(auth, provider);
 };
 
-// Alternative: Sign in with redirect (better for mobile)
-export const signInWithGoogleRedirect = () => {
-  signInWithRedirect(auth, googleProvider);
-};
-
-// Handle redirect result - call this function when the app loads
+/**
+ * Handles the redirect result after returning from Google authentication
+ * @returns The user object if successful, null if no redirect result
+ */
 export const handleRedirectResult = async () => {
   try {
     const result = await getRedirectResult(auth);
-    if (result) {
-      const user = result.user;
-      await handleFirebaseUser(user);
-      return user;
-    }
-    return null;
-  } catch (error: any) {
-    console.error("Error handling redirect result:", error);
-    throw error;
-  }
-};
-
-// Helper function to send Firebase user to our backend
-const handleFirebaseUser = async (firebaseUser: any) => {
-  if (!firebaseUser) return;
-  
-  try {
-    // Extract relevant user information
-    const userData = {
-      email: firebaseUser.email,
-      firstName: firebaseUser.displayName?.split(' ')[0] || null,
-      lastName: firebaseUser.displayName?.split(' ').slice(1).join(' ') || null,
-      firebaseUid: firebaseUser.uid,
-      photoURL: firebaseUser.photoURL
-    };
     
-    // Send to our backend to create/update the user and establish session
-    const response = await apiRequest('POST', '/api/auth/google', userData);
+    if (!result) {
+      return null; // No redirect result, not coming back from Google auth
+    }
+    
+    // Get the user info and ID token
+    const user = result.user;
+    const idToken = await user.getIdToken();
+    
+    if (!user.email) {
+      throw new GoogleAuthError('No email provided by Google account');
+    }
+    
+    // Send the token to our backend to create/authenticate the user
+    const response = await apiRequest('POST', '/api/auth/google', {
+      idToken,
+      email: user.email,
+      displayName: user.displayName,
+      photoURL: user.photoURL
+    });
+    
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new GoogleAuthError(errorData.message || 'Failed to authenticate with the server');
+    }
+    
+    // Return the user data from our backend
     return await response.json();
-  } catch (error) {
-    console.error("Error sending Firebase user to backend:", error);
-    throw error;
+    
+  } catch (error: any) {
+    console.error('Google auth error:', error);
+    throw new GoogleAuthError(error.message || 'Authentication failed');
   }
 };
 
-// Sign out function
-export const signOutUser = async () => {
-  try {
-    await auth.signOut();
-    // Also sign out from our backend
-    await apiRequest('POST', '/api/logout');
-  } catch (error) {
-    console.error("Error signing out:", error);
-    throw error;
-  }
+/**
+ * Signs out the currently signed-in user
+ */
+export const signOut = async (): Promise<void> => {
+  await auth.signOut();
 };
