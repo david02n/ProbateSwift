@@ -104,42 +104,71 @@ const Hero: React.FC = () => {
         </div>
         
         {/* Pricing Card */}
-        <div className="max-w-lg mx-auto mt-20 bg-gradient-to-r from-primary/5 to-accent/5 p-1 rounded-xl">
-          <Card className="bg-white p-6 md:p-8 rounded-xl">
-            <div className="flex items-center justify-center mb-3">
-              <div className="w-8 h-8 rounded-full bg-success/10 flex items-center justify-center mr-2">
-                <CheckCircle className="h-4 w-4 text-success" />
+        <div className="max-w-3xl mx-auto mt-24">
+          <div className="text-center mb-6">
+            <h2 className="text-3xl font-bold font-inter mb-2">Pricing & Guarantee</h2>
+            <p className="text-gray-600">Simple, transparent pricing with no hidden fees</p>
+          </div>
+          
+          <Card className="bg-white p-8 rounded-xl shadow-md">
+            <div className="flex flex-col md:flex-row">
+              {/* Left side pricing */}
+              <div className="flex-1 mb-8 md:mb-0 md:border-r md:pr-8">
+                <h3 className="text-primary font-semibold text-lg mb-2">One-time fee</h3>
+                <div className="flex items-baseline mb-1">
+                  <span className="text-5xl font-bold text-primary">£297</span>
+                  <span className="text-gray-500 text-sm ml-2">one-time payment</span>
+                </div>
+                <p className="text-gray-600 text-sm mb-8">Pay when you're ready to submit</p>
+                
+                <h4 className="font-medium mb-4">What's included:</h4>
+                <div className="space-y-3">
+                  <div className="flex items-start">
+                    <CheckCircle className="h-5 w-5 text-primary mr-3 mt-0.5 flex-shrink-0" />
+                    <p className="text-gray-700">Complete document upload system</p>
+                  </div>
+                  <div className="flex items-start">
+                    <CheckCircle className="h-5 w-5 text-primary mr-3 mt-0.5 flex-shrink-0" />
+                    <p className="text-gray-700">Intelligent auto-filling technology</p>
+                  </div>
+                  <div className="flex items-start">
+                    <CheckCircle className="h-5 w-5 text-primary mr-3 mt-0.5 flex-shrink-0" />
+                    <p className="text-gray-700">Step-by-step guidance</p>
+                  </div>
+                  <div className="flex items-start">
+                    <CheckCircle className="h-5 w-5 text-primary mr-3 mt-0.5 flex-shrink-0" />
+                    <p className="text-gray-700">Instant estate valuation</p>
+                  </div>
+                  <div className="flex items-start">
+                    <CheckCircle className="h-5 w-5 text-primary mr-3 mt-0.5 flex-shrink-0" />
+                    <p className="text-gray-700">Digital submission to authorities</p>
+                  </div>
+                  <div className="flex items-start">
+                    <CheckCircle className="h-5 w-5 text-primary mr-3 mt-0.5 flex-shrink-0" />
+                    <p className="text-gray-700">Free for 14 days - pay only when you submit</p>
+                  </div>
+                </div>
               </div>
-              <h4 className="font-semibold text-xl">Pay on submission</h4>
+              
+              {/* Right side CTA */}
+              <div className="flex-1 flex flex-col justify-between md:pl-8">
+                <div className="flex-grow flex flex-col justify-center mb-8">
+                  <a href="/auth" className="mb-6">
+                    <Button className="w-full bg-primary text-white hover:bg-primary/90 py-6 flex items-center justify-center rounded-full text-lg">
+                      <span className="font-medium">Start for Free</span>
+                      <ArrowRight className="ml-2 h-5 w-5" aria-hidden="true" />
+                    </Button>
+                  </a>
+                  <p className="text-sm text-center text-gray-500">No credit card required</p>
+                </div>
+                
+                <div className="mt-4">
+                  <div className="bg-blue-50 p-4 rounded-lg text-center">
+                    <p className="text-gray-700">No payment required if you change your mind or can't proceed.</p>
+                  </div>
+                </div>
+              </div>
             </div>
-            <p className="text-charcoal/80 mb-6 text-center">
-              Use the full service free for two weeks. Only pay £297 when you're ready to submit your completed forms. No printer required.
-            </p>
-            <div className="flex flex-col gap-4 mb-6">
-              <div className="flex items-start">
-                <CheckCircle className="h-5 w-5 text-success mr-3 mt-0.5 flex-shrink-0" />
-                <p className="text-charcoal/80 text-sm">Zero upfront risk: Get started for free, no card required.</p>
-              </div>
-              <div className="flex items-start">
-                <CheckCircle className="h-5 w-5 text-success mr-3 mt-0.5 flex-shrink-0" />
-                <p className="text-charcoal/80 text-sm">You stay in control: Review and adjust every field before you submit.</p>
-              </div>
-              <div className="flex items-start">
-                <CheckCircle className="h-5 w-5 text-success mr-3 mt-0.5 flex-shrink-0" />
-                <p className="text-charcoal/80 text-sm">Speedy results: Forms done in minutes, submissions in hours—not weeks.</p>
-              </div>
-              <div className="flex items-start">
-                <CheckCircle className="h-5 w-5 text-success mr-3 mt-0.5 flex-shrink-0" />
-                <p className="text-charcoal/80 text-sm">Huge savings: Skip £1,000+ in legal fees and eliminate endless back-and-forth.</p>
-              </div>
-            </div>
-            <a href="/auth" className="block">
-              <Button className="w-full bg-primary text-white hover:bg-primary/90 py-3 flex items-center justify-center rounded-full">
-                <span className="font-medium">Start for Free</span>
-                <ArrowRight className="ml-2 h-4 w-4" aria-hidden="true" />
-              </Button>
-              <p className="text-xs text-center text-charcoal/60 mt-2">No credit card required</p>
-            </a>
           </Card>
         </div>
       </div>
