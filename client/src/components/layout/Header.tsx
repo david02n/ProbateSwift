@@ -6,6 +6,12 @@ import { Menu, User, LogOut, ChevronDown } from "lucide-react";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { useAuth } from "@/hooks/use-auth";
 
+interface NavItem {
+  label: string;
+  href: string;
+  onClick?: () => void;
+}
+
 const Header: React.FC = () => {
   const { user: currentUser, logoutMutation } = useAuth();
   const [scrolled, setScrolled] = useState(false);
@@ -24,19 +30,21 @@ const Header: React.FC = () => {
   }, [scrolled]);
 
   // Define navigation items based on authentication state
-  const publicNavItems = [
+  const publicNavItems: NavItem[] = [
     { label: "Features", href: "#features" },
     { label: "How It Works", href: "#how-it-works" },
+    { label: "Pricing", href: "#pricing" },
+    { label: "Assessment", href: "#", onClick: () => window.dispatchEvent(new CustomEvent('open-assessment')) },
     { label: "FAQ", href: "#faq" },
   ];
 
-  const authenticatedNavItems = [
+  const authenticatedNavItems: NavItem[] = [
     { label: "Dashboard", href: "/dashboard" },
     { label: "Documents", href: "/dashboard?tab=documents" },
     { label: "Tasks", href: "/dashboard?tab=tasks" },
   ];
 
-  const navItems = currentUser ? authenticatedNavItems : publicNavItems;
+  const navItems: NavItem[] = currentUser ? authenticatedNavItems : publicNavItems;
 
   const handleLogout = () => {
     logoutMutation.mutate();
@@ -67,6 +75,13 @@ const Header: React.FC = () => {
                   >
                     {item.label}
                   </Link>
+                ) : item.onClick ? (
+                  <button 
+                    onClick={item.onClick} 
+                    className="font-medium text-charcoal/90 hover:text-primary transition-colors bg-transparent border-none cursor-pointer p-0"
+                  >
+                    {item.label}
+                  </button>
                 ) : (
                   <a 
                     href={item.href} 
@@ -153,6 +168,14 @@ const Header: React.FC = () => {
                       >
                         {item.label}
                       </Link>
+                    ) : item.onClick ? (
+                      <button 
+                        key={index}
+                        onClick={item.onClick} 
+                        className="py-2 text-left font-medium hover:text-primary transition-colors text-lg bg-transparent border-none cursor-pointer w-full"
+                      >
+                        {item.label}
+                      </button>
                     ) : (
                       <a 
                         key={index}

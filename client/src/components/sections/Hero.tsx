@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { ArrowRight, PlayCircle, Upload, FileText, CheckCircle, BrainCircuit, ChevronRight, HelpCircle } from "lucide-react";
 import { Card } from "@/components/ui/card";
@@ -8,6 +8,19 @@ import logoBirdImage from "@assets/logo_lite.png";
 
 const Hero: React.FC = () => {
   const [isAssessmentOpen, setIsAssessmentOpen] = useState(false);
+  
+  // Listen for the open-assessment event
+  useEffect(() => {
+    const handleOpenAssessment = () => {
+      setIsAssessmentOpen(true);
+    };
+    
+    window.addEventListener('open-assessment', handleOpenAssessment);
+    
+    return () => {
+      window.removeEventListener('open-assessment', handleOpenAssessment);
+    };
+  }, []);
 
   return (
     <section className="py-20 md:py-28 bg-white relative overflow-hidden">
