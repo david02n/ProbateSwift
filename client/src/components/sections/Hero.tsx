@@ -91,20 +91,17 @@ const Hero: React.FC = () => {
         </div>
         
         <div className="md:w-1/2">
-          <Card className="bg-muted p-6 md:p-8 rounded-xl shadow-lg">            
-            {/* CTA Card */}
-            <div className="bg-white rounded-lg p-6 shadow-sm border border-lavender/30">
-              <h4 className="font-medium mb-3 text-center text-lg">Already know probate is required?</h4>
-              <p className="text-charcoal/80 mb-5 text-center">
-                Register to start using our advanced document processing and estate management tools
-              </p>
-              <a href="/auth" className="block">
-                <Button className="w-full bg-primary text-white hover:bg-primary/90 py-3 flex items-center justify-center">
-                  <span className="font-medium">Get Started</span>
-                  <ArrowRight className="ml-2 h-4 w-4" aria-hidden="true" />
-                </Button>
-              </a>
-            </div>
+          <Card className="bg-white p-6 md:p-8 rounded-xl shadow-lg">
+            <h4 className="font-medium mb-3 text-center text-lg">Already know probate is required?</h4>
+            <p className="text-charcoal/80 mb-5 text-center">
+              Register to start using our advanced document processing and estate management tools
+            </p>
+            <a href="/auth" className="block">
+              <Button className="w-full bg-primary text-white hover:bg-primary/90 py-3 flex items-center justify-center">
+                <span className="font-medium">Get Started</span>
+                <ArrowRight className="ml-2 h-4 w-4" aria-hidden="true" />
+              </Button>
+            </a>
           </Card>
         </div>
       </div>
