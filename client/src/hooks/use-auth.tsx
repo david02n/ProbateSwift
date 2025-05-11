@@ -124,13 +124,19 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       await apiRequest("POST", "/api/logout");
     },
     onSuccess: () => {
+      // Clear all query cache data including user data
+      queryClient.clear();
+      
+      // Explicitly set user data to null
       queryClient.setQueryData(["/api/user"], null);
+      
       toast({
         title: "Logged out",
         description: "You have been successfully logged out",
       });
-      // Redirect to home page
-      window.location.href = "/";
+      
+      // Force page reload to ensure all state is reset
+      window.location.href = "/?logout=" + new Date().getTime();
     },
     onError: (error: Error) => {
       toast({
@@ -138,6 +144,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         description: error.message,
         variant: "destructive",
       });
+      
+      // Even on error, try to redirect to home page
+      setTimeout(() => {
+        window.location.href = "/";
+      }, 1500);
     },
   });
 

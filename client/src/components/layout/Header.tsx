@@ -91,7 +91,10 @@ const Header: React.FC = () => {
                 <Button 
                   variant="ghost" 
                   className="hidden md:inline-flex text-charcoal/90 hover:text-primary hover:bg-transparent"
-                  onClick={handleLogout}
+                  onClick={(e) => {
+                    e.preventDefault();
+                    handleLogout();
+                  }}
                 >
                   <LogOut className="h-4 w-4 mr-2" />
                   Logout
@@ -175,7 +178,10 @@ const Header: React.FC = () => {
                         <Button 
                           variant="outline" 
                           className="border-gray-200 text-charcoal hover:bg-gray-50 w-full rounded-full"
-                          onClick={handleLogout}
+                          onClick={(e) => {
+                            e.preventDefault();
+                            handleLogout();
+                          }}
                         >
                           Logout
                         </Button>
