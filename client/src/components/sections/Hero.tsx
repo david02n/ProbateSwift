@@ -27,12 +27,14 @@ const Hero: React.FC = () => {
           </p>
           
           <div className="flex flex-col sm:flex-row gap-4 mb-12">
-            <a href="/auth" aria-label="Start your probate assessment">
-              <Button size="lg" className="bg-primary text-white hover:bg-primary/90 rounded-full shadow-md px-8 py-6 text-lg">
-                <span>Start for Free</span>
-                <ChevronRight className="ml-2 h-5 w-5" aria-hidden="true" />
-              </Button>
-            </a>
+            <div className="flex-1 sm:max-w-[200px]">
+              <a href="/auth" aria-label="Start your probate assessment" className="w-full block">
+                <Button size="lg" className="bg-primary text-white hover:bg-primary/90 rounded-full shadow-md px-8 py-6 text-lg w-full">
+                  <span>Start for Free</span>
+                  <ChevronRight className="ml-2 h-5 w-5" aria-hidden="true" />
+                </Button>
+              </a>
+            </div>
             <p className="text-sm text-charcoal/60 -mt-1 mb-4 sm:hidden">No credit card required</p>
             <div className="sm:hidden mt-4">
               <Button 
@@ -44,11 +46,11 @@ const Hero: React.FC = () => {
                 <span>Is probate required?</span>
               </Button>
             </div>
-            <div className="hidden sm:flex flex-col">
+            <div className="hidden sm:flex flex-1 sm:max-w-[200px]">
               <Button 
                 size="lg" 
                 variant="outline" 
-                className="border-primary text-primary hover:bg-primary/5 rounded-full px-8 py-6 text-lg"
+                className="border-primary text-primary hover:bg-primary/5 rounded-full px-8 py-6 text-lg w-full"
                 onClick={() => setIsAssessmentOpen(true)}
               >
                 <HelpCircle className="h-5 w-5 mr-2" />
