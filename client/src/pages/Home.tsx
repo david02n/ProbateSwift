@@ -7,6 +7,7 @@ import HowItWorks from "@/components/sections/HowItWorks";
 import Features from "@/components/sections/Features";
 import AssessmentPreview from "@/components/sections/AssessmentPreview";
 import Testimonials from "@/components/sections/Testimonials";
+import Pricing from "@/components/sections/Pricing";
 import FAQ from "@/components/sections/FAQ";
 import CTA from "@/components/sections/CTA";
 
@@ -20,6 +21,7 @@ const Home: React.FC = () => {
         <HowItWorks />
         <Features />
         <AssessmentPreview />
+        <Pricing />
         {/* Testimonials temporarily hidden */}
         <FAQ />
         <CTA />
