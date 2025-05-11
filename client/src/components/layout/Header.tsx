@@ -1,14 +1,27 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Link } from "wouter";
 import { Button } from "@/components/ui/button";
 import { SwiftLogo, SwiftLogoWithText } from "@/components/ui/SwiftLogo";
-import { Menu, User, LogOut } from "lucide-react";
+import { Menu, User, LogOut, ChevronDown } from "lucide-react";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { useAuth } from "@/hooks/use-auth";
 
 const Header: React.FC = () => {
   const { user: currentUser, logoutMutation } = useAuth();
-  const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [scrolled, setScrolled] = useState(false);
+  
+  // Handle scroll events for transparent/solid header transition
+  useEffect(() => {
+    const handleScroll = () => {
+      const isScrolled = window.scrollY > 10;
+      if (isScrolled !== scrolled) {
+        setScrolled(isScrolled);
+      }
+    };
+
+    window.addEventListener('scroll', handleScroll);
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, [scrolled]);
 
   // Define navigation items based on authentication state
   const publicNavItems = [
@@ -30,12 +43,14 @@ const Header: React.FC = () => {
   };
 
   return (
-    <header className="bg-white shadow-sm w-full">
-      <div className="container mx-auto px-4 py-4 flex justify-between items-center">
+    <header className={`fixed top-0 left-0 right-0 z-50 w-full transition-all duration-300 ${
+      scrolled ? "bg-white shadow-sm py-3" : "bg-transparent py-5"
+    }`}>
+      <div className="container mx-auto px-6 flex justify-between items-center">
         <div className="flex items-center">
           <Link href={currentUser ? "/dashboard" : "/"}>
             <div className="flex items-center cursor-pointer">
-              <SwiftLogoWithText height={40} />
+              <SwiftLogoWithText height={36} />
             </div>
           </Link>
         </div>
@@ -48,14 +63,14 @@ const Header: React.FC = () => {
                 {item.href.startsWith('/') ? (
                   <Link 
                     href={item.href} 
-                    className="font-inter font-medium hover:text-primary transition-colors"
+                    className="font-medium text-charcoal/90 hover:text-primary transition-colors"
                   >
                     {item.label}
                   </Link>
                 ) : (
                   <a 
                     href={item.href} 
-                    className="font-inter font-medium hover:text-primary transition-colors"
+                    className="font-medium text-charcoal/90 hover:text-primary transition-colors"
                   >
                     {item.label}
                   </a>
@@ -70,12 +85,12 @@ const Header: React.FC = () => {
             /* Authenticated user actions */
             <>
               <div className="hidden md:flex items-center">
-                <div className="mr-4 text-sm text-charcoal/70">
+                <div className="mr-6 text-sm text-charcoal/70 hidden lg:block">
                   Hello, {currentUser.firstName || currentUser.email.split('@')[0]}
                 </div>
                 <Button 
-                  variant="outline" 
-                  className="hidden md:inline-flex border-primary text-primary hover:bg-primary hover:text-white"
+                  variant="ghost" 
+                  className="hidden md:inline-flex text-charcoal/90 hover:text-primary hover:bg-transparent"
                   onClick={handleLogout}
                 >
                   <LogOut className="h-4 w-4 mr-2" />
@@ -83,7 +98,7 @@ const Header: React.FC = () => {
                 </Button>
               </div>
               <Link href="/dashboard">
-                <Button className="bg-primary text-white hover:bg-primary/90">
+                <Button className="bg-primary text-white hover:bg-primary/90 rounded-full shadow-sm">
                   <User className="h-4 w-4 mr-2" />
                   Dashboard
                 </Button>
@@ -94,14 +109,14 @@ const Header: React.FC = () => {
             <>
               <Link href="/auth">
                 <Button 
-                  variant="outline" 
-                  className="hidden md:inline-flex border-primary text-primary hover:bg-primary hover:text-white"
+                  variant="ghost" 
+                  className="hidden md:inline-flex text-charcoal/90 hover:text-primary hover:bg-transparent"
                 >
-                  Login
+                  Log In
                 </Button>
               </Link>
               <Link href="/auth">
-                <Button className="bg-primary text-white hover:bg-primary/90">
+                <Button className="bg-primary text-white hover:bg-primary/90 rounded-full shadow-sm">
                   Get Started
                 </Button>
               </Link>
@@ -120,10 +135,10 @@ const Header: React.FC = () => {
                 <Menu className="h-6 w-6" />
               </Button>
             </SheetTrigger>
-            <SheetContent className="w-[250px] sm:w-[300px]">
-              <div className="flex flex-col gap-6 pt-6">
+            <SheetContent className="w-[280px] sm:w-[320px]">
+              <div className="flex flex-col gap-8 pt-8">
                 <div className="flex items-center">
-                  <SwiftLogoWithText height={30} />
+                  <SwiftLogoWithText height={32} />
                 </div>
                 <nav className="flex flex-col gap-4">
                   {navItems.map((item, index) => (
@@ -131,7 +146,7 @@ const Header: React.FC = () => {
                       <Link 
                         key={index}
                         href={item.href}
-                        className="py-2 font-medium hover:text-primary transition-colors"
+                        className="py-2 font-medium hover:text-primary transition-colors text-lg"
                       >
                         {item.label}
                       </Link>
@@ -139,24 +154,27 @@ const Header: React.FC = () => {
                       <a 
                         key={index}
                         href={item.href}
-                        className="py-2 font-medium hover:text-primary transition-colors"
+                        className="py-2 font-medium hover:text-primary transition-colors text-lg"
                       >
                         {item.label}
                       </a>
                     )
                   ))}
-                  <div className="flex flex-col gap-2 pt-4">
+                  <div className="flex flex-col gap-3 pt-6 mt-2 border-t border-gray-100">
                     {currentUser ? (
                       /* Authenticated mobile actions */
                       <>
+                        <div className="text-sm text-charcoal/60 mb-2">
+                          Signed in as {currentUser.firstName || currentUser.email.split('@')[0]}
+                        </div>
                         <Link href="/dashboard" className="w-full">
-                          <Button className="bg-primary text-white hover:bg-primary/90 w-full">
+                          <Button className="bg-primary text-white hover:bg-primary/90 w-full rounded-full">
                             Dashboard
                           </Button>
                         </Link>
                         <Button 
                           variant="outline" 
-                          className="border-primary text-primary hover:bg-primary hover:text-white w-full"
+                          className="border-gray-200 text-charcoal hover:bg-gray-50 w-full rounded-full"
                           onClick={handleLogout}
                         >
                           Logout
@@ -166,16 +184,16 @@ const Header: React.FC = () => {
                       /* Public mobile actions */
                       <>
                         <Link href="/auth" className="w-full">
-                          <Button 
-                            variant="outline" 
-                            className="border-primary text-primary hover:bg-primary hover:text-white w-full"
-                          >
-                            Login
+                          <Button className="bg-primary text-white hover:bg-primary/90 w-full rounded-full">
+                            Get Started
                           </Button>
                         </Link>
                         <Link href="/auth" className="w-full">
-                          <Button className="bg-primary text-white hover:bg-primary/90 w-full">
-                            Get Started
+                          <Button 
+                            variant="outline" 
+                            className="border-gray-200 text-charcoal hover:bg-gray-50 w-full rounded-full"
+                          >
+                            Log In
                           </Button>
                         </Link>
                       </>

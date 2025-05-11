@@ -14,7 +14,7 @@ const Home: React.FC = () => {
   return (
     <div className="min-h-screen flex flex-col bg-cream">
       <Header />
-      <main className="flex-grow">
+      <main className="flex-grow pt-24 md:pt-28">
         <Hero />
         <Benefits />
         <HowItWorks />
