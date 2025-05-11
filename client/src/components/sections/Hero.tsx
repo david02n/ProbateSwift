@@ -26,10 +26,10 @@ const Hero: React.FC = () => {
             ProbateSwift guides you step by step, cutting weeks off the timeline, easing stress, and reducing costs.
           </p>
           
-          <div className="flex flex-col sm:flex-row gap-4 mb-12">
-            <div className="flex-1 sm:max-w-[200px]">
+          <div className="flex flex-col sm:flex-row gap-4 mb-12 justify-center">
+            <div className="flex-1 sm:max-w-[250px]">
               <a href="/auth" aria-label="Start your probate assessment" className="w-full block">
-                <Button size="lg" className="bg-primary text-white hover:bg-primary/90 rounded-full shadow-md px-8 py-6 text-lg w-full">
+                <Button size="lg" className="bg-primary text-white hover:bg-primary/90 rounded-full shadow-md px-8 py-6 text-lg w-full justify-center">
                   <span>Start for Free</span>
                   <ChevronRight className="ml-2 h-5 w-5" aria-hidden="true" />
                 </Button>
@@ -39,18 +39,18 @@ const Hero: React.FC = () => {
             <div className="sm:hidden mt-4">
               <Button 
                 variant="outline" 
-                className="border-primary text-primary hover:bg-primary/5 rounded-full w-full"
+                className="border-primary text-primary hover:bg-primary/5 rounded-full w-full justify-center"
                 onClick={() => setIsAssessmentOpen(true)}
               >
                 <HelpCircle className="h-4 w-4 mr-2" />
                 <span>Is probate required?</span>
               </Button>
             </div>
-            <div className="hidden sm:flex flex-1 sm:max-w-[200px]">
+            <div className="hidden sm:flex flex-1 sm:max-w-[250px]">
               <Button 
                 size="lg" 
                 variant="outline" 
-                className="border-primary text-primary hover:bg-primary/5 rounded-full px-8 py-6 text-lg w-full"
+                className="border-primary text-primary hover:bg-primary/5 rounded-full px-8 py-6 text-lg w-full justify-center"
                 onClick={() => setIsAssessmentOpen(true)}
               >
                 <HelpCircle className="h-5 w-5 mr-2" />

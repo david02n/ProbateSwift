@@ -101,7 +101,7 @@ const Header: React.FC = () => {
                 </Button>
               </div>
               <Link href="/dashboard">
-                <Button className="bg-primary text-white hover:bg-primary/90 rounded-full shadow-sm">
+                <Button className="bg-primary text-white hover:bg-primary/90 rounded-full shadow-sm px-6 py-2 justify-center min-w-[120px]">
                   <User className="h-4 w-4 mr-2" />
                   Dashboard
                 </Button>
@@ -119,7 +119,7 @@ const Header: React.FC = () => {
                 </Button>
               </Link>
               <Link href="/auth">
-                <Button className="bg-primary text-white hover:bg-primary/90 rounded-full shadow-sm">
+                <Button className="bg-primary text-white hover:bg-primary/90 rounded-full shadow-sm px-6 py-2 justify-center min-w-[120px]">
                   Get Started
                 </Button>
               </Link>
@@ -171,13 +171,13 @@ const Header: React.FC = () => {
                           Signed in as {currentUser.firstName || currentUser.email.split('@')[0]}
                         </div>
                         <Link href="/dashboard" className="w-full">
-                          <Button className="bg-primary text-white hover:bg-primary/90 w-full rounded-full">
+                          <Button className="bg-primary text-white hover:bg-primary/90 w-full rounded-full py-2 justify-center">
                             Dashboard
                           </Button>
                         </Link>
                         <Button 
                           variant="outline" 
-                          className="border-gray-200 text-charcoal hover:bg-gray-50 w-full rounded-full"
+                          className="border-gray-200 text-charcoal hover:bg-gray-50 w-full rounded-full py-2 justify-center"
                           onClick={(e) => {
                             e.preventDefault();
                             handleLogout();
@@ -190,14 +190,14 @@ const Header: React.FC = () => {
                       /* Public mobile actions */
                       <>
                         <Link href="/auth" className="w-full">
-                          <Button className="bg-primary text-white hover:bg-primary/90 w-full rounded-full">
+                          <Button className="bg-primary text-white hover:bg-primary/90 w-full rounded-full py-2 justify-center">
                             Get Started
                           </Button>
                         </Link>
                         <Link href="/auth" className="w-full">
                           <Button 
                             variant="outline" 
-                            className="border-gray-200 text-charcoal hover:bg-gray-50 w-full rounded-full"
+                            className="border-gray-200 text-charcoal hover:bg-gray-50 w-full rounded-full py-2 justify-center"
                           >
                             Log In
                           </Button>
