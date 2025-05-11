@@ -63,11 +63,12 @@ const Hero: React.FC = () => {
           <p className="text-sm text-charcoal/60 -mt-8 mb-8 hidden sm:block">No credit card required</p>
           
           {/* Logo at the bottom */}
-          <div className="flex justify-center mt-8">
+          <div className="flex justify-center mt-12 mb-4">
             <img 
               src={logoBirdImage}
               alt="ProbateSwift Logo" 
-              className="w-16 h-16 opacity-80"
+              className="w-[200px] h-auto"
+              style={{ filter: 'brightness(1.1) contrast(1.1)' }}
             />
           </div>
         </div>
