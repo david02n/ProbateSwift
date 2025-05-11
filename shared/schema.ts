@@ -12,6 +12,8 @@ export const users = pgTable("users", {
   createdAt: timestamp("created_at").defaultNow(),
   lastLogin: timestamp("last_login"),
   isGuest: boolean("is_guest").default(false),
+  firebaseUid: text("firebase_uid").unique(),
+  photoURL: text("photo_url"),
 });
 
 // Assessment results model 

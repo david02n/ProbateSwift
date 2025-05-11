@@ -40,6 +40,7 @@ export interface IStorage {
   getUser(id: number): Promise<User | undefined>;
   getUserByEmail(email: string): Promise<User | undefined>;
   createUser(user: InsertUser): Promise<User>;
+  updateUser(id: number, userData: Partial<InsertUser>): Promise<User | undefined>;
   updateUserLastLogin(id: number): Promise<void>;
   
   // Assessment methods
@@ -203,6 +204,26 @@ export class MemStorage implements IStorage {
     
     this.users.set(id, user);
     return user;
+  }
+
+  async updateUser(id: number, userData: Partial<InsertUser>): Promise<User | undefined> {
+    const user = this.users.get(id);
+    if (!user) return undefined;
+
+    const updatedUser: User = {
+      ...user,
+      ...userData,
+      // Ensure these fields are properly typed as they may be undefined in userData
+      firstName: userData.firstName !== undefined ? userData.firstName : user.firstName,
+      lastName: userData.lastName !== undefined ? userData.lastName : user.lastName,
+      isGuest: userData.isGuest !== undefined ? userData.isGuest : user.isGuest,
+      // Add Firebase fields
+      firebaseUid: userData.firebaseUid !== undefined ? userData.firebaseUid : user.firebaseUid || null,
+      photoURL: userData.photoURL !== undefined ? userData.photoURL : user.photoURL || null,
+    };
+    
+    this.users.set(id, updatedUser);
+    return updatedUser;
   }
 
   async updateUserLastLogin(id: number): Promise<void> {
@@ -613,6 +634,18 @@ export class DatabaseStorage implements IStorage {
 
   async createUser(insertUser: InsertUser): Promise<User> {
     const [user] = await db.insert(users).values(insertUser).returning();
+    return user;
+  }
+
+  async updateUser(id: number, userData: Partial<InsertUser>): Promise<User | undefined> {
+    const [user] = await db.update(users)
+      .set({
+        ...userData,
+        ...(userData.lastLogin ? { lastLogin: userData.lastLogin } : {})
+      })
+      .where(eq(users.id, id))
+      .returning();
+    
     return user;
   }
 
