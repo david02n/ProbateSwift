@@ -91,17 +91,9 @@ const Hero: React.FC = () => {
         </div>
         
         <div className="md:w-1/2">
-          <Card className="bg-muted p-6 md:p-8 rounded-xl shadow-lg">
-            <div className="mb-6">
-              <div className="w-12 h-12 bg-primary rounded-full flex items-center justify-center text-white mx-auto mb-3">
-                <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
-                </svg>
-              </div>
-            </div>
-            
+          <Card className="bg-muted p-6 md:p-8 rounded-xl shadow-lg">            
             {/* CTA Card */}
-            <div className="bg-white rounded-lg p-6 shadow-sm mb-6 border border-lavender/30">
+            <div className="bg-white rounded-lg p-6 shadow-sm border border-lavender/30">
               <h4 className="font-medium mb-3 text-center text-lg">Already know probate is required?</h4>
               <p className="text-charcoal/80 mb-5 text-center">
                 Register to start using our advanced document processing and estate management tools
@@ -109,34 +101,9 @@ const Hero: React.FC = () => {
               <a href="/auth" className="block">
                 <Button className="w-full bg-primary text-white hover:bg-primary/90 py-3 flex items-center justify-center">
                   <span className="font-medium">Get Started</span>
-                  <ArrowRight className="ml-2 h-4 w-4" />
+                  <ArrowRight className="ml-2 h-4 w-4" aria-hidden="true" />
                 </Button>
               </a>
-            </div>
-            
-            {/* Key Benefits */}
-            <div className="bg-white/40 rounded-lg p-4 mb-6">
-              <div className="flex items-center mb-3">
-                <CheckCircle className="h-4 w-4 text-success mr-2" />
-                <span className="text-sm font-medium">Automatic document analysis</span>
-              </div>
-              <div className="flex items-center mb-3">
-                <CheckCircle className="h-4 w-4 text-success mr-2" />
-                <span className="text-sm font-medium">Real-time estate value calculations</span>
-              </div>
-              <div className="flex items-center">
-                <CheckCircle className="h-4 w-4 text-success mr-2" />
-                <span className="text-sm font-medium">Guided multi-executor workflows</span>
-              </div>
-            </div>
-            
-            <div className="flex items-center justify-center">
-              <div className="flex items-center text-sm text-mid-grey">
-                <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
-                </svg>
-                <span>Your information is secure</span>
-              </div>
             </div>
           </Card>
         </div>
