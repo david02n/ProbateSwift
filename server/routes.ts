@@ -70,6 +70,56 @@ export async function registerRoutes(app: Express): Promise<Server> {
   };
   // Set up authentication routes and middleware
   setupAuth(app);
+  
+  // Google Authentication endpoint
+  app.post('/api/auth/google', async (req: Request, res: Response) => {
+    try {
+      const { email, firstName, lastName, firebaseUid, photoURL } = req.body;
+      
+      if (!email) {
+        return res.status(400).json({ error: 'Email is required' });
+      }
+      
+      // Check if user exists
+      let user = await storage.getUserByEmail(email);
+      
+      if (user) {
+        // Update existing user with Firebase details
+        user = await storage.updateUser(user.id, {
+          firebaseUid,
+          lastLogin: new Date(),
+          // Only update these if they don't exist already
+          firstName: user.firstName || firstName,
+          lastName: user.lastName || lastName,
+          photoURL: user.photoURL || photoURL
+        });
+      } else {
+        // Create new user
+        user = await storage.createUser({
+          email,
+          firstName,
+          lastName,
+          firebaseUid,
+          photoURL,
+          password: '', // Not used with Firebase auth
+          isGuest: false,
+          createdAt: new Date(),
+          lastLogin: new Date()
+        });
+      }
+      
+      // Log the user in
+      req.login(user, (err) => {
+        if (err) {
+          return res.status(500).json({ error: 'Failed to login' });
+        }
+        return res.status(200).json(user);
+      });
+    } catch (error) {
+      console.error('Google auth error:', error);
+      res.status(500).json({ error: 'Failed to authenticate with Google' });
+    }
+  });
 
   // API routes for assessment results
   app.get("/api/assessment", async (req, res) => {
