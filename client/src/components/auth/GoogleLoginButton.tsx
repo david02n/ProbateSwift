@@ -19,8 +19,19 @@ const GoogleLoginButton: React.FC<GoogleLoginButtonProps> = ({
 }) => {
   const [isLoading, setIsLoading] = useState(false);
   const [authError, setAuthError] = useState<string | null>(null);
+  const [isMobile, setIsMobile] = useState(false);
   const { toast } = useToast();
   const [, setLocation] = useLocation();
+  
+  // Detect mobile devices on mount
+  useEffect(() => {
+    const mobile = /Mobi|Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
+    setIsMobile(mobile);
+    
+    if (mobile) {
+      console.log('GoogleLoginButton: Mobile browser detected');
+    }
+  }, []);
 
   // Handle Google redirect result on component mount
   useEffect(() => {
@@ -57,9 +68,21 @@ const GoogleLoginButton: React.FC<GoogleLoginButtonProps> = ({
           const cleanUrl = window.location.pathname;
           window.history.replaceState({}, document.title, cleanUrl);
           
-          // Redirect to dashboard if on auth page
+          // Redirect to dashboard if on auth page with special handling for mobile
           if (window.location.pathname === '/auth') {
-            setLocation('/');
+            console.log('GoogleLoginButton: Redirecting from auth page to dashboard');
+            
+            // For mobile browsers, use direct navigation for more reliable cookies
+            if (isMobile) {
+              console.log('GoogleLoginButton: Using direct navigation for mobile auth success');
+              // Small delay to ensure cookies are set
+              setTimeout(() => {
+                window.location.href = '/';
+              }, 100);
+            } else {
+              // For desktop, use Wouter
+              setLocation('/');
+            }
           }
         } else {
           console.log('GoogleLoginButton: No redirect result found');
@@ -105,9 +128,21 @@ const GoogleLoginButton: React.FC<GoogleLoginButtonProps> = ({
             : 'Welcome to ProbateSwift!',
         });
         
-        // Navigate to dashboard if on auth page
+        // Navigate to dashboard if on auth page with special handling for mobile
         if (window.location.pathname === '/auth') {
-          setLocation('/');
+          console.log('GoogleLoginButton popup: Redirecting from auth page to dashboard');
+          
+          // For mobile browsers, use direct navigation for more reliable cookies
+          if (isMobile) {
+            console.log('GoogleLoginButton popup: Using direct navigation for mobile auth success');
+            // Small delay to ensure cookies are set
+            setTimeout(() => {
+              window.location.href = '/';
+            }, 100);
+          } else {
+            // For desktop, use Wouter
+            setLocation('/');
+          }
         }
       } else {
         // If result is null, we're using redirect flow - add a parameter to indicate auth return

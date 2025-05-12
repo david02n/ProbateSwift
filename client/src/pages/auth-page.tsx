@@ -144,12 +144,41 @@ const AuthPage: React.FC<AuthPageProps> = ({ tab }) => {
     },
   });
 
-  // Handle login submission
+  // Handle login submission with special mobile handling
   const onLoginSubmit = (values: LoginFormValues) => {
-    loginMutation.mutate(values);
+    // Save email in shared window object to aid in potential login retries
+    if (window.sharedAuthFunctions) {
+      window.sharedAuthFunctions.loginFormEmail = values.email;
+    }
+    
+    // Log for debugging mobile issues
+    if (isMobile) {
+      console.log('Mobile login submission with special handling');
+    }
+    
+    loginMutation.mutate(values, {
+      onSuccess: (data) => {
+        console.log('Login successful');
+        // For mobile devices, use direct navigation for more reliable redirect
+        if (isMobile) {
+          console.log('Using direct navigation for mobile login success');
+          // Small delay to allow cookies to be set
+          setTimeout(() => {
+            window.location.href = '/';
+          }, 100);
+        }
+      },
+      onError: (error) => {
+        console.error('Login error:', error);
+        // For mobile, show clear error and provide guidance
+        if (isMobile) {
+          alert('Login failed. Please check your credentials and try again.');
+        }
+      }
+    });
   };
 
-  // Handle register submission
+  // Handle register submission with special mobile handling
   const onRegisterSubmit = (values: RegisterFormValues) => {
     // Get assessment data from localStorage if available
     const savedResult = localStorage.getItem('probate_assessment_result');
@@ -164,7 +193,31 @@ const AuthPage: React.FC<AuthPageProps> = ({ tab }) => {
       } : undefined
     };
     
-    registerMutation.mutate(userRegisterData);
+    // Log for debugging mobile issues
+    if (isMobile) {
+      console.log('Mobile registration submission with special handling');
+    }
+    
+    registerMutation.mutate(userRegisterData, {
+      onSuccess: (data) => {
+        console.log('Registration successful');
+        // For mobile devices, use direct navigation for more reliable redirect
+        if (isMobile) {
+          console.log('Using direct navigation for mobile registration success');
+          // Small delay to allow cookies to be set
+          setTimeout(() => {
+            window.location.href = '/';
+          }, 100);
+        }
+      },
+      onError: (error) => {
+        console.error('Registration error:', error);
+        // For mobile, show clear error and provide guidance
+        if (isMobile) {
+          alert('Registration failed. The email might already be in use or there was a server error.');
+        }
+      }
+    });
   };
 
   // Enhanced redirect handling for mobile and desktop browsers
