@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useEffect } from "react";
 import Header from "@/components/layout/Header";
 import Footer from "@/components/layout/Footer";
 import Hero from "@/components/sections/Hero";
@@ -13,6 +13,27 @@ import FAQ from "@/components/sections/FAQ";
 import CTA from "@/components/sections/CTA";
 
 const Home: React.FC = () => {
+  // Add detection for mobile browsers and set special metadata
+  useEffect(() => {
+    // Log environment info for debugging
+    console.log('Home page loaded');
+    console.log('User agent:', navigator.userAgent);
+    
+    // Add special metadata for mobile browsers to ensure proper routing
+    if (/Mobi|Android|iPhone|iPad|iPod/i.test(navigator.userAgent)) {
+      console.log('Mobile browser detected in Home page');
+      
+      // Add a meta tag to help with mobile-specific routing
+      const metaTag = document.createElement('meta');
+      metaTag.name = 'viewport-extra';
+      metaTag.content = 'width=device-width, initial-scale=1, maximum-scale=1, mobile-web-app-capable=yes';
+      document.head.appendChild(metaTag);
+      
+      // Set special class on body for mobile-specific CSS
+      document.body.classList.add('mobile-browser');
+    }
+  }, []);
+  
   return (
     <div className="min-h-screen flex flex-col bg-white">
       <Header />

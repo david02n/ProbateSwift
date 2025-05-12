@@ -60,7 +60,9 @@ function Router() {
     // Render public routes with more specific route definitions
     return (
       <Switch>
-        <Route path="/auth" component={AuthPage} />
+        <Route path="/auth">
+          <AuthPage />
+        </Route>
         <Route path="/auth/:tab">
           {(params) => <AuthPage tab={params.tab} />}
         </Route>

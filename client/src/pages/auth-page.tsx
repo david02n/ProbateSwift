@@ -1,6 +1,6 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useAuth } from "@/hooks/use-auth";
-import { Redirect } from "wouter";
+import { Redirect, useLocation, useRoute } from "wouter";
 import GoogleLoginButton from "@/components/auth/GoogleLoginButton";
 
 // Extend Window interface to include our shared functions
@@ -56,9 +56,44 @@ const registerSchema = z.object({
 
 type RegisterFormValues = z.infer<typeof registerSchema>;
 
-const AuthPage: React.FC = () => {
+// Define props for AuthPage for better TypeScript support
+interface AuthPageProps {
+  tab?: string;
+}
+
+const AuthPage: React.FC<AuthPageProps> = ({ tab }) => {
   const { user, isLoading, loginMutation, registerMutation } = useAuth();
   const [activeTab, setActiveTab] = useState<string>("login");
+  const [location] = useLocation();
+  
+  // Initialize tab from URL parameters or props
+  useEffect(() => {
+    // Get tab from URL if present
+    const searchParams = new URLSearchParams(window.location.search);
+    const tabParam = searchParams.get('tab');
+    
+    // Log for debugging
+    console.log('Auth page initialized');
+    console.log('URL location:', location);
+    console.log('Tab from props:', tab);
+    console.log('Tab from URL:', tabParam);
+    
+    // Set tab based on available data
+    if (tabParam === 'register' || tabParam === 'login') {
+      console.log('Setting tab from URL param:', tabParam);
+      setActiveTab(tabParam);
+    } else if (tab === 'register' || tab === 'login') {
+      console.log('Setting tab from props:', tab);
+      setActiveTab(tab);
+    }
+    
+    // Handle hash fragments (common in mobile browsers)
+    if (window.location.hash && window.location.hash.includes('tab=')) {
+      const hashTab = window.location.hash.includes('tab=register') ? 'register' : 'login';
+      console.log('Setting tab from hash:', hashTab);
+      setActiveTab(hashTab);
+    }
+  }, [tab, location]);
   
   // Share the setActiveTab function with the parent window for error handling
   window.sharedAuthFunctions = {
@@ -108,9 +143,26 @@ const AuthPage: React.FC = () => {
     registerMutation.mutate(userRegisterData);
   };
 
-  // Redirect if already logged in
+  // Enhanced redirect handling for mobile and desktop browsers
+  useEffect(() => {
+    // If user is authenticated, redirect programmatically
+    // This is more reliable on mobile browsers
+    if (user && !isLoading) {
+      console.log('User is authenticated, redirecting to dashboard');
+      
+      // Use window.location for more reliable mobile redirects
+      if (/Mobi|Android/i.test(navigator.userAgent)) {
+        console.log('Mobile browser detected, using window.location');
+        window.location.href = '/';
+      }
+      // Otherwise let Wouter handle it via the return
+    }
+  }, [user, isLoading]);
+  
+  // Redirect if already logged in (will be used if useEffect redirect doesn't trigger)
   if (user) {
-    return <Redirect to="/dashboard" />;
+    console.log('Redirecting with Wouter');
+    return <Redirect to="/" />;
   }
 
   return (
