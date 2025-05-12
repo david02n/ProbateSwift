@@ -76,6 +76,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const { idToken, email, displayName, photoURL } = req.body;
       
+      // Log request details for debugging
+      console.log('Google auth request received:');
+      console.log(`Email: ${email || 'Not provided'}`);
+      console.log(`User Agent: ${req.headers['user-agent'] || 'Not provided'}`);
+      console.log(`Is Mobile: ${/Mobi|Android|iPhone|iPad|iPod/i.test(req.headers['user-agent'] || '')}`);
+      console.log(`Origin: ${req.headers.origin || 'Not provided'}`);
+      console.log(`Host: ${req.headers.host || 'Not provided'}`);
+      
       if (!email) {
         return res.status(400).json({ error: 'Email is required' });
       }

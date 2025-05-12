@@ -118,6 +118,14 @@ export function setupAuth(app: Express) {
     // For production, always require secure cookies
     const isProduction = process.env.NODE_ENV === 'production';
     
+    // Check if it's a mobile user agent for special handling
+    const userAgent = req.headers['user-agent'] || '';
+    const isMobile = /Mobi|Android|iPhone|iPad|iPod/i.test(userAgent);
+    
+    if (isMobile) {
+      console.log('Mobile browser detected in auth module');
+    }
+    
     // In production, enforce secure cookies. In development, match the request protocol.
     return isProduction ? true : isSecure;
   };
@@ -145,16 +153,30 @@ export function setupAuth(app: Express) {
       console.log(`Host: ${host}`);
       console.log(`Origin: ${origin}`);
       console.log(`Referer: ${referer}`);
+      
+      // Check if it's a mobile browser
+      const userAgent = req.headers['user-agent'] || '';
+      const isMobile = /Mobi|Android|iPhone|iPad|iPod/i.test(userAgent);
+      
+      console.log(`Mobile device: ${isMobile ? 'yes' : 'no'}`);
       console.log(`Using cookie domain: ${domain || 'none'}`);
       console.log(`Secure cookies: ${secure}`);
-      console.log(`SameSite: none (for cross-domain support)`);
+      console.log(`SameSite: ${isMobile ? 'lax (for mobile)' : 'none (for cross-domain support)'}`);
+    }
+    
+    // Check if it's a mobile user agent for special handling
+    const userAgent = req.headers['user-agent'] || '';
+    const isMobile = /Mobi|Android|iPhone|iPad|iPod/i.test(userAgent);
+    
+    if (isMobile && (req.path === '/api/login' || req.path === '/api/auth/google')) {
+      console.log('Mobile browser detected for authentication endpoint');
     }
     
     // Configure cookie settings for this request
     const cookieSettings: session.CookieOptions = {
       secure: secure,
       maxAge: 1000 * 60 * 60 * 24 * 7, // 1 week
-      sameSite: 'none', // Allow cross-site cookies for authentication
+      sameSite: isMobile ? 'lax' : 'none', // Use 'lax' for mobile, 'none' for cross-site on desktop
       httpOnly: true,
     };
     
@@ -311,6 +333,10 @@ export function setupAuth(app: Express) {
         res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
         res.setHeader('Pragma', 'no-cache');
         
+        // Check if it's a mobile browser
+        const userAgent = req.headers['user-agent'] || '';
+        const isMobile = /Mobi|Android|iPhone|iPad|iPod/i.test(userAgent);
+        
         // Set an additional cookie as a backup method
         const host = req.get('host') || '';
         if (host.includes('probateswift.com')) {
@@ -318,21 +344,45 @@ export function setupAuth(app: Express) {
           res.cookie('probswft_check', 'ok', {
             httpOnly: false, // Make visible to JavaScript for debugging
             secure: true,
-            sameSite: 'none',
+            sameSite: isMobile ? 'lax' : 'none', // Use lax for mobile browsers
             domain: '.probateswift.com',
-            maxAge: 1000 * 60 * 60 * 24 // 1 day
+            maxAge: 1000 * 60 * 60 * 24 * 7 // 7 days
           });
-          console.log('Set probswft_check cookie for .probateswift.com');
-        } else if (host.includes('replit.app')) {
+          console.log(`Set probswft_check cookie for .probateswift.com (SameSite: ${isMobile ? 'lax' : 'none'})`);
+          
+          // Set additional mobile-specific cookie if needed
+          if (isMobile) {
+            res.cookie('mobile_auth', 'true', {
+              httpOnly: false,
+              secure: true,
+              sameSite: 'lax',
+              domain: '.probateswift.com',
+              maxAge: 1000 * 60 * 60 * 24 * 7
+            });
+            console.log('Set mobile-specific cookie for .probateswift.com');
+          }
+        } else if (host.includes('replit.app') || host.includes('replit.dev')) {
           // For Replit domains
-          res.cookie('rpltsft_check', 'ok', {
+          const cookieName = isMobile ? 'mblsft_check' : 'rpltsft_check';
+          res.cookie(cookieName, 'ok', {
             httpOnly: false,
             secure: true,
-            sameSite: 'none',
+            sameSite: isMobile ? 'lax' : 'none',
             domain: host.includes('probateswift') ? 'probateswift.replit.app' : undefined,
-            maxAge: 1000 * 60 * 60 * 24
+            maxAge: 1000 * 60 * 60 * 24 * 7
           });
-          console.log(`Set rpltsft_check cookie for ${host.includes('probateswift') ? 'probateswift.replit.app' : 'current host'}`);
+          console.log(`Set ${cookieName} cookie for ${host.includes('probateswift') ? 'probateswift.replit.app' : 'current host'} (SameSite: ${isMobile ? 'lax' : 'none'})`);
+          
+          // Set additional mobile-specific cookie if needed
+          if (isMobile) {
+            res.cookie('mobile_auth', 'true', {
+              httpOnly: false,
+              secure: true,
+              sameSite: 'lax',
+              maxAge: 1000 * 60 * 60 * 24 * 7
+            });
+            console.log('Set mobile-specific cookie for replit domain');
+          }
         }
         
         return res.json(user);
