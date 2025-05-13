@@ -170,6 +170,13 @@ export function setupAuth(app: Express) {
     
     if (isMobile && (req.path === '/api/login' || req.path === '/api/auth/google')) {
       console.log('Mobile browser detected for authentication endpoint');
+      console.log('Mobile details:', {
+        isFacebookBrowser: /FBAN|FBAV/i.test(userAgent),
+        isInstagramBrowser: /Instagram/i.test(userAgent),
+        isIOSBrowser: /iPad|iPhone|iPod/i.test(userAgent) && !(/CriOS|FxiOS/i.test(userAgent)),
+        isAndroidBrowser: /Android/i.test(userAgent),
+        responseType: 'json'
+      });
     }
     
     // Configure cookie settings for this request
@@ -179,6 +186,14 @@ export function setupAuth(app: Express) {
       sameSite: isMobile ? 'lax' : 'none', // Use 'lax' for mobile, 'none' for cross-site on desktop
       httpOnly: true,
     };
+    
+    // Additional protections for iOS browsers that have stricter cookie policies
+    if (isMobile && /iPad|iPhone|iPod/i.test(userAgent) && !(/CriOS|FxiOS/i.test(userAgent))) {
+      console.log('iOS browser detected, using stricter cookie settings');
+      // For iOS browsers, make cookies more permissive to work with their limitations
+      cookieSettings.sameSite = 'none';
+      cookieSettings.secure = true; // iOS requires secure for SameSite=None
+    }
     
     // Add domain if available
     if (domain) {

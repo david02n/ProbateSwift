@@ -104,34 +104,44 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
       
       // Use the token as the Firebase UID
-      const firebaseUid = idToken ? `google:${email}` : null;
+      const firebaseUid = idToken ? `google:${email}` : undefined;
       
       // Check if user exists
       let user = await storage.getUserByEmail(email);
       
       if (user) {
         // Update existing user with Firebase details
-        user = await storage.updateUser(user.id, {
+        const updatedUser = await storage.updateUser(user.id, {
           firebaseUid,
-          photoURL,
+          photoURL: photoURL || undefined,
           // Only update these if they don't exist already
-          firstName: user.firstName || firstName,
-          lastName: user.lastName || lastName
+          firstName: user.firstName || firstName || undefined,
+          lastName: user.lastName || lastName || undefined
         });
         
-        // Update last login
-        await storage.updateUserLastLogin(user.id);
+        // Make sure we have a valid user before continuing
+        if (updatedUser) {
+          user = updatedUser;
+          // Update last login
+          await storage.updateUserLastLogin(user.id);
+        }
       } else {
         // Create new user
         user = await storage.createUser({
           email,
-          firstName,
-          lastName,
+          firstName: firstName || undefined,
+          lastName: lastName || undefined,
           firebaseUid,
-          photoURL,
+          photoURL: photoURL || undefined,
           password: '', // Not used with Firebase auth
           isGuest: false
         });
+      }
+      
+      // Make sure we have a valid user before login
+      if (!user) {
+        console.error('No valid user object for login');
+        return res.status(500).json({ error: 'Failed to create or update user' });
       }
       
       // Log the user in
