@@ -1626,8 +1626,6 @@ const PeoplePage: React.FC = () => {
                         </div>
                       </div>
                     )}
-                      </div>
-                    </div>
                   </div>
                   
                   <DialogFooter className="flex flex-col sm:flex-row gap-2">
