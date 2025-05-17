@@ -985,7 +985,7 @@ const PeoplePage: React.FC = () => {
               setCurrentExecutor(null);
             }
           }}>
-            <DialogContent className="sm:max-w-md md:max-w-lg">
+            <DialogContent className="sm:max-w-md md:max-w-xl lg:max-w-2xl max-h-[90vh] overflow-y-auto">
               <DialogHeader>
                 <DialogTitle>
                   {isEditing 
@@ -1035,42 +1035,42 @@ const PeoplePage: React.FC = () => {
               
               <Form {...form}>
                 <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-5">
-                  {/* Title */}
-                  <FormField
-                    control={form.control}
-                    name="title"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Title</FormLabel>
-                        <Select onValueChange={field.onChange} defaultValue={field.value}>
-                          <FormControl>
-                            <SelectTrigger>
-                              <SelectValue placeholder="Select title (optional)" />
-                            </SelectTrigger>
-                          </FormControl>
-                          <SelectContent>
-                            <SelectItem value="Mr">Mr</SelectItem>
-                            <SelectItem value="Mrs">Mrs</SelectItem>
-                            <SelectItem value="Miss">Miss</SelectItem>
-                            <SelectItem value="Ms">Ms</SelectItem>
-                            <SelectItem value="Dr">Dr</SelectItem>
-                            <SelectItem value="Prof">Prof</SelectItem>
-                            <SelectItem value="Rev">Rev</SelectItem>
-                            <SelectItem value="Other">Other</SelectItem>
-                          </SelectContent>
-                        </Select>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                  
-                  {/* Name Information */}
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
+                  {/* Name Section - Title, First name, Last name */}
+                  <div className="grid grid-cols-1 sm:grid-cols-4 gap-4">
+                    {/* Title - Reduced width */}
+                    <FormField
+                      control={form.control}
+                      name="title"
+                      render={({ field }) => (
+                        <FormItem className="sm:col-span-1">
+                          <FormLabel>Title</FormLabel>
+                          <Select onValueChange={field.onChange} defaultValue={field.value}>
+                            <FormControl>
+                              <SelectTrigger>
+                                <SelectValue placeholder="Title" />
+                              </SelectTrigger>
+                            </FormControl>
+                            <SelectContent>
+                              <SelectItem value="Mr">Mr</SelectItem>
+                              <SelectItem value="Mrs">Mrs</SelectItem>
+                              <SelectItem value="Miss">Miss</SelectItem>
+                              <SelectItem value="Ms">Ms</SelectItem>
+                              <SelectItem value="Dr">Dr</SelectItem>
+                              <SelectItem value="Prof">Prof</SelectItem>
+                              <SelectItem value="Rev">Rev</SelectItem>
+                              <SelectItem value="Other">Other</SelectItem>
+                            </SelectContent>
+                          </Select>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    {/* First Name - More Space */}
                     <FormField
                       control={form.control}
                       name="firstName"
                       render={({ field }) => (
-                        <FormItem>
+                        <FormItem className="sm:col-span-2">
                           <FormLabel>First name(s) <span className="text-red-500">*</span></FormLabel>
                           <FormControl>
                             <Input placeholder="Enter first name" {...field} />
@@ -1080,25 +1080,12 @@ const PeoplePage: React.FC = () => {
                       )}
                     />
                     
-                    <FormField
-                      control={form.control}
-                      name="middleNames"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Middle name(s)</FormLabel>
-                          <FormControl>
-                            <Input placeholder="Middle names (optional)" {...field} />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                    
+                    {/* Last Name */}
                     <FormField
                       control={form.control}
                       name="lastName"
                       render={({ field }) => (
-                        <FormItem>
+                        <FormItem className="sm:col-span-1">
                           <FormLabel>Last name <span className="text-red-500">*</span></FormLabel>
                           <FormControl>
                             <Input placeholder="Enter last name" {...field} />
@@ -1108,6 +1095,21 @@ const PeoplePage: React.FC = () => {
                       )}
                     />
                   </div>
+                  
+                  {/* Middle Names (on their own line) */}
+                  <FormField
+                    control={form.control}
+                    name="middleNames"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Middle name(s)</FormLabel>
+                        <FormControl>
+                          <Input placeholder="Middle names (optional)" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
                   
                   {/* Will has name override */}
                   {form.watch("isExecutor") && (
