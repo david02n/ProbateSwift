@@ -1908,17 +1908,23 @@ const PeoplePage: React.FC = () => {
                             <SelectValue placeholder="Select an uploaded document" />
                           </SelectTrigger>
                           <SelectContent>
-                            {/* Filter documents by the selected type */}
+                            {/* Filter documents by the selected type and exclude deleted documents */}
                             {documentList
-                              .filter((doc: any) => doc.type === selectedDocumentType)
+                              .filter((doc: any) => 
+                                doc.type === selectedDocumentType && 
+                                doc.status !== 'deleted'
+                              )
                               .map((doc: any) => (
                                 <SelectItem key={doc.id} value={doc.id.toString()}>
                                   {doc.filename}
                                 </SelectItem>
                               ))}
-                            {documentList.filter((doc: any) => doc.type === selectedDocumentType).length === 0 && (
+                            {documentList.filter((doc: any) => 
+                              doc.type === selectedDocumentType && 
+                              doc.status !== 'deleted'
+                            ).length === 0 && (
                               <SelectItem value="none" disabled>
-                                No {selectedDocumentType.replace('_', ' ')} documents found
+                                No active {selectedDocumentType.replace('_', ' ')} documents found
                               </SelectItem>
                             )}
                           </SelectContent>
