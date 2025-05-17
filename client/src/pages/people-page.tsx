@@ -2191,75 +2191,38 @@ const PeoplePage: React.FC = () => {
                               personData.firstName = extractedData.person.firstName || "Deceased";
                               personData.lastName = extractedData.person.surname || extractedData.person.lastName || "Person";
                               
-                              // Add middle names if present
-                              if (extractedData.person.middleNames) {
-                                personData.middleNames = extractedData.person.middleNames;
-                              }
+                              // Include all fields with default values if not present
+                              personData.middleNames = extractedData.person.middleNames || "";
+                              personData.dateOfBirth = extractedData.person.dateOfBirth || null;
+                              personData.dateOfDeath = extractedData.person.dateOfDeath || null;
                               
-                              // Add dates if present
-                              if (extractedData.person.dateOfBirth) {
-                                personData.dateOfBirth = extractedData.person.dateOfBirth;
-                              }
-                              
-                              if (extractedData.person.dateOfDeath) {
-                                personData.dateOfDeath = extractedData.person.dateOfDeath;
-                              }
-                              
-                              // Add address if present
-                              if (extractedData.person.address) {
-                                if (extractedData.person.address.street) {
-                                  personData.addressLine1 = extractedData.person.address.street;
-                                }
-                                
-                                if (extractedData.person.address.city) {
-                                  personData.city = extractedData.person.address.city;
-                                }
-                                
-                                if (extractedData.person.address.postcode) {
-                                  personData.postCode = extractedData.person.address.postcode;
-                                }
-                              }
+                              // Add address values with defaults
+                              personData.addressLine1 = extractedData.person?.address?.street || "";
+                              personData.city = extractedData.person?.address?.city || "";
+                              personData.postCode = extractedData.person?.address?.postcode || "";
                               
                               // Add place of death if present
-                              if (extractedData.registration && extractedData.registration.placeOfDeath) {
-                                personData.placeOfDeath = extractedData.registration.placeOfDeath;
-                              }
+                              personData.placeOfDeath = extractedData.registration?.placeOfDeath || null;
+                              
+                              // Always set these fields to ensure partial records can be saved
+                              personData.status = 'needs_more_info';
+                              personData.needsMoreInfo = true;
                             } else {
                               // Flat format (new structure)
                               personData.firstName = extractedData.firstName || "Deceased";
                               personData.lastName = extractedData.surname || "Person";
                               
-                              // Add middle names if present
-                              if (extractedData.middleName) {
-                                personData.middleNames = extractedData.middleName;
-                              }
+                              // Include all fields with default values
+                              personData.middleNames = extractedData.middleName || "";
+                              personData.dateOfBirth = extractedData.dateOfBirth || null;
+                              personData.dateOfDeath = extractedData.dateOfDeath || null;
+                              personData.addressLine1 = extractedData.street || "";
+                              personData.city = extractedData.city || "";
+                              personData.postCode = extractedData.postcode || "";
                               
-                              // Add dates if present
-                              if (extractedData.dateOfBirth) {
-                                personData.dateOfBirth = extractedData.dateOfBirth;
-                              }
-                              
-                              if (extractedData.dateOfDeath) {
-                                personData.dateOfDeath = extractedData.dateOfDeath;
-                              }
-                              
-                              // Add address if present 
-                              if (extractedData.street) {
-                                personData.addressLine1 = extractedData.street;
-                              }
-                              
-                              if (extractedData.city) {
-                                personData.city = extractedData.city;
-                              }
-                              
-                              if (extractedData.postcode) {
-                                personData.postCode = extractedData.postcode;
-                              }
-                              
-                              // Add application number if present
-                              if (extractedData.applicationNumber) {
-                                personData.notes = `Application Number: ${extractedData.applicationNumber}`;
-                              }
+                              // Add application number to notes if present
+                              personData.notes = extractedData.applicationNumber ? 
+                                `Application Number: ${extractedData.applicationNumber}` : "";
                               
                               // Always set these fields to ensure the record can be saved
                               personData.needsMoreInfo = true;
