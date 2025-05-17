@@ -173,37 +173,14 @@ export const getQueryFn: <T>(options: {
     }
   };
 
-// Shared mutation handler creator for common mutation patterns
-export function createMutationHandlers<T>(entityName: string, queryKey: string | string[]) {
-  const queryKeyArray = Array.isArray(queryKey) ? queryKey : [queryKey];
-  
-  return {
-    onSuccess: (data: T, variables: any, context: any) => {
-      queryClient.invalidateQueries({ queryKey: queryKeyArray });
-      return {
-        title: `${entityName} saved`,
-        description: `The ${entityName.toLowerCase()} has been saved successfully`,
-      };
-    },
-    onError: (error: Error) => {
-      return {
-        title: `Error saving ${entityName.toLowerCase()}`,
-        description: error.message,
-        variant: "destructive" as const,
-      };
-    }
-  };
-}
-
 export const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
       queryFn: getQueryFn({ on401: "throw" }),
       refetchInterval: false,
       refetchOnWindowFocus: true,  // Refetch when tab gains focus
-      staleTime: 60 * 1000,        // Increased stale time to 60 seconds for better performance
+      staleTime: 30 * 1000,        // Data becomes stale after 30 seconds
       retry: false,
-      gcTime: 5 * 60 * 1000,       // Keep unused data for 5 minutes to prevent redundant fetches
     },
     mutations: {
       retry: false,
