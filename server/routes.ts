@@ -150,6 +150,39 @@ export async function registerRoutes(app: Express): Promise<Server> {
           console.error('Login error:', err);
           return res.status(500).json({ error: 'Failed to login' });
         }
+        
+        // Set additional cookie options for extra security and better mobile support
+        const userAgent = req.headers['user-agent'] || '';
+        const isMobile = /Mobi|Android|iPhone|iPad|iPod/i.test(userAgent);
+        const isIOS = /iPad|iPhone|iPod/i.test(userAgent);
+        const host = req.headers.host || '';
+        const isProbateSwift = host.includes('probateswift.com') || host.includes('probateswift.replit.app');
+        
+        // Log details for debugging
+        console.log(`Google auth login success for: ${user.email}`);
+        console.log(`Device: ${isMobile ? (isIOS ? 'iOS' : 'Android/Other Mobile') : 'Desktop'}`);
+        console.log(`Host: ${host}`);
+        
+        // For iOS devices and production domains, set an additional access token cookie
+        // that is explicitly visible to client-side JavaScript
+        if (isProbateSwift) {
+          const cookieOptions: any = {
+            httpOnly: false, // Make visible to JavaScript
+            secure: true,
+            sameSite: isMobile ? 'lax' : 'none', // Use lax for mobile which handles 'none' poorly
+            maxAge: 1000 * 60 * 60 * 24 * 7 // 7 days
+          };
+          
+          // Set domain for production
+          if (host.includes('probateswift.com')) {
+            cookieOptions.domain = '.probateswift.com';
+          }
+          
+          // Set a visible session indicator cookie for the client to detect
+          res.cookie('ps_auth_token', 'active', cookieOptions);
+          console.log(`Set visible auth cookie for ${host} with SameSite=${cookieOptions.sameSite}`);
+        }
+        
         return res.status(200).json(user);
       });
     } catch (error) {
