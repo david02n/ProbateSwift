@@ -1424,14 +1424,20 @@ const DocumentCard: React.FC<DocumentCardProps> = ({ document, onDelete }) => {
                         </div>
                         <div className="flex items-center justify-between flex-wrap gap-y-1 w-full">
                           <div className="font-medium break-words pr-2 max-w-[80%]">
-                            {Array.isArray(value) ? value.join(', ') : String(value)}
+                            {Array.isArray(value) ? value.join(', ') : 
+                             typeof value === 'object' && value !== null ? 
+                             JSON.stringify(value).replace(/[{}]/g, '').replace(/"/g, '') : 
+                             String(value)}
                           </div>
                           <Button 
                             variant="ghost" 
                             size="icon" 
                             className="h-6 w-6 flex-shrink-0"
                             onClick={() => copyToClipboard(
-                              Array.isArray(value) ? value.join(', ') : String(value), 
+                              Array.isArray(value) ? value.join(', ') : 
+                              typeof value === 'object' && value !== null ? 
+                              JSON.stringify(value).replace(/[{}]/g, '').replace(/"/g, '') : 
+                              String(value), 
                               key.replace(/([A-Z])/g, ' $1').replace(/^./, str => str.toUpperCase())
                             )}
                           >
