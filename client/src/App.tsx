@@ -10,7 +10,7 @@ import AuthPage from "@/pages/auth-page";
 
 // New redesigned pages
 import NewDashboardPage from "@/pages/new-dashboard";
-import ExecutorsPage from "@/pages/executors-page";
+import PeoplePage from "@/pages/executors-page"; // Renamed from ExecutorsPage but file name kept the same
 import EstatePage from "@/pages/estate-page";
 import DocumentsPage from "@/pages/documents-page";
 import DocumentUploadPage from "@/pages/document-upload-page";
@@ -82,7 +82,7 @@ function Router() {
         <Redirect to="/" />
       </Route>
       <Route path="/" component={NewDashboardPage} />
-      <Route path="/executors" component={ExecutorsPage} />
+      <Route path="/people" component={PeoplePage} />
       <Route path="/estate" component={EstatePage} />
       <Route path="/documents" component={DocumentsPage} />
       <Route path="/documents/upload" component={DocumentUploadPage} />

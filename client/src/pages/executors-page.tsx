@@ -80,7 +80,7 @@ const executorFormSchema = z.object({
 
 type ExecutorFormValues = z.infer<typeof executorFormSchema>;
 
-const ExecutorsPage: React.FC = () => {
+const PeoplePage: React.FC = () => {
   const { user } = useAuth();
   const { toast } = useToast();
   // State to track modal open state
@@ -384,9 +384,9 @@ const ExecutorsPage: React.FC = () => {
         <div className="container mx-auto px-4 py-8">
           <div className="max-w-6xl mx-auto">
             <div className="mb-8">
-              <h1 className="text-2xl font-bold mb-2">Executors</h1>
+              <h1 className="text-2xl font-bold mb-2">People</h1>
               <p className="text-gray-600">
-                Manage executor details and professional representatives
+                Manage people involved in the probate process
               </p>
             </div>
             
