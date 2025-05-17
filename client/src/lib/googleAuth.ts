@@ -177,17 +177,27 @@ export async function handleRedirectResult() {
       
       console.log('Backend authentication successful after redirect');
       
-      // Check if we have a return URL in the state
+      // Check if we have a return URL in the state parameter
       try {
-        if (result.user && result._tokenResponse && result._tokenResponse.state) {
-          const stateData = JSON.parse(result._tokenResponse.state);
-          if (stateData.returnUrl) {
-            console.log('Found return URL in state:', stateData.returnUrl);
-            // Will use this for navigation after returning
+        // Access potential state from URL query parameters 
+        const urlParams = new URLSearchParams(window.location.search);
+        const stateParam = urlParams.get('state');
+        
+        if (stateParam) {
+          try {
+            const stateData = JSON.parse(stateParam);
+            if (stateData.returnUrl) {
+              console.log('Found return URL in state parameter:', stateData.returnUrl);
+              // Will use this for navigation after returning
+            }
+          } catch (parseError) {
+            console.log('State parameter was not valid JSON');
           }
+        } else {
+          console.log('No state parameter found in URL');
         }
       } catch (parseError) {
-        console.error('Error parsing state data:', parseError);
+        console.error('Error processing state data:', parseError);
       }
       
       // Return the user data from the server
