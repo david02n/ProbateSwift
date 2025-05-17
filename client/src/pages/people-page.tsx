@@ -289,14 +289,14 @@ const PeoplePage: React.FC = () => {
       setIsLoadingAddresses(true);
       
       // Extract address components from the full address string
-      // For example: "73 St. Andrews Road, Southsea, Hampshire, PO5 1ES"
-      // Format is typically: Building/Street, City, County, Postcode
+      // Format from GetAddress.io is typically: "Building Number Street, City, County, Postcode"
+      // Example: "73 St. Andrews Road, Southsea, Hampshire, PO5 1ES"
       const fullAddress = selectedAddress.address;
       const addressParts = fullAddress.split(', ');
       
       // Parse the address parts
-      const extractedPostcode = addressParts[addressParts.length - 1]; // Last part is postcode
-      const extractedAddressLine1 = addressParts[0]; // First part is building/street
+      const extractedPostcode = addressParts[addressParts.length - 1].trim(); // Last part is postcode
+      const extractedAddressLine1 = addressParts[0].trim(); // First part is building/street
       
       let extractedAddressLine2 = '';
       let extractedCity = '';
@@ -304,17 +304,17 @@ const PeoplePage: React.FC = () => {
       
       // Handle different address formats based on number of parts
       if (addressParts.length === 4) {
-        // Format: Building/Street, City, County, Postcode
-        extractedCity = addressParts[1];
-        extractedCounty = addressParts[2];
+        // Most common UK format: Building/Street, City, County, Postcode
+        extractedCity = addressParts[1].trim();
+        extractedCounty = addressParts[2].trim();
       } else if (addressParts.length === 3) {
-        // Format: Building/Street, City, Postcode
-        extractedCity = addressParts[1];
+        // Format without county: Building/Street, City, Postcode
+        extractedCity = addressParts[1].trim();
       } else if (addressParts.length > 4) {
-        // Format with multiple address lines
-        extractedAddressLine2 = addressParts[1];
-        extractedCity = addressParts[addressParts.length - 3];
-        extractedCounty = addressParts[addressParts.length - 2];
+        // Format with multiple address lines or extra details
+        extractedAddressLine2 = addressParts[1].trim();
+        extractedCity = addressParts[addressParts.length - 3].trim();
+        extractedCounty = addressParts[addressParts.length - 2].trim();
       }
       
       console.log("Parsed address components:", {
@@ -325,12 +325,12 @@ const PeoplePage: React.FC = () => {
         postcode: extractedPostcode
       });
       
-      // Fill the form with the address details
-      form.setValue("addressLine1", extractedAddressLine1);
-      form.setValue("addressLine2", extractedAddressLine2);
-      form.setValue("city", extractedCity);
-      form.setValue("county", extractedCounty);
-      form.setValue("postCode", extractedPostcode);
+      // Fill the form with the address details, ensuring we use empty string for null values
+      form.setValue("addressLine1", extractedAddressLine1 || "");
+      form.setValue("addressLine2", extractedAddressLine2 || "");
+      form.setValue("city", extractedCity || "");
+      form.setValue("county", extractedCounty || "");
+      form.setValue("postCode", extractedPostcode || "");
       
       // Close the suggestions dropdown
       setShowAddressSuggestions(false);
@@ -1457,75 +1457,78 @@ const PeoplePage: React.FC = () => {
                       />
                     )}
                     
-                    {/* Roles section with improved styling */}
-                    <div className="space-y-3 bg-gray-50 p-3 rounded-md mt-2 border border-gray-100">
-                      {!isLegalProfessional && activeCaseId && (
-                        <FormField
-                          control={form.control}
-                          name="isExecutor"
-                          render={({ field }) => (
-                            <FormItem className="flex items-start space-x-3 space-y-0">
-                              <FormControl>
-                                <Checkbox 
-                                  checked={field.value} 
-                                  onCheckedChange={field.onChange}
-                                />
-                              </FormControl>
-                              <div className="space-y-1 leading-none">
-                                <FormLabel className="font-medium">Serve as an executor</FormLabel>
-                                <FormDescription className="text-xs">
-                                  This person is named as an executor in the will
-                                </FormDescription>
-                              </div>
-                            </FormItem>
-                          )}
-                        />
-                      )}
-                      
-                      {!isLegalProfessional && (
-                        <FormField
-                          control={form.control}
-                          name="isApplicant"
-                          render={({ field }) => (
-                            <FormItem className="flex items-start space-x-3 space-y-0 border-t border-gray-200 pt-3 mt-3">
-                              <FormControl>
-                                <Checkbox 
-                                  checked={field.value} 
-                                  onCheckedChange={field.onChange}
-                                />
-                              </FormControl>
-                              <div className="space-y-1 leading-none">
-                                <FormLabel className="font-medium">Primary Applicant</FormLabel>
-                                <FormDescription className="text-xs">
-                                  This person will be the main applicant for the probate application
-                                </FormDescription>
-                              </div>
-                            </FormItem>
-                          )}
-                        />
-                      )}
-                      {!isLegalProfessional && (
-                        <FormField
-                          control={form.control}
-                          name="isNotifying"
-                          render={({ field }) => (
-                            <FormItem className="flex items-start space-x-3 space-y-0 border-t border-gray-200 pt-3 mt-3">
-                              <FormControl>
-                                <Checkbox 
-                                  checked={field.value} 
-                                  onCheckedChange={field.onChange}
-                                />
-                              </FormControl>
-                              <div className="space-y-1 leading-none">
-                                <FormLabel className="font-medium">Notifying Only</FormLabel>
-                                <FormDescription className="text-xs">
-                                  This person will be notified but won't be actively involved in the probate process
-                                </FormDescription>
-                              </div>
-                            </FormItem>
-                          )}
-                        />
-                      )}
+                    {/* Role checkboxes with improved styling */}
+                    <div className="bg-gray-50 p-4 rounded-md mt-4 border border-gray-100">
+                      <div className="space-y-4">
+                        {!isLegalProfessional && activeCaseId && (
+                          <FormField
+                            control={form.control}
+                            name="isExecutor"
+                            render={({ field }) => (
+                              <FormItem className="flex items-start space-x-3 space-y-0">
+                                <FormControl>
+                                  <Checkbox 
+                                    checked={field.value} 
+                                    onCheckedChange={field.onChange}
+                                  />
+                                </FormControl>
+                                <div className="space-y-1 leading-none">
+                                  <FormLabel className="font-medium">Serve as an executor</FormLabel>
+                                  <FormDescription className="text-xs">
+                                    This person is named as an executor in the will
+                                  </FormDescription>
+                                </div>
+                              </FormItem>
+                            )}
+                          />
+                        )}
+                        
+                        {!isLegalProfessional && (
+                          <FormField
+                            control={form.control}
+                            name="isApplicant"
+                            render={({ field }) => (
+                              <FormItem className="flex items-start space-x-3 space-y-0 border-t border-gray-200 pt-3">
+                                <FormControl>
+                                  <Checkbox 
+                                    checked={field.value} 
+                                    onCheckedChange={field.onChange}
+                                  />
+                                </FormControl>
+                                <div className="space-y-1 leading-none">
+                                  <FormLabel className="font-medium">Primary Applicant</FormLabel>
+                                  <FormDescription className="text-xs">
+                                    This person will be the main applicant for the probate application
+                                  </FormDescription>
+                                </div>
+                              </FormItem>
+                            )}
+                          />
+                        )}
+                        
+                        {!isLegalProfessional && (
+                          <FormField
+                            control={form.control}
+                            name="isNotifying"
+                            render={({ field }) => (
+                              <FormItem className="flex items-start space-x-3 space-y-0 border-t border-gray-200 pt-3">
+                                <FormControl>
+                                  <Checkbox 
+                                    checked={field.value} 
+                                    onCheckedChange={field.onChange}
+                                  />
+                                </FormControl>
+                                <div className="space-y-1 leading-none">
+                                  <FormLabel className="font-medium">Notifying Only</FormLabel>
+                                  <FormDescription className="text-xs">
+                                    This person will be notified but won't be actively involved in the probate process
+                                  </FormDescription>
+                                </div>
+                              </FormItem>
+                            )}
+                          />
+                        )}
+                      </div>
                     </div>
                   </div>
                   
