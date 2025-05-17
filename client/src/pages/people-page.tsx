@@ -287,15 +287,13 @@ const PeoplePage: React.FC = () => {
       
       setIsLoadingAddresses(true);
       
-      // Get the URL path from the response - it should have a url property like "/get/AbC123..."
-      if (!selectedAddress.rawAddress || !selectedAddress.rawAddress.url) {
-        throw new Error('Address data is missing URL path');
+      // The suggestions from GetAddress.io include a direct URL to the details
+      if (!selectedAddress.rawAddress) {
+        throw new Error('Address data is missing');
       }
       
-      // Extract just the ID part from the URL (format is /get/{id})
-      const urlPath = selectedAddress.rawAddress.url;
-      const idMatch = urlPath.match(/\/get\/([^?]+)/);
-      const detailsId = idMatch ? idMatch[1] : urlPath.split('/').pop();
+      // Get the ID directly from the selected suggestion
+      const detailsId = selectedAddress.rawAddress.id;
       
       console.log("Fetching details for address ID:", detailsId);
       

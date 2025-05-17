@@ -1383,7 +1383,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (id && typeof id === 'string') {
         try {
           console.log(`Fetching full address details for id: ${id}`);
-          // Directly use the provided ID with the getaddress.io API
+          // Use exactly the URL format from the GetAddress.io example
           const getAddressUrl = `https://api.getaddress.io/get/${id}?api-key=${apiKey}`;
           console.log(`Making request to: ${getAddressUrl.replace(apiKey, '[REDACTED]')}`);
           
