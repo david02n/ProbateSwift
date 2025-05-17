@@ -1736,15 +1736,15 @@ const PeoplePage: React.FC = () => {
                     <Button
                       type="button"
                       variant={selectedDocumentType === 'will' ? 'default' : 'outline'}
-                      className={`flex justify-start items-center h-auto py-3 px-4 ${
+                      className={`flex justify-start items-start h-auto py-3 px-4 ${
                         selectedDocumentType === 'will' ? 'border-primary' : ''
                       }`}
                       onClick={() => setSelectedDocumentType('will')}
                     >
                       <div className="flex-1 text-left">
                         <div className="font-medium">Will</div>
-                        <div className="text-xs text-gray-500 mt-1 line-clamp-2">
-                          Extract executors and beneficiaries from the Will document
+                        <div className="text-xs text-gray-500 mt-1 whitespace-normal">
+                          Extract executors and beneficiaries from Will
                         </div>
                       </div>
                     </Button>
@@ -1752,15 +1752,15 @@ const PeoplePage: React.FC = () => {
                     <Button
                       type="button"
                       variant={selectedDocumentType === 'death_certificate' ? 'default' : 'outline'}
-                      className={`flex justify-start items-center h-auto py-3 px-4 ${
+                      className={`flex justify-start items-start h-auto py-3 px-4 ${
                         selectedDocumentType === 'death_certificate' ? 'border-primary' : ''
                       }`}
                       onClick={() => setSelectedDocumentType('death_certificate')}
                     >
                       <div className="flex-1 text-left">
                         <div className="font-medium">Death Certificate</div>
-                        <div className="text-xs text-gray-500 mt-1 line-clamp-2">
-                          Extract deceased person's details automatically for this probate case
+                        <div className="text-xs text-gray-500 mt-1 whitespace-normal">
+                          Add deceased person to this case
                         </div>
                       </div>
                     </Button>
@@ -1768,15 +1768,15 @@ const PeoplePage: React.FC = () => {
                     <Button
                       type="button"
                       variant={selectedDocumentType === 'id_document' ? 'default' : 'outline'}
-                      className={`flex justify-start items-center h-auto py-3 px-4 ${
+                      className={`flex justify-start items-start h-auto py-3 px-4 ${
                         selectedDocumentType === 'id_document' ? 'border-primary' : ''
                       }`}
                       onClick={() => setSelectedDocumentType('id_document')}
                     >
                       <div className="flex-1 text-left">
                         <div className="font-medium">ID Document</div>
-                        <div className="text-xs text-gray-500 mt-1 line-clamp-2">
-                          Extract details from passport, driving license or other ID
+                        <div className="text-xs text-gray-500 mt-1 whitespace-normal">
+                          Extract details from passport or driving license
                         </div>
                       </div>
                     </Button>
@@ -1784,15 +1784,15 @@ const PeoplePage: React.FC = () => {
                     <Button
                       type="button"
                       variant={selectedDocumentType === 'bill' ? 'default' : 'outline'}
-                      className={`flex justify-start items-center h-auto py-3 px-4 ${
+                      className={`flex justify-start items-start h-auto py-3 px-4 ${
                         selectedDocumentType === 'bill' ? 'border-primary' : ''
                       }`}
                       onClick={() => setSelectedDocumentType('bill')}
                     >
                       <div className="flex-1 text-left">
                         <div className="font-medium">Bill or Statement</div>
-                        <div className="text-xs text-gray-500 mt-1 line-clamp-2">
-                          Extract name and address details from bills or statements
+                        <div className="text-xs text-gray-500 mt-1 whitespace-normal">
+                          Extract name and address details
                         </div>
                       </div>
                     </Button>
@@ -1800,15 +1800,15 @@ const PeoplePage: React.FC = () => {
                     <Button
                       type="button"
                       variant={selectedDocumentType === 'other' ? 'default' : 'outline'}
-                      className={`flex justify-start items-center h-auto py-3 px-4 ${
+                      className={`flex justify-start items-start h-auto py-3 px-4 ${
                         selectedDocumentType === 'other' ? 'border-primary' : ''
                       }`}
                       onClick={() => setSelectedDocumentType('other')}
                     >
                       <div className="flex-1 text-left">
                         <div className="font-medium">Other Document</div>
-                        <div className="text-xs text-gray-500 mt-1 line-clamp-2">
-                          Upload any other document containing person details
+                        <div className="text-xs text-gray-500 mt-1 whitespace-normal">
+                          Upload any other document with person details
                         </div>
                       </div>
                     </Button>
