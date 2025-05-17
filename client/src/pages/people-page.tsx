@@ -166,8 +166,25 @@ const PeoplePage: React.FC = () => {
   const [selectedDocumentType, setSelectedDocumentType] = useState<string | null>(null);
   const [isProcessingDocument, setIsProcessingDocument] = useState(false);
   
+  // Define the document interface based on the API's actual response
+  interface DocumentWithFields {
+    id: number;
+    caseId: number;
+    userId: number; 
+    type: string;
+    filename: string;
+    fileSize?: number;
+    fileType?: string;
+    storagePath: string;
+    status?: string;
+    notes?: string;
+    metadata?: any;
+    createdAt?: Date;
+    updatedAt?: Date;
+  }
+  
   // Fetch documents when modal is open
-  const { data: documentList = [] } = useQuery<Document[]>({
+  const { data: documentList = [] } = useQuery<DocumentWithFields[]>({
     queryKey: ['/api/documents'],
     enabled: isPersonFromDocModalOpen
   });
@@ -2069,30 +2086,83 @@ const PeoplePage: React.FC = () => {
                       const latestCert = deathCerts[0];
                       
                       try {
-                        // First make a direct call to the webhook to get fresh extracted fields
-                        console.log("Calling fileupload-dc webhook to get extracted fields for document ID:", latestCert.id);
+                        // Create a basic person data object with defaults
+                        const personData: any = {
+                          caseId: activeCaseId,
+                          userId: user?.id,
+                          firstName: "Deceased",
+                          lastName: "Person",
+                          isExecutor: false,
+                          isApplicant: false,
+                          needsMoreInfo: true,
+                          relationshipToDeceased: 'Deceased',
+                          documentId: latestCert.id
+                        };
+                        
+                        // Call the webhook to get extracted data
+                        console.log("Calling fileupload-dc webhook for document ID:", latestCert.id);
                         
                         try {
-                          // Call the webhook with the document ID to get the extracted data
-                          const webhookResponse = await fetch(`https://n8n.probateswift.com/webhook/fileupload-dc?documentId=${latestCert.id}`);
+                          // Call the webhook with the document ID
+                          const response = await fetch(`https://n8n.probateswift.com/webhook/fileupload-dc?documentId=${latestCert.id}`);
+                          const responseText = await response.text();
                           
-                          if (webhookResponse.ok) {
-                            const extractedFields = await webhookResponse.json();
-                            console.log("Successfully fetched data from webhook:", extractedFields);
+                          if (responseText && responseText.trim().length > 0) {
+                            const extractedData = JSON.parse(responseText);
+                            console.log("Successfully extracted data:", extractedData);
                             
-                            // Use the extracted data to create a person
-                            if (extractedFields && (extractedFields.firstName || extractedFields.surname)) {
-                              // Create a person record with the extracted data
-                              const personData: any = {
-                                caseId: activeCaseId,
-                                userId: user?.id,
-                                firstName: extractedFields.firstName || "Unknown",
-                                lastName: extractedFields.surname || extractedFields.lastName || "Unknown",
-                                middleNames: extractedFields.middleName || extractedFields.middleNames || "",
-                                addressLine1: extractedFields.street || extractedFields.addressLine1 || "",
-                                city: extractedFields.city || extractedFields.town || "",
-                                county: extractedFields.county || "",
-                                postCode: extractedFields.postcode || extractedFields.postCode || "",
+                            // Update person data with extracted fields if available
+                            if (extractedData.firstName) personData.firstName = extractedData.firstName;
+                            if (extractedData.surname) personData.lastName = extractedData.surname;
+                            if (extractedData.lastName) personData.lastName = extractedData.lastName;
+                            if (extractedData.middleName) personData.middleNames = extractedData.middleName;
+                            if (extractedData.middleNames) personData.middleNames = extractedData.middleNames;
+                            if (extractedData.street) personData.addressLine1 = extractedData.street;
+                            if (extractedData.addressLine1) personData.addressLine1 = extractedData.addressLine1;
+                            if (extractedData.city) personData.city = extractedData.city;
+                            if (extractedData.town) personData.city = extractedData.town;
+                            if (extractedData.county) personData.county = extractedData.county;
+                            if (extractedData.postcode) personData.postCode = extractedData.postcode;
+                            if (extractedData.postCode) personData.postCode = extractedData.postCode;
+                            if (extractedData.dateOfBirth) personData.dateOfBirth = extractedData.dateOfBirth;
+                            if (extractedData.dateOfDeath) personData.dateOfDeath = extractedData.dateOfDeath;
+                          }
+                        } catch (webhookError) {
+                          console.error("Error calling webhook:", webhookError);
+                        }
+                        
+                        // Create the person record with the data we have
+                        console.log("Creating person with data:", personData);
+                        createExecutorMutation.mutate(personData, {
+                          onSuccess: () => {
+                            toast({
+                              title: "Person Created",
+                              description: `Created ${personData.firstName} ${personData.lastName} from death certificate`,
+                            });
+                            setIsProcessingDocument(false);
+                            setIsPersonFromDocModalOpen(false);
+                          },
+                          onError: (error) => {
+                            console.error("Error creating person:", error);
+                            toast({
+                              title: "Error Creating Person",
+                              description: "There was an error creating the person record",
+                              variant: "destructive"
+                            });
+                            setIsProcessingDocument(false);
+                          }
+                        });
+                      } catch (error) {
+                        console.error("Error in death certificate processing:", error);
+                        setIsProcessingDocument(false);
+                        toast({
+                          title: "Error Processing Document",
+                          description: "There was an error processing the death certificate",
+                          variant: "destructive"
+                        });
+                      }
+                            
+                            // Person creation logic is handled elsewhere
                                 isExecutor: false,
                                 isApplicant: false,
                                 needsMoreInfo: true,
