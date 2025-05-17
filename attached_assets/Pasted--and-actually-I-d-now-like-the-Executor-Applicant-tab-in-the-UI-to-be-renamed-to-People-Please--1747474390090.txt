@@ -1,0 +1,66 @@
+…and actually I’d now like the “Executor/Applicant” tab in the UI to be renamed to “People”. Please adjust accordingly and finish up:
+
+UI/Text updates
+
+Rename the “Executor” and “Applicant” tab or menu item to “People” everywhere it appears.
+
+On the “People” screen, show each person’s roles (Applicant, Executor, Attorney, etc.) rather than hard-coding “Executor.”
+
+Only surface the executor-toggle and will-override fields when you’re on the PA1P form and has_will = TRUE.
+
+Database changes
+
+Ensure the applicants table (now backing the “People” screen) matches exactly this schema:
+
+sql
+Copy
+CREATE TABLE applicants (
+  id                SERIAL PRIMARY KEY,
+  case_id           INT         NOT NULL REFERENCES probate_cases(id),
+  user_id           INT         NOT NULL REFERENCES users(id),
+
+  person_position   SMALLINT    NOT NULL CHECK (person_position BETWEEN 1 AND 4),
+  executor          BOOLEAN     NOT NULL DEFAULT FALSE,
+  title             VARCHAR(10),
+  first_names       VARCHAR(255) NOT NULL,
+  middle_names      VARCHAR(255),
+  last_name         VARCHAR(255) NOT NULL,
+  name_diff_will    BOOLEAN     NOT NULL DEFAULT FALSE,
+  alt_name_will     VARCHAR(255),
+  address_line1     VARCHAR(255) NOT NULL,
+  address_line2     VARCHAR(255),
+  city              VARCHAR(100) NOT NULL,
+  county            VARCHAR(100),
+  postcode          VARCHAR(20)  NOT NULL,
+  phone_home        VARCHAR(50),
+  phone_mobile      VARCHAR(50),
+  email             VARCHAR(255),
+  relationship      VARCHAR(100),
+  is_notifying      BOOLEAN     NOT NULL DEFAULT FALSE,
+  status            VARCHAR(50) NOT NULL DEFAULT 'pending',
+  created_at        TIMESTAMP WITHOUT TIME ZONE NOT NULL DEFAULT now(),
+  updated_at        TIMESTAMP WITHOUT TIME ZONE NOT NULL DEFAULT now(),
+
+  CONSTRAINT uq_case_position UNIQUE(case_id, person_position),
+  CONSTRAINT chk_executor_fields
+    CHECK (
+      (executor = TRUE  AND name_diff_will IN (TRUE, FALSE))
+      OR (executor = FALSE AND name_diff_will = FALSE AND alt_name_will IS NULL)
+    )
+);
+CREATE INDEX idx_applicants_executor ON applicants(case_id) WHERE executor = TRUE;
+Add any missing columns, constraints, or the index as above.
+
+Backfill or migrate existing data so no values are lost.
+
+Verification in staging
+
+The tab now reads “People” throughout the app.
+
+The People screen lists up to four entries per case, in order, for both PA1A and PA1P.
+
+The executor toggle only appears for PA1P cases with has_will = TRUE.
+
+All existing data (including relationship) is intact and behaving correctly.
+
+Let me know when these changes are live so I can redeploy and validate.
