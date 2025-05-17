@@ -2080,10 +2080,17 @@ const PeoplePage: React.FC = () => {
                             
                             // Handle webhook response structure if present
                             if (notesObj.webhookResponse && notesObj.webhookResponse.content) {
-                              const match = notesObj.webhookResponse.content.match(/```json\s*(\{[\s\S]*?\})\s*```/);
-                              if (match && match[1]) {
-                                extractedData = JSON.parse(match[1]);
-                                console.log("Extracted data from webhookResponse:", extractedData);
+                              try {
+                                // First try to parse content directly as JSON (flat format)
+                                extractedData = JSON.parse(notesObj.webhookResponse.content);
+                                console.log("Parsed webhookResponse content directly:", extractedData);
+                              } catch (jsonErr) {
+                                // If direct parsing fails, try to extract JSON from code blocks
+                                const match = notesObj.webhookResponse.content.match(/```json\s*(\{[\s\S]*?\})\s*```/);
+                                if (match && match[1]) {
+                                  extractedData = JSON.parse(match[1]);
+                                  console.log("Extracted data from webhookResponse code block:", extractedData);
+                                }
                               }
                             }
                           } catch (err) {
