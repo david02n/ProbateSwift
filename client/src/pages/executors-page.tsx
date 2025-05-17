@@ -239,9 +239,9 @@ const PeoplePage: React.FC = () => {
       isNotifying: false,
     });
     
-    // Open executor modal for regular executor
+    // Open person modal for regular person
     setIsLegalProfessional(false);
-    setIsExecutorModalOpen(true);
+    setIsPersonModalOpen(true);
   };
   
   // Handle opening professional form
@@ -269,9 +269,9 @@ const PeoplePage: React.FC = () => {
       isNotifying: false,
     });
     
-    // Open executor modal for legal professional
+    // Open person modal for legal professional
     setIsLegalProfessional(true);
-    setIsExecutorModalOpen(true);
+    setIsPersonModalOpen(true);
   };
   
   // Handler for editing an executor
@@ -294,7 +294,7 @@ const PeoplePage: React.FC = () => {
       isNotifying: executor.isNotifying || false,
     });
     
-    setIsExecutorModalOpen(true);
+    setIsPersonModalOpen(true);
   };
   
   // Handler for confirming executor deletion
@@ -343,7 +343,7 @@ const PeoplePage: React.FC = () => {
         },
         {
           onSuccess: () => {
-            setIsExecutorModalOpen(false);
+            setIsPersonModalOpen(false);
             setIsEditing(false);
             setCurrentExecutor(null);
             form.reset();
