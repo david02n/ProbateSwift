@@ -2352,8 +2352,8 @@ const PeoplePage: React.FC = () => {
                             // Try one more time to get document data
                             try {
                               // Try to parse direct JSON format from the document notes
-                              const documentData = JSON.parse(latestCert.notes);
-                              console.log("Trying direct JSON parsing from document with ID:", latestCert.id, documentData);
+                              const documentData = JSON.parse(selectedCert.notes);
+                              console.log("Trying direct JSON parsing from document with ID:", selectedCert.id, documentData);
                               
                               // Attempt to access the death certificate data from any found location
                               if (documentData.webhookResponse && documentData.webhookResponse.content) {
@@ -2380,7 +2380,7 @@ const PeoplePage: React.FC = () => {
                                     isApplicant: false,
                                     needsMoreInfo: true,
                                     relationshipToDeceased: 'Deceased',
-                                    documentId: latestCert.id
+                                    documentId: selectedCert.id
                                   };
                                   
                                   // Add all available fields
