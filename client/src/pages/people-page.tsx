@@ -1035,16 +1035,16 @@ const PeoplePage: React.FC = () => {
               
               <Form {...form}>
                 <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-5">
-                  {/* Name Section - Title, First name, Last name */}
-                  <div className="grid grid-cols-1 sm:grid-cols-4 gap-4">
-                    {/* Title - Reduced width */}
+                  {/* Name Section - Better spacing and layout */}
+                  <div className="grid grid-cols-4 gap-4">
+                    {/* Title - Takes less space */}
                     <FormField
                       control={form.control}
                       name="title"
                       render={({ field }) => (
-                        <FormItem className="sm:col-span-1">
+                        <FormItem className="col-span-1">
                           <FormLabel>Title</FormLabel>
-                          <Select onValueChange={field.onChange} defaultValue={field.value}>
+                          <Select onValueChange={field.onChange} value={field.value || ""}>
                             <FormControl>
                               <SelectTrigger>
                                 <SelectValue placeholder="Title" />
@@ -1065,12 +1065,12 @@ const PeoplePage: React.FC = () => {
                         </FormItem>
                       )}
                     />
-                    {/* First Name - More Space */}
+                    {/* First Name */}
                     <FormField
                       control={form.control}
                       name="firstName"
                       render={({ field }) => (
-                        <FormItem className="sm:col-span-2">
+                        <FormItem className="col-span-2">
                           <FormLabel>First name(s) <span className="text-red-500">*</span></FormLabel>
                           <FormControl>
                             <Input placeholder="Enter first name" {...field} />
@@ -1085,7 +1085,7 @@ const PeoplePage: React.FC = () => {
                       control={form.control}
                       name="lastName"
                       render={({ field }) => (
-                        <FormItem className="sm:col-span-1">
+                        <FormItem className="col-span-1">
                           <FormLabel>Last name <span className="text-red-500">*</span></FormLabel>
                           <FormControl>
                             <Input placeholder="Enter last name" {...field} />
@@ -1096,7 +1096,7 @@ const PeoplePage: React.FC = () => {
                     />
                   </div>
                   
-                  {/* Middle Names (on their own line) */}
+                  {/* Middle Names */}
                   <FormField
                     control={form.control}
                     name="middleNames"
@@ -1154,12 +1154,12 @@ const PeoplePage: React.FC = () => {
                   )}
                   
                   {/* Address Information */}
-                  <div className="space-y-3 border-t pt-3">
-                    <h3 className="text-sm font-medium">Address</h3>
+                  <div className="space-y-4 border-t pt-4">
+                    <h3 className="text-sm font-medium mt-2">Address</h3>
                     
-                    {/* Postcode Lookup */}
+                    {/* Postcode Lookup - Improved layout */}
                     <div className="mb-4">
-                      <div className="flex gap-2 items-end">
+                      <div className="flex flex-col sm:flex-row gap-2">
                         <div className="flex-1">
                           <FormField
                             control={form.control}
@@ -1187,26 +1187,28 @@ const PeoplePage: React.FC = () => {
                             )}
                           />
                         </div>
-                        <Button
-                          type="button"
-                          onClick={handlePostcodeLookup}
-                          disabled={isLoadingAddresses || manualAddressEntry}
-                          className="mb-0.5"
-                        >
-                          {isLoadingAddresses ? (
-                            <Loader2 className="h-4 w-4 animate-spin" />
-                          ) : (
-                            <>
-                              <Search className="h-4 w-4 mr-1" />
-                              Find Address
-                            </>
-                          )}
-                        </Button>
+                        <div className="self-end">
+                          <Button
+                            type="button"
+                            onClick={handlePostcodeLookup}
+                            disabled={isLoadingAddresses || manualAddressEntry}
+                            className="w-full sm:w-auto mb-0.5"
+                          >
+                            {isLoadingAddresses ? (
+                              <Loader2 className="h-4 w-4 animate-spin" />
+                            ) : (
+                              <>
+                                <Search className="h-4 w-4 mr-1" />
+                                Find Address
+                              </>
+                            )}
+                          </Button>
+                        </div>
                       </div>
                       
                       {/* Address suggestions dropdown */}
                       {showAddressSuggestions && addressSuggestions.length > 0 && (
-                        <div className="relative mt-1">
+                        <div className="relative mt-2">
                           <div className="absolute z-10 mt-1 w-full bg-white border border-gray-200 rounded-md shadow-lg max-h-60 overflow-auto">
                             <div className="p-2 text-xs text-gray-500 border-b">
                               Select an address from the list:
@@ -1247,6 +1249,7 @@ const PeoplePage: React.FC = () => {
                       </div>
                     </div>
                     
+                    {/* Address lines - Improved layout */}
                     <FormField
                       control={form.control}
                       name="addressLine1"
@@ -1257,7 +1260,8 @@ const PeoplePage: React.FC = () => {
                             <Input 
                               id="addressLine1"
                               placeholder="Address line 1" 
-                              {...field} 
+                              value={field.value || ""}
+                              onChange={field.onChange}
                               disabled={!manualAddressEntry && selectedAddressId !== null}
                             />
                           </FormControl>
@@ -1275,7 +1279,8 @@ const PeoplePage: React.FC = () => {
                           <FormControl>
                             <Input 
                               placeholder="Address line 2 (optional)" 
-                              {...field} 
+                              value={field.value || ""}
+                              onChange={field.onChange}
                               disabled={!manualAddressEntry && selectedAddressId !== null}
                             />
                           </FormControl>
@@ -1284,17 +1289,19 @@ const PeoplePage: React.FC = () => {
                       )}
                     />
                     
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
+                    {/* Town, County and Postcode - Improved responsive grid */}
+                    <div className="grid grid-cols-1 sm:grid-cols-6 gap-4">
                       <FormField
                         control={form.control}
                         name="city"
                         render={({ field }) => (
-                          <FormItem>
+                          <FormItem className="sm:col-span-3">
                             <FormLabel>Town or city <span className="text-red-500">*</span></FormLabel>
                             <FormControl>
                               <Input 
                                 placeholder="Town or city" 
-                                {...field} 
+                                value={field.value || ""}
+                                onChange={field.onChange}
                                 disabled={!manualAddressEntry && selectedAddressId !== null}
                               />
                             </FormControl>
@@ -1307,12 +1314,13 @@ const PeoplePage: React.FC = () => {
                         control={form.control}
                         name="county"
                         render={({ field }) => (
-                          <FormItem>
+                          <FormItem className="sm:col-span-2">
                             <FormLabel>County</FormLabel>
                             <FormControl>
                               <Input 
                                 placeholder="County (optional)" 
-                                {...field} 
+                                value={field.value || ""}
+                                onChange={field.onChange}
                                 disabled={!manualAddressEntry && selectedAddressId !== null}
                               />
                             </FormControl>
@@ -1325,10 +1333,15 @@ const PeoplePage: React.FC = () => {
                         control={form.control}
                         name="postCode"
                         render={({ field }) => (
-                          <FormItem className="hidden md:block">
+                          <FormItem className="sm:col-span-1">
                             <FormLabel>Postcode <span className="text-red-500">*</span></FormLabel>
                             <FormControl>
-                              <Input disabled placeholder="Postcode" {...field} />
+                              <Input 
+                                placeholder="Postcode"
+                                value={field.value || ""}
+                                onChange={field.onChange}
+                                disabled={!manualAddressEntry && selectedAddressId !== null}
+                              />
                             </FormControl>
                             <FormMessage />
                           </FormItem>
