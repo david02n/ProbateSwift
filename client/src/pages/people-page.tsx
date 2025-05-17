@@ -240,36 +240,24 @@ const PeoplePage: React.FC = () => {
         return;
       }
       
-      // GetAddress.io can return addresses in different formats based on the query parameters
+      // Process addresses from the GetAddress.io API response
       let suggestions: PostcodeLookupSuggestion[] = [];
       
-      // Check if we have the expanded format that includes formatted address objects
+      // Check if we have addresses in the response
       if (data.addresses && Array.isArray(data.addresses)) {
-        if (data.addresses.length > 0 && typeof data.addresses[0] === 'object') {
-          // Handle expanded format
-          suggestions = data.addresses.map((address: any, index: number) => {
-            // Build a formatted address string
-            const formattedAddress = [
-              address.formatted_address?.line_1,
-              address.formatted_address?.line_2,
-              address.formatted_address?.locality,
-              address.formatted_address?.town_or_city,
-              address.formatted_address?.county
-            ].filter(Boolean).join(', ');
-            
-            return {
-              id: `${postcode}-${index}`,
-              address: formattedAddress ? `${formattedAddress}, ${postcode}` : postcode,
-              rawAddress: address
-            };
-          });
-        } else {
-          // Handle simple format (array of strings)
-          suggestions = data.addresses.map((address: string, index: number) => ({
+        // The autocomplete endpoint returns an array of suggestion objects
+        suggestions = data.addresses.map((suggestion: any, index: number) => {
+          // Suggestion could be a string or an object with an 'address' property
+          const addressText = typeof suggestion === 'string' 
+            ? suggestion 
+            : suggestion.address || suggestion.text || '';
+          
+          return {
             id: `${postcode}-${index}`,
-            address: address ? `${address}, ${postcode}` : postcode
-          }));
-        }
+            address: addressText.includes(postcode) ? addressText : `${addressText}, ${postcode}`,
+            rawAddress: typeof suggestion === 'object' ? suggestion : null
+          };
+        });
       }
       
       console.log("Processed address suggestions:", suggestions);

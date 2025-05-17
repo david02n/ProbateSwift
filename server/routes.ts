@@ -1380,12 +1380,22 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       try {
         console.log(`Fetching addresses for postcode: ${postcode}`);
-        // Use the correct API endpoint according to GetAddress.io documentation
+        // Format the postcode (remove spaces)
         const formattedPostcode = postcode.replace(/\s+/g, '');
         console.log(`API Request to GetAddress.io for postcode: ${formattedPostcode}`);
-        const response = await axios.get(`https://api.getaddress.io/find/${encodeURIComponent(formattedPostcode)}?api-key=${apiKey}&expand=true`);
+        
+        // Using the autocomplete endpoint which was confirmed to be working
+        const response = await axios.get(`https://api.getAddress.io/autocomplete/${encodeURIComponent(formattedPostcode)}?api-key=${apiKey}&all=true`);
         console.log('Successfully received address data from GetAddress.io');
-        return res.json(response.data);
+        
+        // Transform the response to the format our frontend expects
+        const transformedResponse = {
+          postcode: postcode,
+          addresses: response.data.suggestions || []
+        };
+        
+        console.log(`Found ${transformedResponse.addresses.length} addresses`);
+        return res.json(transformedResponse);
       } catch (apiError: any) {
         console.error("API error with GetAddress.io:", apiError.message);
         
