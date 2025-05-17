@@ -149,6 +149,10 @@ const PeoplePage: React.FC = () => {
   const [showSelfSuggestion, setShowSelfSuggestion] = useState(false);
   const [selfSuggestionDismissed, setSelfSuggestionDismissed] = useState(false);
   
+  // Document-based person addition
+  const [isPersonFromDocModalOpen, setIsPersonFromDocModalOpen] = useState(false);
+  const [selectedDocumentType, setSelectedDocumentType] = useState<string | null>(null);
+  
   // Initialize form with validation
   const form = useForm<ExecutorFormValues>({
     resolver: zodResolver(executorFormSchema),
@@ -728,6 +732,52 @@ const PeoplePage: React.FC = () => {
               </CardDescription>
             </CardHeader>
             <CardContent>
+              {/* Quick Actions Row */}
+              <div className="flex flex-col sm:flex-row gap-3 mb-6">
+                <Button 
+                  variant="outline" 
+                  className="flex-1 flex items-center justify-center gap-2 border-dashed border-primary/50 hover:bg-primary/5"
+                  onClick={() => {
+                    if (!activeCaseId) {
+                      toast({
+                        title: "No probate case",
+                        description: "Please create a probate case first",
+                        variant: "destructive",
+                      });
+                      return;
+                    }
+                    
+                    // Reset form and add current user details
+                    form.reset({
+                      firstName: user?.firstName || "",
+                      lastName: user?.lastName || "",
+                      email: user?.email || "",
+                      isApplicant: regularExecutors.length === 0, // Make first executor the applicant if none exist
+                      isNotifying: false,
+                    });
+                    
+                    // Open person modal for user to confirm details
+                    setIsLegalProfessional(false);
+                    setIsPersonModalOpen(true);
+                  }}
+                >
+                  <UserPlus className="h-5 w-5 text-primary" />
+                  <span>Add Yourself</span>
+                </Button>
+                
+                <Button 
+                  variant="outline" 
+                  className="flex-1 flex items-center justify-center gap-2 border-dashed border-primary/50 hover:bg-primary/5"
+                  onClick={() => {
+                    // Will implement document-based person addition in next step
+                    setIsPersonFromDocModalOpen(true);
+                  }}
+                >
+                  <AlertCircle className="h-5 w-5 text-primary" />
+                  <span>Add from Document</span>
+                </Button>
+              </div>
+              
               <div className="space-y-6">
                 {regularExecutors.length > 0 ? (
                   regularExecutors.map((executor) => (
@@ -1588,6 +1638,130 @@ const PeoplePage: React.FC = () => {
               </AlertDialogFooter>
             </AlertDialogContent>
           </AlertDialog>
+          
+          {/* Add Person from Document Dialog */}
+          <Dialog open={isPersonFromDocModalOpen} onOpenChange={setIsPersonFromDocModalOpen}>
+            <DialogContent className="sm:max-w-md md:max-w-xl">
+              <DialogHeader>
+                <DialogTitle>Add Person from Document</DialogTitle>
+                <DialogDescription>
+                  Add person details from an existing document or upload a new document to extract information.
+                </DialogDescription>
+              </DialogHeader>
+              
+              <div className="space-y-4 py-4">
+                <div className="space-y-2">
+                  <h3 className="text-sm font-medium">Select Document Type</h3>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <Button
+                      type="button"
+                      variant={selectedDocumentType === 'will' ? 'default' : 'outline'}
+                      className={`flex justify-start items-center h-auto py-3 px-4 ${
+                        selectedDocumentType === 'will' ? 'border-primary' : ''
+                      }`}
+                      onClick={() => setSelectedDocumentType('will')}
+                    >
+                      <div className="flex-1 text-left">
+                        <div className="font-medium">Will</div>
+                        <div className="text-xs text-gray-500 mt-1">
+                          Extract executors and beneficiaries from the Will document
+                        </div>
+                      </div>
+                    </Button>
+                    
+                    <Button
+                      type="button"
+                      variant={selectedDocumentType === 'death_certificate' ? 'default' : 'outline'}
+                      className={`flex justify-start items-center h-auto py-3 px-4 ${
+                        selectedDocumentType === 'death_certificate' ? 'border-primary' : ''
+                      }`}
+                      onClick={() => setSelectedDocumentType('death_certificate')}
+                    >
+                      <div className="flex-1 text-left">
+                        <div className="font-medium">Death Certificate</div>
+                        <div className="text-xs text-gray-500 mt-1">
+                          Extract personal details from Death Certificate
+                        </div>
+                      </div>
+                    </Button>
+                  </div>
+                </div>
+                
+                <div className="border rounded-lg p-4 bg-gray-50">
+                  <h3 className="text-sm font-medium mb-3">Choose Document Source</h3>
+                  
+                  <div className="space-y-3">
+                    <div className="flex flex-col space-y-2">
+                      <label className="text-sm font-medium">Select from uploaded documents</label>
+                      <Select disabled={!selectedDocumentType}>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select an uploaded document" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="example1">Will_Draft_Final.pdf</SelectItem>
+                          <SelectItem value="example2">Death_Certificate.pdf</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    
+                    <div className="relative">
+                      <div className="absolute inset-0 flex items-center">
+                        <span className="w-full border-t border-gray-300" />
+                      </div>
+                      <div className="relative flex justify-center text-xs uppercase">
+                        <span className="bg-gray-50 px-2 text-gray-500">Or</span>
+                      </div>
+                    </div>
+                    
+                    <div>
+                      <label className="text-sm font-medium">Upload a new document</label>
+                      <div className="mt-2 flex justify-center rounded-lg border border-dashed border-gray-300 px-6 py-10">
+                        <div className="text-center">
+                          <FileUp className="mx-auto h-12 w-12 text-gray-300" />
+                          <div className="mt-4 flex text-sm leading-6 text-gray-600">
+                            <label
+                              htmlFor="file-upload"
+                              className="relative cursor-pointer rounded-md bg-white font-semibold text-primary focus-within:outline-none focus-within:ring-2 focus-within:ring-primary"
+                            >
+                              <span>Upload a file</span>
+                              <input id="file-upload" name="file-upload" type="file" className="sr-only" />
+                            </label>
+                            <p className="pl-1">or drag and drop</p>
+                          </div>
+                          <p className="text-xs leading-5 text-gray-600">PDF, PNG, JPG up to 10MB</p>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              
+              <DialogFooter>
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => setIsPersonFromDocModalOpen(false)}
+                >
+                  Cancel
+                </Button>
+                <Button
+                  type="button"
+                  disabled={!selectedDocumentType}
+                  onClick={() => {
+                    // In a real implementation, this would extract data from the document
+                    // and pre-fill the person form
+                    toast({
+                      title: "Coming Soon",
+                      description: "This feature is coming soon! Currently in development.",
+                    });
+                    setIsPersonFromDocModalOpen(false);
+                  }}
+                >
+                  Extract Person Details
+                </Button>
+              </DialogFooter>
+            </DialogContent>
+          </Dialog>
         </div>
       </main>
     </div>
