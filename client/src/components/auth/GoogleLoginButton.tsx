@@ -1,7 +1,6 @@
 import React from 'react';
 import { Button } from '@/components/ui/button';
 import { FcGoogle } from 'react-icons/fc';
-import { loginWithGoogle } from '@/lib/firebase';
 import { signInWithGoogle } from '@/lib/googleAuth';
 import { useToast } from '@/hooks/use-toast';
 
@@ -17,20 +16,13 @@ const GoogleLoginButton = ({ className = '' }: GoogleLoginButtonProps) => {
     try {
       setIsLoading(true);
       
-      // Check if it's an iOS device
-      const isIOS = /iPad|iPhone|iPod/i.test(navigator.userAgent);
+      // Get the domain information for debugging
+      const domain = window.location.hostname;
+      console.log('Starting Google login from', domain.includes('replit') ? 'development domain' : 'production domain');
       
-      if (isIOS) {
-        console.log('iOS device detected, using enhanced authentication flow');
-        // For iOS, we use the enhanced flow from googleAuth.ts
-        const result = await signInWithGoogle();
-        if (result) {
-          console.log('GoogleLoginButton: Popup auth successful');
-        }
-      } else {
-        // For non-iOS devices, standard flow
-        loginWithGoogle();
-      }
+      // Use the signInWithGoogle function from googleAuth.ts
+      await signInWithGoogle();
+      
     } catch (error) {
       console.error('Google login error:', error);
       toast({

@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 import { useAuth } from "@/hooks/use-auth";
 import { Redirect, useLocation, useRoute } from "wouter";
 import GoogleLoginButton from "@/components/auth/GoogleLoginButton";
-import { handleRedirectResult } from "@/lib/firebase";
+import { handleRedirectResult } from "@/lib/googleAuth";
 
 // Extend Window interface to include our shared functions
 declare global {
