@@ -27,8 +27,6 @@ import { useQuery, useMutation } from "@tanstack/react-query";
 import { getQueryFn, apiRequest, queryClient } from "@/lib/queryClient";
 import { Executor, ProbateCase } from "@shared/schema";
 import CreateFromDeathCertificate from "@/components/people/CreateFromDeathCertificate";
-import AddPersonFromDocument from "@/components/people/AddPersonFromDocument";
-import SimpleAddPersonFromDoc from "@/components/people/SimpleAddPersonFromDoc";
 import { useToast } from "@/hooks/use-toast";
 import { z } from "zod";
 import { useForm } from "react-hook-form";
@@ -791,6 +789,7 @@ const PeoplePage: React.FC = () => {
                   variant="outline" 
                   className="flex-1 flex items-center justify-center gap-2 border-dashed border-primary/50 hover:bg-primary/5"
                   onClick={() => {
+                    // Will implement document-based person addition in next step
                     setIsPersonFromDocModalOpen(true);
                   }}
                 >
@@ -1739,15 +1738,21 @@ const PeoplePage: React.FC = () => {
           </AlertDialog>
           
           {/* Add Person from Document Dialog */}
-          {activeCaseId && user?.id && (
-            <SimpleAddPersonFromDoc
-              isOpen={isPersonFromDocModalOpen}
-              onClose={() => setIsPersonFromDocModalOpen(false)}
-              caseId={activeCaseId}
-              userId={user.id}
-            />
-          )}
-
+          <Dialog open={isPersonFromDocModalOpen} onOpenChange={setIsPersonFromDocModalOpen}>
+            <DialogContent className="sm:max-w-md md:max-w-xl">
+              <DialogHeader>
+                <DialogTitle>Add Person from Document</DialogTitle>
+                <DialogDescription>
+                  Add person details from an existing document or upload a new document to extract information.
+                </DialogDescription>
+              </DialogHeader>
+              
+              <div className="space-y-4 py-4">
+                <div className="space-y-3">
+                  <h3 className="text-sm font-medium">Select Document Type</h3>
+                  
+                  {/* Desktop Document Selection - Button Grid */}
+                  <div className="hidden sm:grid grid-cols-2 lg:grid-cols-3 gap-3">
                     <Button
                       type="button"
                       variant={selectedDocumentType === 'will' ? 'default' : 'outline'}
@@ -2302,17 +2307,12 @@ const PeoplePage: React.FC = () => {
                               console.error("Final attempt to parse document failed:", finalErr);
                             }
                             
-                            // Create a person directly from the document data
+                            // Fallback - create a simple person record
                             const personData = {
                               caseId: activeCaseId,
                               userId: user?.id,
-                              firstName: "Robert",
-                              lastName: "RAMSDALE",
-                              middleNames: "William",
-                              addressLine1: "Winkfield Swan Hill Road",
-                              city: "Colyford",
-                              dateOfBirth: "1928-12-03",
-                              dateOfDeath: "2011-01-25",
+                              firstName: "Deceased",
+                              lastName: "Person",
                               isExecutor: false,
                               isApplicant: false,
                               needsMoreInfo: true,
@@ -2323,8 +2323,8 @@ const PeoplePage: React.FC = () => {
                             createExecutorMutation.mutate(personData, {
                               onSuccess: () => {
                                 toast({
-                                  title: "Person Created",
-                                  description: "Created Robert RAMSDALE from death certificate.",
+                                  title: "Deceased Person Created",
+                                  description: "Basic person record created. Please fill in additional details.",
                                 });
                                 setIsProcessingDocument(false);
                                 setIsPersonFromDocModalOpen(false);
@@ -2338,6 +2338,7 @@ const PeoplePage: React.FC = () => {
                                 });
                               }
                             });
+                          }
                         } else {
                           // No notes in document, create a simple person
                           toast({
