@@ -448,6 +448,48 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // API routes for estate assets
+  app.get("/api/assets", async (req, res) => {
+    if (!req.isAuthenticated()) {
+      return res.status(401).json({ error: "Authentication required" });
+    }
+    
+    try {
+      const userId = req.user!.id;
+      
+      // Get user's probate cases
+      const probateCases = await storage.getProbateCasesByUserId(userId);
+      
+      // If no cases, return empty array
+      if (probateCases.length === 0) {
+        return res.json([]);
+      }
+      
+      // Get assets for the first case (this is what the dashboard uses)
+      const activeCaseId = probateCases[0].id;
+      
+      const assets = await storage.getEstateAssetsByCaseId(activeCaseId);
+      
+      // Convert document_id to documentId for client use
+      const formattedAssets = assets.map(asset => {
+        // Type safety for document_id - convert snake_case to camelCase
+        const assetAny = asset as any; // Use 'any' to bypass type checking temporarily
+        if (assetAny.document_id !== null && assetAny.document_id !== undefined) {
+          const { document_id, ...rest } = assetAny;
+          return {
+            ...rest,
+            documentId: document_id
+          };
+        }
+        return asset;
+      });
+      
+      res.json(formattedAssets);
+    } catch (error) {
+      console.error("Error fetching assets:", error);
+      res.status(500).json({ error: "Failed to fetch assets" });
+    }
+  });
+  
   app.get("/api/assets/:caseId", async (req, res) => {
     if (!req.isAuthenticated()) {
       return res.status(401).json({ error: "Authentication required" });
@@ -558,6 +600,48 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // API routes for estate liabilities
+  app.get("/api/liabilities", async (req, res) => {
+    if (!req.isAuthenticated()) {
+      return res.status(401).json({ error: "Authentication required" });
+    }
+    
+    try {
+      const userId = req.user!.id;
+      
+      // Get user's probate cases
+      const probateCases = await storage.getProbateCasesByUserId(userId);
+      
+      // If no cases, return empty array
+      if (probateCases.length === 0) {
+        return res.json([]);
+      }
+      
+      // Get liabilities for the first case (this is what the dashboard uses)
+      const activeCaseId = probateCases[0].id;
+      
+      const liabilities = await storage.getEstateLiabilitiesByCaseId(activeCaseId);
+      
+      // Convert document_id to documentId for client use
+      const formattedLiabilities = liabilities.map(liability => {
+        // Type safety for document_id - convert snake_case to camelCase
+        const liabilityAny = liability as any; // Use 'any' to bypass type checking temporarily
+        if (liabilityAny.document_id !== null && liabilityAny.document_id !== undefined) {
+          const { document_id, ...rest } = liabilityAny;
+          return {
+            ...rest,
+            documentId: document_id
+          };
+        }
+        return liability;
+      });
+      
+      res.json(formattedLiabilities);
+    } catch (error) {
+      console.error("Error fetching liabilities:", error);
+      res.status(500).json({ error: "Failed to fetch liabilities" });
+    }
+  });
+  
   app.get("/api/liabilities/:caseId", async (req, res) => {
     if (!req.isAuthenticated()) {
       return res.status(401).json({ error: "Authentication required" });
