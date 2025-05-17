@@ -1101,6 +1101,20 @@ export async function registerRoutes(app: Express): Promise<Server> {
               documentType: category,
               webhookResponse: webhookResponse.data
             });
+            
+            // Check if we need to create a person record from this document
+            const createPersonRecord = req.body.createPersonRecord === 'true';
+            if (createPersonRecord && webhookResponse.data && 
+               (category === 'death_certificate' || category === 'id_document' || category === 'will')) {
+              
+              try {
+                console.log('Creating person record from document data...');
+                await createPersonFromDeathCertificate(newDocument.id, webhookResponse.data);
+                console.log('Person record created successfully');
+              } catch (personError) {
+                console.error('Error creating person record:', personError);
+              }
+            }
           }
         } catch (error: any) {
           // Log the webhook error but don't fail the upload
