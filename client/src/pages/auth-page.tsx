@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import { useAuth } from "@/hooks/use-auth";
 import { Redirect, useLocation, useRoute } from "wouter";
 import GoogleLoginButton from "@/components/auth/GoogleLoginButton";
+import { handleRedirectResult } from "@/lib/googleAuth";
 
 // Extend Window interface to include our shared functions
 declare global {
@@ -74,9 +75,11 @@ const AuthPage: React.FC<AuthPageProps> = ({ tab }) => {
     const searchParams = new URLSearchParams(window.location.search);
     const tabParam = searchParams.get('tab');
     const mobileParam = searchParams.get('mobile');
+    const authReturn = searchParams.get('authReturn');
     
     // Check mobile status from different sources
     const isMobileDevice = /Mobi|Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
+    const isIOS = /iPad|iPhone|iPod/i.test(navigator.userAgent);
     setIsMobile(isMobileDevice || mobileParam === 'true');
     
     // Log for debugging
@@ -84,8 +87,36 @@ const AuthPage: React.FC<AuthPageProps> = ({ tab }) => {
     console.log('URL location:', location);
     console.log('Tab from props:', tab);
     console.log('Tab from URL:', tabParam);
-    console.log('Mobile detection:', isMobileDevice);
+    console.log('Mobile detection:', isMobileDevice, isIOS ? '(iOS)' : '');
     console.log('Mobile from URL param:', mobileParam);
+    console.log('Auth return parameter:', authReturn);
+    
+    // Handle Firebase authentication redirect result for iOS and other browsers
+    if (authReturn === 'true') {
+      console.log('Auth return detected, processing Firebase redirect');
+      // Process Firebase redirect result
+      (async () => {
+        try {
+          const result = await handleRedirectResult();
+          if (result) {
+            console.log('Firebase redirect processed successfully:', result);
+            // If we're on a mobile device, do a hard redirect to dashboard
+            if (isMobileDevice) {
+              console.log('Mobile device detected, redirecting to dashboard');
+              window.location.href = '/';
+            }
+          } else {
+            console.log('No redirect result from Firebase');
+          }
+        } catch (error) {
+          console.error('Error handling Firebase redirect:', error);
+          // On iOS specifically, better error handling
+          if (isIOS) {
+            alert('There was a problem with the Google login. Please try again or use email/password.');
+          }
+        }
+      })();
+    }
     
     // Set tab based on available data
     if (tabParam === 'register' || tabParam === 'login') {
