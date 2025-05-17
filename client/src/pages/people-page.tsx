@@ -2254,7 +2254,7 @@ const PeoplePage: React.FC = () => {
                               isApplicant: false,
                               needsMoreInfo: true,
                               relationshipToDeceased: 'Deceased',
-                              documentId: latestCert.id
+                              documentId: selectedCert.id
                             };
                             
                             // Handle both nested and flat formats
@@ -2437,7 +2437,7 @@ const PeoplePage: React.FC = () => {
                               isApplicant: false,
                               needsMoreInfo: true,
                               relationshipToDeceased: 'Deceased',
-                              documentId: latestCert.id
+                              documentId: selectedCert.id
                             };
                             
                             createExecutorMutation.mutate(personData, {
