@@ -802,9 +802,14 @@ const PeoplePage: React.FC = () => {
                       <div className="flex justify-between">
                         <div className="flex items-start">
                           <div className={`rounded-full w-10 h-10 flex items-center justify-center mr-4 ${
-                            executor.isPrimary ? 'bg-primary text-white' : 'bg-gray-200'
+                            executor.needsMoreInfo ? 'bg-amber-100 text-amber-600' :
+                            executor.isPrimary ? 'bg-primary text-white' : 
+                            'bg-gray-200'
                           }`}>
-                            <User className="h-5 w-5" />
+                            {executor.needsMoreInfo ? 
+                              <AlertTriangle className="h-5 w-5" /> : 
+                              <User className="h-5 w-5" />
+                            }
                           </div>
                           <div>
                             <div className="flex items-center flex-wrap gap-2">
@@ -821,7 +826,7 @@ const PeoplePage: React.FC = () => {
                                   Executor
                                 </span>
                               )}
-                              {executor.status === 'needs_more_info' && (
+                              {executor.needsMoreInfo && (
                                 <span className="text-xs bg-amber-100 text-amber-800 px-2 py-0.5 rounded-full flex items-center">
                                   <AlertTriangle className="h-3 w-3 mr-1" />
                                   Needs more information
@@ -830,13 +835,13 @@ const PeoplePage: React.FC = () => {
                             </div>
                             <p className="text-gray-500 text-sm mt-1">
                               {executor.relationshipToDeceased || "Relationship not specified"} 
-                              {executor.status === 'needs_more_info' && (
+                              {executor.needsMoreInfo && (
                                 <span className="text-amber-600 ml-2 text-xs">
                                   Please complete all required fields
                                 </span>
                               )}
                             </p>
-                            {executor.status === 'needs_more_info' && (
+                            {executor.needsMoreInfo && (
                               <div className="mt-2 text-xs">
                                 <span className="font-medium text-amber-800">Missing: </span>
                                 {!executor.firstName && <span className="text-amber-600 mr-1">First name</span>}
