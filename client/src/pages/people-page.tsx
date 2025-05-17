@@ -2120,6 +2120,8 @@ const PeoplePage: React.FC = () => {
                             console.log("Couldn't determine if person was already created:", err);
                           }
                           
+                          console.log("DOCUMENT DATA FOR PERSON:", extractedData);
+                          
                           // If we have extracted data, create a person with it
                           if (!personAlreadyCreated && extractedData) {
                             // Check if we have the nested structure or the new flat structure
@@ -2233,7 +2235,71 @@ const PeoplePage: React.FC = () => {
                               }
                             });
                           } else {
-                            // No data extracted, create a simple person record
+                            // Try one more time to get document data
+                            try {
+                              // Try to parse direct JSON format from the document notes
+                              const documentData = JSON.parse(latestCert.notes);
+                              console.log("Trying direct JSON parsing:", documentData);
+                              
+                              if (documentData.webhookResponse && documentData.webhookResponse.content) {
+                                try {
+                                  // Parse the content directly
+                                  const extractedContent = JSON.parse(documentData.webhookResponse.content);
+                                  console.log("Successfully got data on retry:", extractedContent);
+                                  
+                                  // Create person with the extracted content
+                                  const personData = {
+                                    caseId: activeCaseId,
+                                    userId: user?.id,
+                                    firstName: extractedContent.firstName || "Unknown",
+                                    lastName: extractedContent.surname || "Unknown",
+                                    middleNames: extractedContent.middleName || "",
+                                    addressLine1: extractedContent.street || "",
+                                    city: extractedContent.city || "",
+                                    postCode: extractedContent.postcode || "",
+                                    isExecutor: false,
+                                    isApplicant: false,
+                                    needsMoreInfo: true,
+                                    relationshipToDeceased: 'Deceased',
+                                    documentId: latestCert.id
+                                  };
+                                  
+                                  if (extractedContent.dateOfBirth) {
+                                    personData.dateOfBirth = extractedContent.dateOfBirth;
+                                  }
+                                  
+                                  if (extractedContent.dateOfDeath) {
+                                    personData.dateOfDeath = extractedContent.dateOfDeath;
+                                  }
+                                  
+                                  createExecutorMutation.mutate(personData, {
+                                    onSuccess: () => {
+                                      toast({
+                                        title: "Person Created",
+                                        description: `Created ${extractedContent.firstName} ${extractedContent.surname} from death certificate`,
+                                      });
+                                      setIsProcessingDocument(false);
+                                      setIsPersonFromDocModalOpen(false);
+                                    },
+                                    onError: () => {
+                                      setIsProcessingDocument(false);
+                                      toast({
+                                        title: "Error Creating Person",
+                                        description: "There was an error creating the person record",
+                                        variant: "destructive"
+                                      });
+                                    }
+                                  });
+                                  return; // Skip the fallback person creation
+                                } catch (jsonErr) {
+                                  console.error("Error parsing webhookResponse content:", jsonErr);
+                                }
+                              }
+                            } catch (finalErr) {
+                              console.error("Final attempt to parse document failed:", finalErr);
+                            }
+                            
+                            // Fallback - create a simple person record
                             const personData = {
                               caseId: activeCaseId,
                               userId: user?.id,
