@@ -91,8 +91,8 @@ const AuthPage: React.FC<AuthPageProps> = ({ tab }) => {
     console.log('Mobile from URL param:', mobileParam);
     console.log('Auth return parameter:', authReturn);
     
-    // Always check for Firebase authentication redirect result
-    // The Google auth might not set the authReturn parameter, so we should check for results regardless
+    // Check for any Firebase redirect results (as a fallback only)
+    // Our primary method is now popup, but we still need this for cases where popup fails
     console.log('Checking for Firebase redirect result');
     // Process Firebase redirect result
     (async () => {
@@ -100,6 +100,7 @@ const AuthPage: React.FC<AuthPageProps> = ({ tab }) => {
         const result = await handleRedirectResult();
         if (result) {
           console.log('Firebase redirect processed successfully:', result);
+          
           // If we're on a mobile device, do a hard redirect to dashboard
           if (isMobileDevice) {
             console.log('Mobile device detected, redirecting to dashboard');
@@ -110,9 +111,11 @@ const AuthPage: React.FC<AuthPageProps> = ({ tab }) => {
         }
       } catch (error) {
         console.error('Error handling Firebase redirect:', error);
+        
         // On iOS specifically, better error handling
         if (isIOS) {
-          alert('There was a problem with the Google login. Please try again or use email/password.');
+          console.error('iOS-specific redirect error handling');
+          // Don't show alert here as it may confuse users who aren't using redirect
         }
       }
     })();
