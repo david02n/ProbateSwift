@@ -1350,19 +1350,24 @@ const PeoplePage: React.FC = () => {
                     </div>
                   </div>
                   
-                  {/* Contact Information */}
-                  <div className="space-y-3 border-t pt-3">
-                    <h3 className="text-sm font-medium">Contact Information</h3>
+                  {/* Contact Information - Improved layout */}
+                  <div className="space-y-4 border-t pt-4">
+                    <h3 className="text-sm font-medium mt-2">Contact Information</h3>
                     
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
+                    <div className="grid grid-cols-1 sm:grid-cols-6 gap-4">
                       <FormField
                         control={form.control}
-                        name="phoneHome"
+                        name="email"
                         render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>Home telephone number</FormLabel>
+                          <FormItem className="sm:col-span-3">
+                            <FormLabel>Email address</FormLabel>
                             <FormControl>
-                              <Input placeholder="Home phone (optional)" {...field} />
+                              <Input 
+                                type="email" 
+                                placeholder="Email address" 
+                                value={field.value || ""}
+                                onChange={field.onChange}
+                              />
                             </FormControl>
                             <FormMessage />
                           </FormItem>
@@ -1373,10 +1378,15 @@ const PeoplePage: React.FC = () => {
                         control={form.control}
                         name="phoneMobile"
                         render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>Mobile or work telephone number</FormLabel>
+                          <FormItem className="sm:col-span-3">
+                            <FormLabel>Mobile telephone</FormLabel>
                             <FormControl>
-                              <Input placeholder="Mobile/work phone (optional)" {...field} />
+                              <Input 
+                                type="tel" 
+                                placeholder="Mobile phone" 
+                                value={field.value || ""}
+                                onChange={field.onChange}
+                              />
                             </FormControl>
                             <FormMessage />
                           </FormItem>
@@ -1385,12 +1395,17 @@ const PeoplePage: React.FC = () => {
                       
                       <FormField
                         control={form.control}
-                        name="email"
+                        name="phoneHome"
                         render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>Email address</FormLabel>
+                          <FormItem className="sm:col-span-3">
+                            <FormLabel>Home telephone (optional)</FormLabel>
                             <FormControl>
-                              <Input type="email" placeholder="Email (optional)" {...field} />
+                              <Input 
+                                type="tel" 
+                                placeholder="Home phone" 
+                                value={field.value || ""}
+                                onChange={field.onChange}
+                              />
                             </FormControl>
                             <FormMessage />
                           </FormItem>
@@ -1399,9 +1414,9 @@ const PeoplePage: React.FC = () => {
                     </div>
                   </div>
                   
-                  {/* Role Information */}
-                  <div className="space-y-3 border-t pt-3">
-                    <h3 className="text-sm font-medium">Role & Relationship</h3>
+                  {/* Role Information - Improved layout */}
+                  <div className="space-y-4 border-t pt-4">
+                    <h3 className="text-sm font-medium mt-2">Role & Relationship</h3>
                     
                     {!isLegalProfessional && (
                       <FormField
@@ -1410,7 +1425,7 @@ const PeoplePage: React.FC = () => {
                         render={({ field }) => (
                           <FormItem>
                             <FormLabel>Relationship to the deceased</FormLabel>
-                            <Select onValueChange={field.onChange} defaultValue={field.value}>
+                            <Select onValueChange={field.onChange} value={field.value || ""}>
                               <FormControl>
                                 <SelectTrigger>
                                   <SelectValue placeholder="Select relationship to the deceased" />
@@ -1432,73 +1447,76 @@ const PeoplePage: React.FC = () => {
                       />
                     )}
                     
-                    {/* Show executor checkbox only if there's an assessment with a will */}
-                    {!isLegalProfessional && activeCaseId && (
-                      <FormField
-                        control={form.control}
-                        name="isExecutor"
-                        render={({ field }) => (
-                          <FormItem className="flex items-start space-x-3 space-y-0">
-                            <FormControl>
-                              <Checkbox 
-                                checked={field.value} 
-                                onCheckedChange={field.onChange}
-                              />
-                            </FormControl>
-                            <div className="space-y-1 leading-none">
-                              <FormLabel>Serve as an executor</FormLabel>
-                              <FormDescription>
-                                This person is named as an executor in the will
-                              </FormDescription>
-                            </div>
-                          </FormItem>
-                        )}
-                      />
-                    )}
-                    
-                    {!isLegalProfessional && (
-                      <FormField
-                        control={form.control}
-                        name="isApplicant"
-                        render={({ field }) => (
-                          <FormItem className="flex items-start space-x-3 space-y-0">
-                            <FormControl>
-                              <Checkbox 
-                                checked={field.value} 
-                                onCheckedChange={field.onChange}
-                              />
-                            </FormControl>
-                            <div className="space-y-1 leading-none">
-                              <FormLabel>Primary Applicant</FormLabel>
-                              <FormDescription>
-                                This person will be the main applicant for the probate application
-                              </FormDescription>
-                            </div>
-                          </FormItem>
-                        )}
-                      />
-                    )}
-                    
-                    <FormField
-                      control={form.control}
-                      name="isNotifying"
-                      render={({ field }) => (
-                        <FormItem className="flex items-start space-x-3 space-y-0">
-                          <FormControl>
-                            <Checkbox 
-                              checked={field.value} 
-                              onCheckedChange={field.onChange}
-                            />
-                          </FormControl>
-                          <div className="space-y-1 leading-none">
-                            <FormLabel>Notifying Only</FormLabel>
-                            <FormDescription>
-                              This person will be notified but won't be actively involved in the probate process
-                            </FormDescription>
-                          </div>
-                        </FormItem>
+                    {/* Roles section with improved styling */}
+                    <div className="space-y-3 bg-gray-50 p-3 rounded-md mt-2 border border-gray-100">
+                      {!isLegalProfessional && activeCaseId && (
+                        <FormField
+                          control={form.control}
+                          name="isExecutor"
+                          render={({ field }) => (
+                            <FormItem className="flex items-start space-x-3 space-y-0">
+                              <FormControl>
+                                <Checkbox 
+                                  checked={field.value} 
+                                  onCheckedChange={field.onChange}
+                                />
+                              </FormControl>
+                              <div className="space-y-1 leading-none">
+                                <FormLabel className="font-medium">Serve as an executor</FormLabel>
+                                <FormDescription className="text-xs">
+                                  This person is named as an executor in the will
+                                </FormDescription>
+                              </div>
+                            </FormItem>
+                          )}
+                        />
                       )}
-                    />
+                      
+                      {!isLegalProfessional && (
+                        <FormField
+                          control={form.control}
+                          name="isApplicant"
+                          render={({ field }) => (
+                            <FormItem className="flex items-start space-x-3 space-y-0 border-t border-gray-200 pt-3 mt-3">
+                              <FormControl>
+                                <Checkbox 
+                                  checked={field.value} 
+                                  onCheckedChange={field.onChange}
+                                />
+                              </FormControl>
+                              <div className="space-y-1 leading-none">
+                                <FormLabel className="font-medium">Primary Applicant</FormLabel>
+                                <FormDescription className="text-xs">
+                                  This person will be the main applicant for the probate application
+                                </FormDescription>
+                              </div>
+                            </FormItem>
+                          )}
+                        />
+                      )}
+                      {!isLegalProfessional && (
+                        <FormField
+                          control={form.control}
+                          name="isNotifying"
+                          render={({ field }) => (
+                            <FormItem className="flex items-start space-x-3 space-y-0 border-t border-gray-200 pt-3 mt-3">
+                              <FormControl>
+                                <Checkbox 
+                                  checked={field.value} 
+                                  onCheckedChange={field.onChange}
+                                />
+                              </FormControl>
+                              <div className="space-y-1 leading-none">
+                                <FormLabel className="font-medium">Notifying Only</FormLabel>
+                                <FormDescription className="text-xs">
+                                  This person will be notified but won't be actively involved in the probate process
+                                </FormDescription>
+                              </div>
+                            </FormItem>
+                          )}
+                        />
+                      )}
+                    </div>
                   </div>
                   
                   <DialogFooter>
