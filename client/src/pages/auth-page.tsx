@@ -91,31 +91,45 @@ const AuthPage: React.FC<AuthPageProps> = ({ tab }) => {
     console.log('Mobile from URL param:', mobileParam);
     console.log('Auth return parameter:', authReturn);
     
-    // Check for any Firebase redirect results (as a fallback only)
-    // Our primary method is now popup, but we still need this for cases where popup fails
-    console.log('Checking for Firebase redirect result');
-    // Process Firebase redirect result
+    // Check for redirect results - this is critical for both mobile and production logins
+    console.log('Checking for redirect authentication result...');
+    
+    // Process redirect result - this is the main authentication flow for mobile and production
     (async () => {
       try {
+        // For production domains, always check for redirect result
+        const isProductionDomain = window.location.hostname.includes('probateswift.com');
+        console.log('Authentication Environment:', isProductionDomain ? 'Production' : 'Development/Testing');
+        
+        // Get the redirect result from Firebase
         const result = await handleRedirectResult();
+        
         if (result) {
-          console.log('Firebase redirect processed successfully:', result);
+          console.log('Authentication redirect processed successfully');
           
-          // If we're on a mobile device, do a hard redirect to dashboard
+          // Show success notification
           if (isMobileDevice) {
-            console.log('Mobile device detected, redirecting to dashboard');
-            window.location.href = '/';
+            // On mobile, use a simpler approach
+            alert('Login successful');
           }
+          
+          // Always use window.location for redirecting after authentication
+          // This ensures cookies are properly set before navigation
+          console.log('Redirecting to dashboard after successful authentication');
+          window.location.href = '/';
         } else {
-          console.log('No redirect result from Firebase');
+          console.log('No redirect result found - user may need to log in');
         }
       } catch (error) {
-        console.error('Error handling Firebase redirect:', error);
+        console.error('Error handling authentication redirect:', error);
         
-        // On iOS specifically, better error handling
-        if (isIOS) {
-          console.error('iOS-specific redirect error handling');
-          // Don't show alert here as it may confuse users who aren't using redirect
+        // Improved error handling for all platforms
+        const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+        console.error('Authentication redirect error details:', errorMessage);
+        
+        // Show a user-friendly error on all platforms
+        if (isMobileDevice || isIOS) {
+          alert('There was a problem with your login. Please try again.');
         }
       }
     })();

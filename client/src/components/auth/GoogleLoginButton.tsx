@@ -16,9 +16,15 @@ const GoogleLoginButton = ({ className = '' }: GoogleLoginButtonProps) => {
     try {
       setIsLoading(true);
       
-      // Get the domain information for debugging
+      // Get domain information for debugging and analytics
       const domain = window.location.hostname;
-      console.log('Starting Google login from', domain.includes('replit') ? 'development domain' : 'production domain');
+      const fullHost = window.location.host;
+      const isProd = domain.includes('probateswift.com');
+      const isReplit = domain.includes('replit');
+      
+      console.log('Starting Google login from:', fullHost);
+      console.log('Environment type:', isProd ? 'Production' : (isReplit ? 'Replit' : 'Development'));
+      console.log('Current path:', window.location.pathname);
       
       // Use the signInWithGoogle function from googleAuth.ts
       const result = await signInWithGoogle();
@@ -37,11 +43,34 @@ const GoogleLoginButton = ({ className = '' }: GoogleLoginButtonProps) => {
         window.location.href = '/';
       }
       
-    } catch (error) {
+    } catch (error: any) {
       console.error('Google login error:', error);
+      
+      // Handle different error types with specific messages
+      let errorMessage = 'There was a problem logging in with Google. Please try again.';
+      
+      if (error.code) {
+        // Firebase auth error codes
+        if (error.code === 'auth/popup-blocked') {
+          errorMessage = 'Login popup was blocked by your browser. Please allow popups for this site.';
+        } else if (error.code === 'auth/popup-closed-by-user') {
+          errorMessage = 'Login was cancelled. Please try again to log in.';
+        } else if (error.code === 'auth/unauthorized-domain') {
+          errorMessage = 'This domain is not authorized for authentication. Please contact support.';
+          // Log detailed domain information to help diagnose the issue
+          console.error('Unauthorized domain error:', {
+            domain: window.location.hostname,
+            fullHost: window.location.host,
+            origin: window.location.origin,
+            path: window.location.pathname,
+            href: window.location.href
+          });
+        }
+      }
+      
       toast({
         title: 'Google Login Failed',
-        description: 'There was a problem logging in with Google. Please try again.',
+        description: errorMessage,
         variant: 'destructive',
       });
     } finally {
