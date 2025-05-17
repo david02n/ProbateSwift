@@ -418,7 +418,7 @@ const PeoplePage: React.FC = () => {
             </p>
           </div>
           
-          {/* Primary Executor Card */}
+          {/* People Card */}
           <Card className="mb-8">
             <CardHeader>
               <CardTitle className="flex items-center">
@@ -672,7 +672,7 @@ const PeoplePage: React.FC = () => {
             </CardContent>
           </Card>
           
-          {/* Add Executor Modal */}
+          {/* Add Person Modal */}
           <Dialog open={isExecutorModalOpen} onOpenChange={(open) => {
             setIsExecutorModalOpen(open);
             if (!open) {
@@ -685,14 +685,14 @@ const PeoplePage: React.FC = () => {
               <DialogHeader>
                 <DialogTitle>
                   {isEditing 
-                    ? (isLegalProfessional ? "Edit Legal Professional" : "Edit Executor") 
-                    : (isLegalProfessional ? "Add Legal Professional" : "Add Executor")
+                    ? (isLegalProfessional ? "Edit Legal Professional" : "Edit Person") 
+                    : (isLegalProfessional ? "Add Legal Professional" : "Add Person")
                   }
                 </DialogTitle>
                 <DialogDescription>
                   {isLegalProfessional 
                     ? `${isEditing ? "Edit" : "Add"} details of a solicitor or legal professional who is assisting with the probate process.` 
-                    : `${isEditing ? "Edit" : "Add"} details of a person who is named as an executor in the will or who will be handling the estate.`}
+                    : `${isEditing ? "Edit" : "Add"} details of a person who is involved in the probate process or who will be handling the estate.`}
                 </DialogDescription>
               </DialogHeader>
               
