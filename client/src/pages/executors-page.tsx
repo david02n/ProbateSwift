@@ -215,7 +215,7 @@ const PeoplePage: React.FC = () => {
   const regularExecutors = processedExecutors.filter(exec => !exec.isLegalProfessional);
   
   // Handle opening executor form
-  const handleAddExecutor = () => {
+  const handleAddPerson = () => {
     if (!activeCaseId) {
       toast({
         title: "No probate case",
@@ -275,7 +275,7 @@ const PeoplePage: React.FC = () => {
   };
   
   // Handler for editing an executor
-  const handleEditExecutor = (executor: Executor) => {
+  const handleEditPerson = (executor: Executor) => {
     setCurrentExecutor(executor);
     setIsEditing(true);
     setIsLegalProfessional(executor.relationshipToDeceased === "Legal Professional");
@@ -467,7 +467,7 @@ const PeoplePage: React.FC = () => {
                             variant="ghost" 
                             size="sm" 
                             className="h-8 w-8 p-0"
-                            onClick={() => handleEditExecutor(executor)}
+                            onClick={() => handleEditPerson(executor)}
                           >
                             <Edit className="h-4 w-4" />
                           </Button>
@@ -525,7 +525,7 @@ const PeoplePage: React.FC = () => {
                       });
                       return;
                     }
-                    handleAddExecutor();
+                    handleAddPerson();
                   }}
                 >
                   <UserPlus className="h-8 w-8 mx-auto text-gray-400 mb-2" />
@@ -534,7 +534,7 @@ const PeoplePage: React.FC = () => {
                     className="bg-primary hover:bg-primary/90" 
                     onClick={(e) => {
                       e.stopPropagation(); // Prevent the parent div click
-                      handleAddExecutor();
+                      handleAddPerson();
                     }}
                     disabled={createExecutorMutation.isPending}
                   >
@@ -592,7 +592,7 @@ const PeoplePage: React.FC = () => {
                             variant="ghost" 
                             size="sm" 
                             className="h-8 w-8 p-0"
-                            onClick={() => handleEditExecutor(professional)}
+                            onClick={() => handleEditPerson(professional)}
                           >
                             <Edit className="h-4 w-4" />
                           </Button>
