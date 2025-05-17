@@ -2035,17 +2035,22 @@ const PeoplePage: React.FC = () => {
                       status: 'needs_more_info'
                     };
                     
-                    // Open the person form with pre-filled values
-                    setEditingExecutor(null);
-                    form.reset({
-                      firstName: newPerson.firstName,
-                      lastName: newPerson.lastName,
-                      isExecutor: selectedDocumentType === 'will',
-                      isApplicant: selectedDocumentType === 'id_document',
-                      isNotifying: false,
-                      status: 'needs_more_info'
-                    });
-                    setIsPersonModalOpen(true);
+                    // Instead of opening the form, directly create a new person from the document
+                    if (activeCaseId && selectedDocumentType) {
+                      // Create a new person with the document details
+                      createExecutorMutation.mutate({
+                        firstName: newPerson.firstName,
+                        lastName: newPerson.lastName,
+                        caseId: activeCaseId,
+                        userId: user?.id,
+                        isExecutor: selectedDocumentType === 'will',
+                        isApplicant: selectedDocumentType === 'id_document',
+                        needsMoreInfo: true,
+                        relationshipToDeceased: selectedDocumentType === 'death_certificate' ? 'Deceased' : ''
+                      });
+                    }
+                    
+                    // Close the modal
                     setIsPersonFromDocModalOpen(false);
                   }}
                 >
