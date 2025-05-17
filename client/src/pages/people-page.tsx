@@ -617,25 +617,24 @@ const PeoplePage: React.FC = () => {
   const onSubmit = (data: ExecutorFormValues) => {
     if (!activeCaseId) return;
     
-    // Check if all required fields are filled
-    const requiredFieldsFilled = 
-      !!data.firstName && 
-      !!data.lastName && 
-      !!data.addressLine1 && 
-      !!data.city && 
-      !!data.postCode;
-      
-    // Set status based on required fields
-    const status = requiredFieldsFilled ? 'complete' : 'needs_more_info';
+    // Always set as needs_more_info to allow partial/incomplete records to be saved
+    const status = 'needs_more_info';
     
-    // Prepare data with new fields
+    // Always set needsMoreInfo to true to allow records to be saved regardless of completion status
+    const needsMoreInfo = true;
+    
+    // Ensure firstName is never empty - use default value if not provided
+    const firstName = data.firstName || "Unnamed";
+    const lastName = data.lastName || "Person";
+    
+    // Prepare data with new fields - allow all records to be saved
     const executorData = {
       caseId: activeCaseId,
       userId: user?.id || 0,
       title: data.title || null,
-      firstName: data.firstName,
+      firstName: firstName,
       middleNames: data.middleNames || null,
-      lastName: data.lastName,
+      lastName: lastName,
       isNameDifferentInWill: data.isNameDifferentInWill,
       altNameInWill: data.isNameDifferentInWill ? (data.altNameInWill || null) : null,
       addressLine1: data.addressLine1 || null,
@@ -651,7 +650,7 @@ const PeoplePage: React.FC = () => {
       isApplicant: data.isApplicant,
       isNotifying: data.isNotifying,
       status: status,
-      needsMoreInfo: !requiredFieldsFilled || data.needsMoreInfo || false,
+      needsMoreInfo: needsMoreInfo,
       // Legacy fields for backward compatibility
       address: data.addressLine1 || null,
       phone: data.phoneMobile || data.phoneHome || null,
