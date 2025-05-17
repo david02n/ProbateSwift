@@ -2121,7 +2121,6 @@ const PeoplePage: React.FC = () => {
                         // Extract data directly from the document notes
                         console.log("Extracting data from document notes for ID:", selectedCert.id);
                         
-                        // Fallback: Extract document data from notes if webhook call fails
                         if (selectedCert.notes) {
                           console.log("Processing document notes:", selectedCert.notes);
                           let extractedData = null;
@@ -2130,10 +2129,10 @@ const PeoplePage: React.FC = () => {
                             // Parse the JSON from the notes
                             const notesObj = JSON.parse(selectedCert.notes);
                             
-                            // Handle webhook response structure if present
+                            // Extract data from the webhookResponse if present
                             if (notesObj.webhookResponse && notesObj.webhookResponse.content) {
                               try {
-                                // First try to parse content directly as JSON (flat format)
+                                // First try to parse content directly as JSON
                                 extractedData = JSON.parse(notesObj.webhookResponse.content);
                                 console.log("Parsed webhookResponse content directly:", extractedData);
                               } catch (jsonErr) {
