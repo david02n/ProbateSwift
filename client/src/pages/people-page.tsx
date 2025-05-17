@@ -2032,7 +2032,7 @@ const PeoplePage: React.FC = () => {
                 <Button
                   type="button"
                   disabled={!selectedDocumentType || selectedDocumentType === 'other' || isProcessingDocument}
-                  onClick={() => {
+                  onClick={async () => {
                     if (selectedDocumentType === 'other') {
                       toast({
                         title: "Coming Soon",
@@ -2069,7 +2069,78 @@ const PeoplePage: React.FC = () => {
                       const latestCert = deathCerts[0];
                       
                       try {
-                        // Extract document data from notes
+                        // First make a direct call to the webhook to get fresh extracted fields
+                        console.log("Calling fileupload-dc webhook to get extracted fields for document ID:", latestCert.id);
+                        
+                        try {
+                          // Call the webhook with the document ID to get the extracted data
+                          const webhookResponse = await fetch(`https://n8n.probateswift.com/webhook/fileupload-dc?documentId=${latestCert.id}`);
+                          
+                          if (webhookResponse.ok) {
+                            const extractedFields = await webhookResponse.json();
+                            console.log("Successfully fetched data from webhook:", extractedFields);
+                            
+                            // Use the extracted data to create a person
+                            if (extractedFields && (extractedFields.firstName || extractedFields.surname)) {
+                              // Create a person record with the extracted data
+                              const personData: any = {
+                                caseId: activeCaseId,
+                                userId: user?.id,
+                                firstName: extractedFields.firstName || "Unknown",
+                                lastName: extractedFields.surname || extractedFields.lastName || "Unknown",
+                                middleNames: extractedFields.middleName || extractedFields.middleNames || "",
+                                addressLine1: extractedFields.street || extractedFields.addressLine1 || "",
+                                city: extractedFields.city || extractedFields.town || "",
+                                county: extractedFields.county || "",
+                                postCode: extractedFields.postcode || extractedFields.postCode || "",
+                                isExecutor: false,
+                                isApplicant: false,
+                                needsMoreInfo: true,
+                                relationshipToDeceased: 'Deceased',
+                                documentId: latestCert.id
+                              };
+                              
+                              // Add additional fields if available
+                              if (extractedFields.dateOfBirth) {
+                                personData.dateOfBirth = extractedFields.dateOfBirth;
+                              }
+                              
+                              if (extractedFields.dateOfDeath) {
+                                personData.dateOfDeath = extractedFields.dateOfDeath;
+                              }
+                              
+                              console.log("Creating person with data from webhook:", personData);
+                              
+                              createExecutorMutation.mutate(personData, {
+                                onSuccess: () => {
+                                  toast({
+                                    title: "Person Created",
+                                    description: `Created ${personData.firstName} ${personData.lastName} from death certificate`,
+                                  });
+                                  setIsProcessingDocument(false);
+                                  setIsPersonFromDocModalOpen(false);
+                                },
+                                onError: () => {
+                                  toast({
+                                    title: "Error Creating Person",
+                                    description: "There was an error creating the person record",
+                                    variant: "destructive"
+                                  });
+                                  setIsProcessingDocument(false);
+                                }
+                              });
+                              return; // Exit after creating person with webhook data
+                            }
+                          } else {
+                            console.log("Webhook call failed with status:", webhookResponse.status);
+                            console.log("Falling back to document notes parsing");
+                          }
+                        } catch (webhookErr) {
+                          console.error("Error calling webhook:", webhookErr);
+                          console.log("Falling back to document notes parsing");
+                        }
+                        
+                        // Fallback: Extract document data from notes if webhook call fails
                         if (latestCert.notes) {
                           console.log("Processing document notes:", latestCert.notes);
                           let extractedData = null;
