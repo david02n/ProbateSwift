@@ -145,11 +145,11 @@ export const CreateFromDeathCertificate: React.FC<CreateFromDeathCertificateProp
     <>
       <Button 
         variant="outline" 
-        className="flex items-center gap-2" 
+        className="w-full flex items-center justify-center gap-2 border-dashed border-primary/50 hover:bg-primary/5" 
         onClick={() => setIsOpen(true)}
       >
-        <FileText className="h-4 w-4" />
-        Create from Death Certificate
+        <FileText className="h-5 w-5 text-primary" />
+        <span>Create from Death Certificate</span>
       </Button>
       
       <Dialog open={isOpen} onOpenChange={setIsOpen}>
