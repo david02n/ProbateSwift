@@ -1071,33 +1071,100 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       console.log("Extracted death certificate data:", JSON.stringify(certificateData, null, 2));
       
-      // Split first name into first and middle if it contains spaces
-      let firstName = '';
-      let middleNames = '';
+      // Extract data variables
+      let extractedData = {
+        firstName: '',
+        middleNames: '',
+        lastName: '',
+        addressLine1: '',
+        city: '',
+        county: '',
+        postCode: '',
+        dateOfBirth: null as string | null,
+        dateOfDeath: null as string | null
+      };
       
-      if (certificateData.firstName) {
-        const nameParts = certificateData.firstName.trim().split(/\s+/);
-        firstName = nameParts[0];
-        if (nameParts.length > 1) {
-          middleNames = nameParts.slice(1).join(' ');
+      // Extract data based on structure
+      if (certificateData.person) {
+        // Nested person structure
+        console.log("Using nested person structure");
+        
+        // Extract name fields
+        if (certificateData.person.firstName) {
+          const nameParts = certificateData.person.firstName.trim().split(/\s+/);
+          extractedData.firstName = nameParts[0];
+          if (nameParts.length > 1) {
+            extractedData.middleNames = nameParts.slice(1).join(' ');
+          }
         }
+        
+        extractedData.lastName = certificateData.person.surname || certificateData.person.lastName || '';
+        
+        // Extract address fields
+        if (certificateData.person.address) {
+          extractedData.addressLine1 = certificateData.person.address.street || '';
+          extractedData.city = certificateData.person.address.city || '';
+          extractedData.county = certificateData.person.address.county || '';
+          extractedData.postCode = certificateData.person.address.postcode || certificateData.person.address.postCode || '';
+        } else {
+          extractedData.addressLine1 = certificateData.person.address || '';
+        }
+        
+        // Extract dates
+        extractedData.dateOfBirth = certificateData.person.dateOfBirth || null;
+        extractedData.dateOfDeath = certificateData.person.dateOfDeath || null;
+        
+      } else {
+        // Flat structure
+        console.log("Using flat data structure");
+        
+        // Extract name fields
+        if (certificateData.firstName) {
+          const nameParts = certificateData.firstName.trim().split(/\s+/);
+          extractedData.firstName = nameParts[0];
+          if (nameParts.length > 1) {
+            extractedData.middleNames = nameParts.slice(1).join(' ');
+          }
+        }
+        
+        extractedData.lastName = certificateData.surname || certificateData.lastName || '';
+        
+        // Extract address - could be a string or an object
+        if (typeof certificateData.address === 'string') {
+          extractedData.addressLine1 = certificateData.address;
+        } else if (certificateData.address && typeof certificateData.address === 'object') {
+          extractedData.addressLine1 = certificateData.address.street || '';
+          extractedData.city = certificateData.address.city || '';
+          extractedData.county = certificateData.address.county || '';
+          extractedData.postCode = certificateData.address.postcode || certificateData.address.postCode || '';
+        }
+        
+        // If address parts aren't in address object, check top level
+        extractedData.city = extractedData.city || certificateData.city || '';
+        extractedData.county = extractedData.county || certificateData.county || '';
+        extractedData.postCode = extractedData.postCode || certificateData.postcode || certificateData.postCode || '';
+        
+        // Extract dates
+        extractedData.dateOfBirth = certificateData.dateOfBirth || null;
+        extractedData.dateOfDeath = certificateData.dateOfDeath || null;
       }
       
-      // Create a new person from the death certificate data
+      console.log("Person data extracted:", extractedData);
+      
       const personData = {
         caseId: document.caseId,
         userId: document.userId,
         
-        // Map fields from the death certificate to the person record
-        firstName: firstName || certificateData.firstName || 'Unknown',
-        middleNames: middleNames,
-        lastName: certificateData.surname || certificateData.lastName || 'Unknown',
+        // Basic information
+        firstName: extractedData.firstName || 'Unknown',
+        middleNames: extractedData.middleNames,
+        lastName: extractedData.lastName || 'Unknown',
         
-        // Address fields - handle different possible formats
-        addressLine1: certificateData.address || '',
-        city: certificateData.city || '',
-        county: certificateData.county || '',
-        postCode: certificateData.postcode || certificateData.postCode || '',
+        // Address fields
+        addressLine1: extractedData.addressLine1,
+        city: extractedData.city,
+        county: extractedData.county,
+        postCode: extractedData.postCode,
         
         // Default flags as specified in requirements
         isApplicant: false,
@@ -1108,6 +1175,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
         // Additional fields
         relationshipToDeceased: 'Deceased',
         documentId: document.id, // Link to the document that created this person
+        
+        // Dates
+        dateOfBirth: extractedData.dateOfBirth,
+        dateOfDeath: extractedData.dateOfDeath,
       };
       
       // Create the person record

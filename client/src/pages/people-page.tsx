@@ -26,6 +26,7 @@ import axios from "axios";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { getQueryFn, apiRequest, queryClient } from "@/lib/queryClient";
 import { Executor, ProbateCase } from "@shared/schema";
+import CreateFromDeathCertificate from "@/components/people/CreateFromDeathCertificate";
 import { useToast } from "@/hooks/use-toast";
 import { z } from "zod";
 import { useForm } from "react-hook-form";
@@ -788,6 +789,15 @@ const PeoplePage: React.FC = () => {
                   <AlertCircle className="h-5 w-5 text-primary" />
                   <span>Add from Document</span>
                 </Button>
+                
+                {activeCaseId && user && (
+                  <div className="flex-1">
+                    <CreateFromDeathCertificate 
+                      caseId={activeCaseId} 
+                      userId={user.id} 
+                    />
+                  </div>
+                )}
               </div>
               
               <div className="space-y-6">
