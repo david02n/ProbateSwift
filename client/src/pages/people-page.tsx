@@ -2239,16 +2239,21 @@ const PeoplePage: React.FC = () => {
                             try {
                               // Try to parse direct JSON format from the document notes
                               const documentData = JSON.parse(latestCert.notes);
-                              console.log("Trying direct JSON parsing:", documentData);
+                              console.log("Trying direct JSON parsing from document with ID:", latestCert.id, documentData);
                               
+                              // Attempt to access the death certificate data from any found location
                               if (documentData.webhookResponse && documentData.webhookResponse.content) {
                                 try {
-                                  // Parse the content directly
-                                  const extractedContent = JSON.parse(documentData.webhookResponse.content);
-                                  console.log("Successfully got data on retry:", extractedContent);
+                                  // Special handling for death certificate data
+                                  const content = documentData.webhookResponse.content;
+                                  console.log("Found webhook content:", content);
+                                  
+                                  // First try direct JSON parsing
+                                  const extractedContent = JSON.parse(content);
+                                  console.log("Successfully parsed content as JSON:", extractedContent);
                                   
                                   // Create person with the extracted content
-                                  const personData = {
+                                  const personData: any = {
                                     caseId: activeCaseId,
                                     userId: user?.id,
                                     firstName: extractedContent.firstName || "Unknown",
@@ -2264,6 +2269,7 @@ const PeoplePage: React.FC = () => {
                                     documentId: latestCert.id
                                   };
                                   
+                                  // Add all available fields
                                   if (extractedContent.dateOfBirth) {
                                     personData.dateOfBirth = extractedContent.dateOfBirth;
                                   }
@@ -2271,6 +2277,8 @@ const PeoplePage: React.FC = () => {
                                   if (extractedContent.dateOfDeath) {
                                     personData.dateOfDeath = extractedContent.dateOfDeath;
                                   }
+                                  
+                                  console.log("Creating person with data:", personData);
                                   
                                   createExecutorMutation.mutate(personData, {
                                     onSuccess: () => {
