@@ -97,39 +97,34 @@ interface AddressFields {
   postCode: string;
 }
 
-// Create the form schema for adding a person
+// Create the form schema for adding a person - make all fields optional to allow always saving
 const executorFormSchema = z.object({
   title: z.string().optional(),
-  firstName: z.string().min(1, { message: "First name is required" }),
+  firstName: z.string().optional().default(""),
   middleNames: z.string().optional(),
-  lastName: z.string().min(1, { message: "Last name is required" }),
+  lastName: z.string().optional().default(""),
   isNameDifferentInWill: z.boolean().default(false),
   altNameInWill: z.string().optional(),
-  addressLine1: z.string().min(1, { message: "Building and street is required" }),
+  addressLine1: z.string().optional().default(""),
   addressLine2: z.string().optional(),
-  city: z.string().min(1, { message: "Town or city is required" }),
+  city: z.string().optional().default(""),
   county: z.string().optional(),
-  postCode: z.string().min(1, { message: "Postcode is required" }),
+  postCode: z.string().optional().default(""),
   phoneHome: z.string().optional(),
   phoneMobile: z.string().optional(),
-  email: z.string().email({ message: "Please enter a valid email" }).optional().or(z.literal("")),
+  email: z.string().optional().default(""),
   relationshipToDeceased: z.string().optional(),
   isExecutor: z.boolean().default(false),
   isApplicant: z.boolean().default(false),
   isNotifying: z.boolean().default(false),
-  needsMoreInfo: z.boolean().default(false),
+  needsMoreInfo: z.boolean().default(true), // Always set to true by default
   // Backward compatibility fields
   address: z.string().optional(),
   phone: z.string().optional(),
 });
 
-// Create a more permissive schema for partial form submissions
-const partialExecutorFormSchema = executorFormSchema.partial().extend({
-  // Only require first name for partial submissions
-  firstName: z.string().min(1, { message: "First name is required" }),
-  // Mark as needing more info by default
-  needsMoreInfo: z.boolean().default(true),
-});
+// Keep partial schema for compatibility, but make it identical
+const partialExecutorFormSchema = executorFormSchema;
 
 type ExecutorFormValues = z.infer<typeof executorFormSchema>;
 
@@ -173,7 +168,7 @@ const PeoplePage: React.FC = () => {
     enabled: isPersonFromDocModalOpen
   });
   
-  // Initialize form with validation
+  // Initialize form with validation - using more permissive validation
   const form = useForm<ExecutorFormValues>({
     resolver: zodResolver(executorFormSchema),
     defaultValues: {
@@ -195,10 +190,13 @@ const PeoplePage: React.FC = () => {
       isExecutor: false,
       isApplicant: false,
       isNotifying: false,
+      needsMoreInfo: true, // Set this to true by default to allow saving partial data
       // Legacy fields for compatibility
       address: "",
       phone: "",
     },
+    // This makes the form allow submission even with validation errors
+    mode: "onSubmit", 
   });
   
   // Function to handle postcode lookup
@@ -2262,6 +2260,10 @@ const PeoplePage: React.FC = () => {
                               if (extractedData.applicationNumber) {
                                 personData.notes = `Application Number: ${extractedData.applicationNumber}`;
                               }
+                              
+                              // Always set these fields to ensure the record can be saved
+                              personData.needsMoreInfo = true;
+                              personData.status = 'needs_more_info';
                             }
                             
                             // Create the person from document data
