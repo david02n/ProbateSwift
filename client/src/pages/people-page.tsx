@@ -826,6 +826,16 @@ const PeoplePage: React.FC = () => {
                                   Executor
                                 </span>
                               )}
+                              {executor.relationshipToDeceased === 'Deceased' && (
+                                <span className="text-xs bg-gray-100 text-gray-800 px-2 py-0.5 rounded-full">
+                                  Deceased
+                                </span>
+                              )}
+                              {executor.documentId && (
+                                <span className="text-xs bg-purple-100 text-purple-800 px-2 py-0.5 rounded-full">
+                                  Auto-created from document
+                                </span>
+                              )}
                               {executor.needsMoreInfo && (
                                 <span className="text-xs bg-amber-100 text-amber-800 px-2 py-0.5 rounded-full flex items-center">
                                   <AlertTriangle className="h-3 w-3 mr-1" />

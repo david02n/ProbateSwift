@@ -996,6 +996,112 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
   
+  // Helper function to create a person from death certificate data
+  async function createPersonFromDeathCertificate(documentId: number, documentData: any) {
+    try {
+      // Get the document to find which case it belongs to
+      const document = await storage.getDocument(documentId);
+      if (!document) {
+        console.error("Document not found when creating person from death certificate");
+        return null;
+      }
+      
+      // Parse the certificate data from the webhook response
+      let certificateData;
+      if (typeof documentData === 'string') {
+        try {
+          // Extract JSON from the webhook response if it's a string
+          const match = documentData.match(/```json\s*(\{[\s\S]*?\})\s*```/);
+          if (match && match[1]) {
+            certificateData = JSON.parse(match[1]);
+          } else {
+            console.error("Could not extract JSON from webhook response");
+            return null;
+          }
+        } catch (err) {
+          console.error("Error parsing JSON from webhook response:", err);
+          return null;
+        }
+      } else if (documentData && documentData.webhookResponse && documentData.webhookResponse.content) {
+        // Extract from nested webhook response
+        try {
+          const match = documentData.webhookResponse.content.match(/```json\s*(\{[\s\S]*?\})\s*```/);
+          if (match && match[1]) {
+            certificateData = JSON.parse(match[1]);
+          } else {
+            console.error("Could not extract JSON from nested webhook response");
+            return null;
+          }
+        } catch (err) {
+          console.error("Error parsing JSON from nested webhook response:", err);
+          return null;
+        }
+      } else if (typeof documentData === 'object') {
+        certificateData = documentData;
+      }
+      
+      if (!certificateData) {
+        console.error("No certificate data found in webhook response");
+        return null;
+      }
+      
+      console.log("Extracted death certificate data:", certificateData);
+      
+      // Create a new person from the death certificate data
+      const personData = {
+        caseId: document.caseId,
+        userId: document.userId,
+        
+        // Map fields from the death certificate to the person record
+        firstName: certificateData.firstName || '',
+        middleNames: '', // We don't concatenate first and middle names
+        lastName: certificateData.surname || certificateData.lastName || '',
+        
+        // Address fields - handle different possible formats
+        addressLine1: certificateData.address || '',
+        city: certificateData.city || '',
+        county: certificateData.county || '',
+        postCode: certificateData.postcode || certificateData.postCode || '',
+        
+        // Default flags as specified in requirements
+        isApplicant: false,
+        isExecutor: false,
+        isNotifying: false,
+        needsMoreInfo: true,
+        
+        // Additional fields
+        relationshipToDeceased: 'Deceased',
+        documentId: document.id, // Link to the document that created this person
+      };
+      
+      // Create the person record
+      console.log("Creating person from death certificate:", personData);
+      const newPerson = await storage.createExecutor(personData);
+      
+      if (newPerson) {
+        console.log("Successfully created person from death certificate:", newPerson.id);
+        
+        // Update the probate case to link it to the deceased person
+        const probateCase = await storage.getProbateCase(document.caseId);
+        if (probateCase) {
+          await storage.updateProbateCase(probateCase.id, {
+            deceasedFirstName: newPerson.firstName, 
+            deceasedLastName: newPerson.lastName,
+            deceasedDateOfBirth: certificateData.dateOfBirth || null,
+            deceasedDateOfDeath: certificateData.dateOfDeath || null,
+            deceasedId: newPerson.id // Link to the deceased person
+          });
+          console.log("Updated probate case with deceased person:", newPerson.id);
+        }
+      }
+      
+      return newPerson;
+    } catch (error) {
+      console.error("Error creating person from death certificate:", error);
+      return null;
+    }
+  }
+
   // Webhook endpoint to receive document processing results
   app.post("/api/webhook/document-processed", async (req, res) => {
     try {
@@ -1016,6 +1122,27 @@ export async function registerRoutes(app: Express): Promise<Server> {
         notes: metadata ? JSON.stringify(metadata) : 'Processed by webhook',
         metadata: document.metadata || {}, // Initialize metadata if it doesn't exist
       });
+      
+      // Special handling for death certificates - create a person record
+      if (document.type === 'death_certificate' && metadata) {
+        console.log("Processing death certificate document:", document.id);
+        const newPerson = await createPersonFromDeathCertificate(document.id, metadata);
+        
+        // If person was created successfully, update the document notes
+        if (newPerson) {
+          await storage.updateDocument(document.id, {
+            notes: JSON.stringify({
+              message: "Document processed by webhook",
+              documentType: "death_certificate",
+              webhookResponse: metadata,
+              personCreated: true,
+              personId: newPerson.id
+            })
+          });
+          
+          console.log("Updated document notes with person creation info");
+        }
+      }
       
       // Broadcast the update to connected clients
       broadcastDocumentUpdate(document.id, status || 'processed', metadata);

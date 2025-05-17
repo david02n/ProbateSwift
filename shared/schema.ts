@@ -43,6 +43,7 @@ export const probateCases = pgTable("probate_cases", {
   deceasedLastName: text("deceased_last_name"),
   deceasedDateOfBirth: date("deceased_dob"),
   deceasedDateOfDeath: date("deceased_dod"),
+  deceasedId: integer("deceased_id"), // Reference to the deceased person record
   estateValue: numeric("estate_value"), // Estimated total value of the estate
   ihtCompleted: boolean("iht_completed").default(false), // Inheritance tax form completed
   progress: integer("progress").default(0), // Progress percentage (0-100)
@@ -79,6 +80,7 @@ export const executors = pgTable("people", {
   personPosition: integer("person_position"), // Internal position (1-4)
   status: text("status").default("pending"), // pending, accepted, declined
   needsMoreInfo: boolean("needs_more_info").default(false), // Flag for incomplete records
+  documentId: integer("document_id"), // Reference to the document that created this person (e.g., death certificate)
   // Legacy fields maintained for compatibility
   address: text("address"),
   phone: text("phone"),
