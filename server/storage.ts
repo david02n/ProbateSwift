@@ -707,47 +707,71 @@ export class DatabaseStorage implements IStorage {
   // People methods (formerly executors)
   async getExecutor(id: number): Promise<Executor | undefined> {
     // Keeping same method name for backward compatibility
-    const people = pgTable("people", { ...executors }); // Create reference to the people table with executor schema
-    const [result] = await db.select().from(people).where(eq(people.id, id));
-    return result;
+    try {
+      const [result] = await db.select().from(executors).where(eq(executors.id, id));
+      return result;
+    } catch (error) {
+      console.error("Error in getExecutor:", error);
+      throw error;
+    }
   }
 
   async getExecutorsByCaseId(caseId: number): Promise<Executor[]> {
     // Keeping same method name for backward compatibility
-    const people = pgTable("people", { ...executors }); // Create reference to the people table with executor schema
-    return await db.select().from(people).where(eq(people.caseId, caseId));
+    try {
+      return await db.select().from(executors).where(eq(executors.caseId, caseId));
+    } catch (error) {
+      console.error("Error in getExecutorsByCaseId:", error);
+      throw error;
+    }
   }
 
   // New method with renamed table but same functionality
   async getPeopleByCaseId(caseId: number): Promise<Executor[]> {
-    const people = pgTable("people", { ...executors }); // Create reference to the people table with executor schema
-    return await db.select().from(people).where(eq(people.caseId, caseId));
+    try {
+      return await db.select().from(executors).where(eq(executors.caseId, caseId));
+    } catch (error) {
+      console.error("Error in getPeopleByCaseId:", error);
+      throw error;
+    }
   }
 
   async createExecutor(executorData: InsertExecutor): Promise<Executor> {
     // Keeping same method name for backward compatibility
-    const people = pgTable("people", { ...executors }); // Create reference to the people table with executor schema
-    const [result] = await db.insert(people).values(executorData).returning();
-    return result;
+    try {
+      const [result] = await db.insert(executors).values(executorData).returning();
+      return result;
+    } catch (error) {
+      console.error("Error in createExecutor:", error);
+      throw error;
+    }
   }
 
   async updateExecutor(id: number, executorData: Partial<InsertExecutor>): Promise<Executor | undefined> {
     // Keeping same method name for backward compatibility
-    const people = pgTable("people", { ...executors }); // Create reference to the people table with executor schema
-    const [updatedExecutor] = await db
-      .update(people)
-      .set({ ...executorData, updatedAt: new Date() })
-      .where(eq(people.id, id))
-      .returning();
-    return updatedExecutor;
+    try {
+      const [updatedExecutor] = await db
+        .update(executors)
+        .set({ ...executorData, updatedAt: new Date() })
+        .where(eq(executors.id, id))
+        .returning();
+      return updatedExecutor;
+    } catch (error) {
+      console.error("Error in updateExecutor:", error);
+      throw error;
+    }
   }
   
   async deleteExecutor(id: number): Promise<void> {
     // Keeping same method name for backward compatibility
-    const people = pgTable("people", { ...executors }); // Create reference to the people table with executor schema
-    await db
-      .delete(people)
-      .where(eq(people.id, id));
+    try {
+      await db
+        .delete(executors)
+        .where(eq(executors.id, id));
+    } catch (error) {
+      console.error("Error in deleteExecutor:", error);
+      throw error;
+    }
   }
 
   // Estate Asset methods
