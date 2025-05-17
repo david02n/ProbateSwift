@@ -53,22 +53,34 @@ export const probateCases = pgTable("probate_cases", {
 
 // Relationships will be manually handled in queries
 
-// Executors model - people responsible for administering the estate
+// People model - anyone involved in the probate process (executors, applicants, attorneys, etc.)
 export const executors = pgTable("executors", {
   id: serial("id").primaryKey(),
   caseId: integer("case_id").references(() => probateCases.id).notNull(),
-  userId: integer("user_id").references(() => users.id).notNull(), // Who created this executor
-  isApplicant: boolean("is_applicant").default(false), // Whether this executor is the applicant
-  firstName: text("first_name").notNull(),
-  lastName: text("last_name").notNull(),
-  email: text("email"),
-  phone: text("phone"),
-  address: text("address"),
-  city: text("city"),
-  postCode: text("post_code"),
-  relationshipToDeceased: text("relationship"),
-  isNotifying: boolean("is_notifying").default(false), // Whether this executor is notifying only
+  userId: integer("user_id").references(() => users.id).notNull(), // Who created this person
+  title: text("title"), // e.g. Mr, Mrs, Dr
+  firstName: text("first_name").notNull(), // Maps to first_names
+  middleNames: text("middle_names"), // Maps to middle_names
+  lastName: text("last_name").notNull(), // Maps to last_name
+  isNameDifferentInWill: boolean("is_name_different_in_will").default(false), // Whether their name is different in the will
+  altNameInWill: text("alt_name_will"), // Maps to alt_name_will
+  addressLine1: text("address_line1"), // Maps to address_line1
+  addressLine2: text("address_line2"), // Maps to address_line2
+  city: text("city"), // Maps to city (town or city)
+  county: text("county"), // Maps to county
+  postCode: text("post_code"), // Maps to postcode
+  phoneHome: text("phone_home"), // Maps to phone_home
+  phoneMobile: text("phone_mobile"), // Maps to phone_mobile
+  email: text("email"), // Maps to email
+  relationshipToDeceased: text("relationship"), // Maps to relationship
+  isExecutor: boolean("is_executor").default(false), // Whether this person is an executor
+  isApplicant: boolean("is_applicant").default(false), // Whether this person is the applicant
+  isNotifying: boolean("is_notifying").default(false), // Whether this person is notifying only
+  personPosition: integer("person_position"), // Internal position (1-4)
   status: text("status").default("pending"), // pending, accepted, declined
+  // Legacy fields maintained for compatibility
+  address: text("address"),
+  phone: text("phone"),
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
 });
@@ -194,17 +206,29 @@ export const insertExecutorSchema = createInsertSchema(executors)
   .pick({
     caseId: true,
     userId: true,
-    isApplicant: true,
+    title: true,
     firstName: true,
+    middleNames: true,
     lastName: true,
-    email: true,
-    phone: true,
-    address: true,
+    isNameDifferentInWill: true,
+    altNameInWill: true,
+    addressLine1: true,
+    addressLine2: true,
     city: true,
+    county: true,
     postCode: true,
+    phoneHome: true,
+    phoneMobile: true,
+    email: true,
     relationshipToDeceased: true,
+    isExecutor: true,
+    isApplicant: true,
     isNotifying: true,
+    personPosition: true,
     status: true,
+    // Legacy fields included for compatibility
+    address: true,
+    phone: true,
   });
 
 export const insertEstateAssetSchema = createInsertSchema(estateAssets)
