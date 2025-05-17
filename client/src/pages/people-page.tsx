@@ -279,16 +279,25 @@ const PeoplePage: React.FC = () => {
       // Find the selected address suggestion
       const selectedAddress = addressSuggestions.find(suggestion => suggestion.id === id);
       
-      if (!selectedAddress) {
-        throw new Error('Address not found');
+      if (!selectedAddress || !selectedAddress.rawAddress) {
+        throw new Error('Address not found or missing data');
       }
       
       console.log("Selected address:", selectedAddress);
       
       setIsLoadingAddresses(true);
       
+      // Get the URL from the rawAddress (this is the path to retrieve full details)
+      const urlPath = selectedAddress.rawAddress.url;
+      if (!urlPath) {
+        throw new Error('Missing URL path for address details');
+      }
+      
+      // Extract just the ID part from the URL (format is /get/{id})
+      const detailsId = urlPath.split('/').pop();
+      
       // Get the full address details from the API
-      const response = await fetch(`/api/address-lookup?id=${encodeURIComponent(id)}`);
+      const response = await fetch(`/api/address-lookup?id=${encodeURIComponent(detailsId)}`);
       
       if (!response.ok) {
         throw new Error(`Address lookup failed with status: ${response.status}`);
