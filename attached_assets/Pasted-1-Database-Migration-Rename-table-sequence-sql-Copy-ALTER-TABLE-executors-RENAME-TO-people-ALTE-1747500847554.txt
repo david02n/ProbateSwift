@@ -1,0 +1,147 @@
+1. Database Migration
+Rename table & sequence
+
+sql
+Copy
+ALTER TABLE executors RENAME TO people;
+ALTER SEQUENCE executors_id_seq RENAME TO people_id_seq;
+ALTER TABLE people ALTER COLUMN id SET DEFAULT nextval('people_id_seq');
+Ensure all columns exist (add any missing):
+
+sql
+Copy
+ALTER TABLE people
+  ADD COLUMN IF NOT EXISTS title           VARCHAR(10),
+  ADD COLUMN IF NOT EXISTS first_names     VARCHAR(255) NOT NULL,
+  ADD COLUMN IF NOT EXISTS middle_names    VARCHAR(255),
+  ADD COLUMN IF NOT EXISTS last_name       VARCHAR(255) NOT NULL,
+  ADD COLUMN IF NOT EXISTS person_position SMALLINT    NOT NULL DEFAULT 1,
+  ADD COLUMN IF NOT EXISTS executor        BOOLEAN     NOT NULL DEFAULT FALSE,
+  ADD COLUMN IF NOT EXISTS is_applicant    BOOLEAN     NOT NULL DEFAULT FALSE,
+  ADD COLUMN IF NOT EXISTS is_notifying    BOOLEAN     NOT NULL DEFAULT FALSE,
+  ADD COLUMN IF NOT EXISTS needs_more_info BOOLEAN     NOT NULL DEFAULT FALSE,
+  ADD COLUMN IF NOT EXISTS status         VARCHAR(50) NOT NULL DEFAULT 'pending',
+  ADD COLUMN IF NOT EXISTS address_line1   VARCHAR(255) NOT NULL,
+  ADD COLUMN IF NOT EXISTS address_line2   VARCHAR(255),
+  ADD COLUMN IF NOT EXISTS city            VARCHAR(100) NOT NULL,
+  ADD COLUMN IF NOT EXISTS county          VARCHAR(100),
+  ADD COLUMN IF NOT EXISTS postcode        VARCHAR(20)  NOT NULL,
+  ADD COLUMN IF NOT EXISTS phone_home      VARCHAR(50),
+  ADD COLUMN IF NOT EXISTS phone_mobile    VARCHAR(50),
+  ADD COLUMN IF NOT EXISTS email           VARCHAR(255),
+  ADD COLUMN IF NOT EXISTS name_diff_will  BOOLEAN     NOT NULL DEFAULT FALSE,
+  ADD COLUMN IF NOT EXISTS alt_name_will   VARCHAR(255),
+  ADD COLUMN IF NOT EXISTS created_at      TIMESTAMP   NOT NULL DEFAULT now(),
+  ADD COLUMN IF NOT EXISTS updated_at      TIMESTAMP   NOT NULL DEFAULT now();
+Migrate legacy data
+
+sql
+Copy
+UPDATE people
+SET
+  first_names   = COALESCE(first_names, first_name),
+  last_name     = COALESCE(last_name, last_name),
+  address_line1 = COALESCE(address_line1, address),
+  postcode      = COALESCE(postcode, post_code),
+  phone_home    = COALESCE(phone_home, phone),
+  executor      = is_executor,
+  is_applicant  = is_applicant,
+  is_notifying  = is_notifying,
+  needs_more_info = needs_more_info,
+  status        = status;
+Drop redundant columns (after verification)
+
+sql
+Copy
+ALTER TABLE people
+  DROP COLUMN IF EXISTS first_name,
+  DROP COLUMN IF EXISTS address,
+  DROP COLUMN IF EXISTS post_code,
+  DROP COLUMN IF EXISTS phone,
+  DROP COLUMN IF EXISTS is_executor;
+Constraints & indexes
+
+sql
+Copy
+ALTER TABLE people ADD CONSTRAINT uq_case_position UNIQUE(case_id, person_position);
+CREATE INDEX IF NOT EXISTS idx_people_executor ON people(case_id) WHERE executor;
+2. Back-End API Updates
+Endpoints & Models
+
+Rename any references of executors → people in routes, controllers, services, and DB models.
+
+Update request/response schemas to use first_names, last_name, address_line1, postcode, executor, etc.
+
+CRUD operations
+
+GET /cases/:id/people (was /executors): return all people for a case.
+
+POST /cases/:id/people: create a new person entry.
+
+PUT /cases/:id/people/:personId: update fields, including partial saves (needs_more_info).
+
+DELETE /cases/:id/people/:personId: remove a person.
+
+Self-suggestion flag
+
+If you have an endpoint for case settings, add support for storing dismissSelfSuggestion: boolean.
+
+3. Front-End Changes
+Rename UI labels
+
+Change all “Executor” or “Executors/Applicants” tabs, menus, and headings to “People.”
+
+Entry modes UI
+
+Three buttons/tabs at top of the People form:
+
+Add Yourself (pre-fill from current user; “Do not show again” link toggles dismissSelfSuggestion)
+
+Import from Document (OCR-parsed list → select → auto-fill)
+
+Enter Manually (blank form)
+
+Form fields (keep existing labels; map to new keys):
+
+Title, First name(s), Middle name(s), Last name
+
+Address block with:
+
+Postcode + Find Address button
+
+Building and street, Second line, Town or city, County
+
+“Edit address manually” link to override
+
+Contact: Home telephone, Mobile/work telephone, Email
+
+Role & Relationship: Relationship to deceased, Serve as an executor (checkbox, only if case.has_will), Primary Applicant, Notifying Only
+
+Postcode-Lookup Integration
+
+On Find Address click: call
+
+http
+Copy
+GET https://api.getAddress.io/autocomplete/{postcode}?api-key=YOUR_KEY
+show suggestions; on select, call
+
+http
+Copy
+GET https://api.getAddress.io/get/{id}?api-key=YOUR_KEY
+then populate address fields.
+
+Partial-Save & Status
+
+Always enable Save.
+
+On save, front-end should send all fields; back-end sets needs_more_info if any required fields are missing.
+
+In the People list, render a “Needs more info” badge for those records.
+
+Conditional Rendering
+
+Only show the Serve as an executor checkbox if case.has_will === true.
+
+Only show will-override fields (Is your name different…, Alternative name) if executor checkbox is checked.
+
