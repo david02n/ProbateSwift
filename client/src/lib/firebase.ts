@@ -19,11 +19,9 @@ const app = initializeApp(firebaseConfig);
 export const auth = getAuth(app);
 export const googleProvider = new GoogleAuthProvider();
 
-// Configure Google Auth Provider with better parameters
+// Configure Google Auth Provider with minimal parameters
 googleProvider.setCustomParameters({
-  prompt: 'select_account',
-  // Enable login_hint for better user experience
-  login_hint: localStorage.getItem('last_email') || undefined
+  prompt: 'select_account'
 });
 
 export default app;
