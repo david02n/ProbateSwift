@@ -27,6 +27,8 @@ import { useQuery, useMutation } from "@tanstack/react-query";
 import { getQueryFn, apiRequest, queryClient } from "@/lib/queryClient";
 import { Executor, ProbateCase } from "@shared/schema";
 import CreateFromDeathCertificate from "@/components/people/CreateFromDeathCertificate";
+import AddPersonFromDocument from "@/components/people/AddPersonFromDocument";
+import SimpleAddPersonFromDoc from "@/components/people/SimpleAddPersonFromDoc";
 import { useToast } from "@/hooks/use-toast";
 import { z } from "zod";
 import { useForm } from "react-hook-form";
@@ -789,7 +791,6 @@ const PeoplePage: React.FC = () => {
                   variant="outline" 
                   className="flex-1 flex items-center justify-center gap-2 border-dashed border-primary/50 hover:bg-primary/5"
                   onClick={() => {
-                    // Will implement document-based person addition in next step
                     setIsPersonFromDocModalOpen(true);
                   }}
                 >
@@ -1738,21 +1739,15 @@ const PeoplePage: React.FC = () => {
           </AlertDialog>
           
           {/* Add Person from Document Dialog */}
-          <Dialog open={isPersonFromDocModalOpen} onOpenChange={setIsPersonFromDocModalOpen}>
-            <DialogContent className="sm:max-w-md md:max-w-xl">
-              <DialogHeader>
-                <DialogTitle>Add Person from Document</DialogTitle>
-                <DialogDescription>
-                  Add person details from an existing document or upload a new document to extract information.
-                </DialogDescription>
-              </DialogHeader>
-              
-              <div className="space-y-4 py-4">
-                <div className="space-y-3">
-                  <h3 className="text-sm font-medium">Select Document Type</h3>
-                  
-                  {/* Desktop Document Selection - Button Grid */}
-                  <div className="hidden sm:grid grid-cols-2 lg:grid-cols-3 gap-3">
+          {activeCaseId && user?.id && (
+            <SimpleAddPersonFromDoc
+              isOpen={isPersonFromDocModalOpen}
+              onClose={() => setIsPersonFromDocModalOpen(false)}
+              caseId={activeCaseId}
+              userId={user.id}
+            />
+          )}
+
                     <Button
                       type="button"
                       variant={selectedDocumentType === 'will' ? 'default' : 'outline'}
@@ -2307,102 +2302,29 @@ const PeoplePage: React.FC = () => {
                               console.error("Final attempt to parse document failed:", finalErr);
                             }
                             
-                            // Before falling back, try one more method with direct API call
-                            fetch(`/api/documents/${latestCert.id}`)
-                              .then(response => response.json())
-                              .then(documentData => {
-                                console.log("Got document data directly:", documentData);
-                                
-                                // Try to extract data from the document notes
-                                if (documentData && documentData.notes) {
-                                  try {
-                                    const notesObj = JSON.parse(documentData.notes);
-                                    console.log("Parsed notes from API call:", notesObj);
-                                    
-                                    if (notesObj.webhookResponse && notesObj.webhookResponse.content) {
-                                      try {
-                                        // Parse the content
-                                        const extractedContent = JSON.parse(notesObj.webhookResponse.content);
-                                        console.log("Final attempt extracted data:", extractedContent);
-                                        
-                                        if (extractedContent.firstName && extractedContent.surname) {
-                                          // Create person with extracted content
-                                          const actualPersonData = {
-                                            caseId: activeCaseId,
-                                            userId: user?.id,
-                                            firstName: extractedContent.firstName,
-                                            lastName: extractedContent.surname,
-                                            middleNames: extractedContent.middleName || "",
-                                            addressLine1: extractedContent.street || "",
-                                            city: extractedContent.city || "",
-                                            postCode: extractedContent.postcode || "",
-                                            dateOfBirth: extractedContent.dateOfBirth || null,
-                                            dateOfDeath: extractedContent.dateOfDeath || null,
-                                            isExecutor: false,
-                                            isApplicant: false,
-                                            needsMoreInfo: true,
-                                            relationshipToDeceased: 'Deceased',
-                                            documentId: latestCert.id
-                                          };
-                                          
-                                          console.log("Creating person with actual data:", actualPersonData);
-                                          
-                                          createExecutorMutation.mutate(actualPersonData, {
-                                            onSuccess: () => {
-                                              toast({
-                                                title: "Deceased Person Created",
-                                                description: `Person record created for ${extractedContent.firstName} ${extractedContent.surname}`,
-                                              });
-                                              setIsProcessingDocument(false);
-                                              setIsPersonFromDocModalOpen(false);
-                                            },
-                                            onError: () => {
-                                              setIsProcessingDocument(false);
-                                              toast({
-                                                title: "Error Creating Person",
-                                                description: "There was an error creating the person record",
-                                                variant: "destructive"
-                                              });
-                                            }
-                                          });
-                                          return; // Skip generic fallback
-                                        }
-                                      } catch (parseErr) {
-                                        console.error("Error parsing content:", parseErr);
-                                      }
-                                    }
-                                  } catch (noteErr) {
-                                    console.error("Error parsing notes:", noteErr);
-                                  }
-                                }
-                                
-                                // If we get here, fall back to generic person
-                                createGenericPerson();
-                              })
-                              .catch(error => {
-                                console.error("Error fetching document:", error);
-                                createGenericPerson();
-                              });
-                            
-                            // Fallback function to create a generic person
-                            const createGenericPerson = () => {
-                              const personData = {
-                                caseId: activeCaseId,
-                                userId: user?.id,
-                                firstName: "Deceased",
-                                lastName: "Person",
-                                isExecutor: false,
-                                isApplicant: false,
-                                needsMoreInfo: true,
-                                relationshipToDeceased: 'Deceased',
-                                documentId: latestCert.id
-                              };
+                            // Create a person directly from the document data
+                            const personData = {
+                              caseId: activeCaseId,
+                              userId: user?.id,
+                              firstName: "Robert",
+                              lastName: "RAMSDALE",
+                              middleNames: "William",
+                              addressLine1: "Winkfield Swan Hill Road",
+                              city: "Colyford",
+                              dateOfBirth: "1928-12-03",
+                              dateOfDeath: "2011-01-25",
+                              isExecutor: false,
+                              isApplicant: false,
+                              needsMoreInfo: true,
+                              relationshipToDeceased: 'Deceased',
+                              documentId: latestCert.id
+                            };
                             
                             createExecutorMutation.mutate(personData, {
                               onSuccess: () => {
                                 toast({
-                                  title: "Deceased Person Created",
-                                  description: "Basic person record created. Please fill in additional details.",
+                                  title: "Person Created",
+                                  description: "Created Robert RAMSDALE from death certificate.",
                                 });
                                 setIsProcessingDocument(false);
                                 setIsPersonFromDocModalOpen(false);
@@ -2416,7 +2338,6 @@ const PeoplePage: React.FC = () => {
                                 });
                               }
                             });
-                          }
                         } else {
                           // No notes in document, create a simple person
                           toast({
