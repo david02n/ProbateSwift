@@ -66,16 +66,27 @@ interface ProcessedExecutor extends Executor {
 
 // Create the form schema for adding a person
 const executorFormSchema = z.object({
+  title: z.string().optional(),
   firstName: z.string().min(1, { message: "First name is required" }),
+  middleNames: z.string().optional(),
   lastName: z.string().min(1, { message: "Last name is required" }),
+  isNameDifferentInWill: z.boolean().default(false),
+  altNameInWill: z.string().optional(),
+  addressLine1: z.string().min(1, { message: "Building and street is required" }),
+  addressLine2: z.string().optional(),
+  city: z.string().min(1, { message: "Town or city is required" }),
+  county: z.string().optional(),
+  postCode: z.string().min(1, { message: "Postcode is required" }),
+  phoneHome: z.string().optional(),
+  phoneMobile: z.string().optional(),
   email: z.string().email({ message: "Please enter a valid email" }).optional().or(z.literal("")),
-  phone: z.string().optional().or(z.literal("")),
-  address: z.string().optional().or(z.literal("")),
-  city: z.string().optional().or(z.literal("")),
-  postCode: z.string().optional().or(z.literal("")),
-  relationshipToDeceased: z.string({ required_error: "Please select a relationship" }),
+  relationshipToDeceased: z.string().optional(),
+  isExecutor: z.boolean().default(false),
   isApplicant: z.boolean().default(false),
   isNotifying: z.boolean().default(false),
+  // Backward compatibility fields
+  address: z.string().optional(),
+  phone: z.string().optional(),
 });
 
 type ExecutorFormValues = z.infer<typeof executorFormSchema>;
@@ -100,16 +111,27 @@ const PeoplePage: React.FC = () => {
   const form = useForm<ExecutorFormValues>({
     resolver: zodResolver(executorFormSchema),
     defaultValues: {
+      title: "",
       firstName: "",
+      middleNames: "",
       lastName: "",
-      email: "",
-      phone: "",
-      address: "",
+      isNameDifferentInWill: false,
+      altNameInWill: "",
+      addressLine1: "",
+      addressLine2: "",
       city: "",
+      county: "",
       postCode: "",
+      phoneHome: "",
+      phoneMobile: "",
+      email: "",
       relationshipToDeceased: "",
+      isExecutor: false,
       isApplicant: false,
       isNotifying: false,
+      // Legacy fields for compatibility
+      address: "",
+      phone: "",
     },
   });
   
@@ -319,19 +341,31 @@ const PeoplePage: React.FC = () => {
   const onSubmit = (data: ExecutorFormValues) => {
     if (!activeCaseId) return;
     
+    // Prepare data with new fields
     const executorData = {
       caseId: activeCaseId,
       userId: user?.id || 0,
+      title: data.title || null,
       firstName: data.firstName,
+      middleNames: data.middleNames || null,
       lastName: data.lastName,
-      email: data.email || null,
-      phone: data.phone || null,
-      address: data.address || null,
+      isNameDifferentInWill: data.isNameDifferentInWill,
+      altNameInWill: data.isNameDifferentInWill ? (data.altNameInWill || null) : null,
+      addressLine1: data.addressLine1 || null,
+      addressLine2: data.addressLine2 || null,
       city: data.city || null,
+      county: data.county || null,
       postCode: data.postCode || null,
+      phoneHome: data.phoneHome || null,
+      phoneMobile: data.phoneMobile || null,
+      email: data.email || null,
       relationshipToDeceased: data.relationshipToDeceased || null,
+      isExecutor: data.isExecutor,
       isApplicant: data.isApplicant,
       isNotifying: data.isNotifying,
+      // Legacy fields for backward compatibility
+      address: data.addressLine1 || null,
+      phone: data.phoneMobile || data.phoneHome || null,
     };
     
     if (isEditing && currentExecutor) {
@@ -688,15 +722,59 @@ const PeoplePage: React.FC = () => {
               
               <Form {...form}>
                 <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-5">
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+                  {/* Title */}
+                  <FormField
+                    control={form.control}
+                    name="title"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Title</FormLabel>
+                        <Select onValueChange={field.onChange} defaultValue={field.value}>
+                          <FormControl>
+                            <SelectTrigger>
+                              <SelectValue placeholder="Select title (optional)" />
+                            </SelectTrigger>
+                          </FormControl>
+                          <SelectContent>
+                            <SelectItem value="Mr">Mr</SelectItem>
+                            <SelectItem value="Mrs">Mrs</SelectItem>
+                            <SelectItem value="Miss">Miss</SelectItem>
+                            <SelectItem value="Ms">Ms</SelectItem>
+                            <SelectItem value="Dr">Dr</SelectItem>
+                            <SelectItem value="Prof">Prof</SelectItem>
+                            <SelectItem value="Rev">Rev</SelectItem>
+                            <SelectItem value="Other">Other</SelectItem>
+                          </SelectContent>
+                        </Select>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  
+                  {/* Name Information */}
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
                     <FormField
                       control={form.control}
                       name="firstName"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel>First Name</FormLabel>
+                          <FormLabel>First name(s) <span className="text-red-500">*</span></FormLabel>
                           <FormControl>
                             <Input placeholder="Enter first name" {...field} />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    
+                    <FormField
+                      control={form.control}
+                      name="middleNames"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Middle name(s)</FormLabel>
+                          <FormControl>
+                            <Input placeholder="Middle names (optional)" {...field} />
                           </FormControl>
                           <FormMessage />
                         </FormItem>
@@ -708,7 +786,7 @@ const PeoplePage: React.FC = () => {
                       name="lastName"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel>Last Name</FormLabel>
+                          <FormLabel>Last name <span className="text-red-500">*</span></FormLabel>
                           <FormControl>
                             <Input placeholder="Enter last name" {...field} />
                           </FormControl>
@@ -718,113 +796,257 @@ const PeoplePage: React.FC = () => {
                     />
                   </div>
                   
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-                    <FormField
-                      control={form.control}
-                      name="email"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Email</FormLabel>
-                          <FormControl>
-                            <Input type="email" placeholder="Email address (optional)" {...field} />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                    
-                    <FormField
-                      control={form.control}
-                      name="phone"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Phone</FormLabel>
-                          <FormControl>
-                            <Input placeholder="Phone number (optional)" {...field} />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                  </div>
-                  
-                  <FormField
-                    control={form.control}
-                    name="address"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Address</FormLabel>
-                        <FormControl>
-                          <Input placeholder="Address (optional)" {...field} />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                  
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-                    <FormField
-                      control={form.control}
-                      name="city"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>City</FormLabel>
-                          <FormControl>
-                            <Input placeholder="City (optional)" {...field} />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                    
-                    <FormField
-                      control={form.control}
-                      name="postCode"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Post Code</FormLabel>
-                          <FormControl>
-                            <Input placeholder="Post code (optional)" {...field} />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                  </div>
-                  
-                  {!isLegalProfessional && (
-                    <FormField
-                      control={form.control}
-                      name="relationshipToDeceased"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Relationship to Deceased</FormLabel>
-                          <Select onValueChange={field.onChange} defaultValue={field.value}>
+                  {/* Will has name override */}
+                  {form.watch("isExecutor") && (
+                    <>
+                      <FormField
+                        control={form.control}
+                        name="isNameDifferentInWill"
+                        render={({ field }) => (
+                          <FormItem className="flex items-start space-x-3 space-y-0 mt-2">
                             <FormControl>
-                              <SelectTrigger>
-                                <SelectValue placeholder="Select relationship to the deceased" />
-                              </SelectTrigger>
+                              <Checkbox 
+                                checked={field.value} 
+                                onCheckedChange={field.onChange}
+                              />
                             </FormControl>
-                            <SelectContent>
-                              <SelectItem value="Spouse/Partner">Spouse/Partner</SelectItem>
-                              <SelectItem value="Child">Child</SelectItem>
-                              <SelectItem value="Parent">Parent</SelectItem>
-                              <SelectItem value="Sibling">Sibling</SelectItem>
-                              <SelectItem value="Other Family Member">Other Family Member</SelectItem>
-                              <SelectItem value="Friend">Friend</SelectItem>
-                              <SelectItem value="Other">Other</SelectItem>
-                            </SelectContent>
-                          </Select>
-                          <FormMessage />
-                        </FormItem>
+                            <div className="space-y-1 leading-none">
+                              <FormLabel>Is your name different in the will?</FormLabel>
+                              <FormDescription>
+                                Select this if the person's name appears differently in the will document
+                              </FormDescription>
+                            </div>
+                          </FormItem>
+                        )}
+                      />
+                      
+                      {form.watch("isNameDifferentInWill") && (
+                        <FormField
+                          control={form.control}
+                          name="altNameInWill"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>Alternative name in will</FormLabel>
+                              <FormControl>
+                                <Input placeholder="Name as it appears in the will" {...field} />
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
                       )}
-                    />
+                    </>
                   )}
                   
-                  {!isLegalProfessional && (
+                  {/* Address Information */}
+                  <div className="space-y-3 border-t pt-3">
+                    <h3 className="text-sm font-medium">Address</h3>
+                    
                     <FormField
                       control={form.control}
-                      name="isApplicant"
+                      name="addressLine1"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Building and street <span className="text-red-500">*</span></FormLabel>
+                          <FormControl>
+                            <Input placeholder="Address line 1" {...field} />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    
+                    <FormField
+                      control={form.control}
+                      name="addressLine2"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Second line of address</FormLabel>
+                          <FormControl>
+                            <Input placeholder="Address line 2 (optional)" {...field} />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
+                      <FormField
+                        control={form.control}
+                        name="city"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Town or city <span className="text-red-500">*</span></FormLabel>
+                            <FormControl>
+                              <Input placeholder="Town or city" {...field} />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                      
+                      <FormField
+                        control={form.control}
+                        name="county"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>County</FormLabel>
+                            <FormControl>
+                              <Input placeholder="County (optional)" {...field} />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                      
+                      <FormField
+                        control={form.control}
+                        name="postCode"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Postcode <span className="text-red-500">*</span></FormLabel>
+                            <FormControl>
+                              <Input placeholder="Postcode" {...field} />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                    </div>
+                  </div>
+                  
+                  {/* Contact Information */}
+                  <div className="space-y-3 border-t pt-3">
+                    <h3 className="text-sm font-medium">Contact Information</h3>
+                    
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
+                      <FormField
+                        control={form.control}
+                        name="phoneHome"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Home telephone number</FormLabel>
+                            <FormControl>
+                              <Input placeholder="Home phone (optional)" {...field} />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                      
+                      <FormField
+                        control={form.control}
+                        name="phoneMobile"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Mobile or work telephone number</FormLabel>
+                            <FormControl>
+                              <Input placeholder="Mobile/work phone (optional)" {...field} />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                      
+                      <FormField
+                        control={form.control}
+                        name="email"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Email address</FormLabel>
+                            <FormControl>
+                              <Input type="email" placeholder="Email (optional)" {...field} />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                    </div>
+                  </div>
+                  
+                  {/* Role Information */}
+                  <div className="space-y-3 border-t pt-3">
+                    <h3 className="text-sm font-medium">Role & Relationship</h3>
+                    
+                    {!isLegalProfessional && (
+                      <FormField
+                        control={form.control}
+                        name="relationshipToDeceased"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Relationship to the deceased</FormLabel>
+                            <Select onValueChange={field.onChange} defaultValue={field.value}>
+                              <FormControl>
+                                <SelectTrigger>
+                                  <SelectValue placeholder="Select relationship to the deceased" />
+                                </SelectTrigger>
+                              </FormControl>
+                              <SelectContent>
+                                <SelectItem value="Spouse/Partner">Spouse/Partner</SelectItem>
+                                <SelectItem value="Child">Child</SelectItem>
+                                <SelectItem value="Parent">Parent</SelectItem>
+                                <SelectItem value="Sibling">Sibling</SelectItem>
+                                <SelectItem value="Other Family Member">Other Family Member</SelectItem>
+                                <SelectItem value="Friend">Friend</SelectItem>
+                                <SelectItem value="Other">Other</SelectItem>
+                              </SelectContent>
+                            </Select>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                    )}
+                    
+                    {/* Show executor checkbox only if there's an assessment with a will */}
+                    {!isLegalProfessional && activeCaseId && (
+                      <FormField
+                        control={form.control}
+                        name="isExecutor"
+                        render={({ field }) => (
+                          <FormItem className="flex items-start space-x-3 space-y-0">
+                            <FormControl>
+                              <Checkbox 
+                                checked={field.value} 
+                                onCheckedChange={field.onChange}
+                              />
+                            </FormControl>
+                            <div className="space-y-1 leading-none">
+                              <FormLabel>Serve as an executor</FormLabel>
+                              <FormDescription>
+                                This person is named as an executor in the will
+                              </FormDescription>
+                            </div>
+                          </FormItem>
+                        )}
+                      />
+                    )}
+                    
+                    {!isLegalProfessional && (
+                      <FormField
+                        control={form.control}
+                        name="isApplicant"
+                        render={({ field }) => (
+                          <FormItem className="flex items-start space-x-3 space-y-0">
+                            <FormControl>
+                              <Checkbox 
+                                checked={field.value} 
+                                onCheckedChange={field.onChange}
+                              />
+                            </FormControl>
+                            <div className="space-y-1 leading-none">
+                              <FormLabel>Primary Applicant</FormLabel>
+                              <FormDescription>
+                                This person will be the main applicant for the probate application
+                              </FormDescription>
+                            </div>
+                          </FormItem>
+                        )}
+                      />
+                    )}
+                    
+                    <FormField
+                      control={form.control}
+                      name="isNotifying"
                       render={({ field }) => (
                         <FormItem className="flex items-start space-x-3 space-y-0">
                           <FormControl>
@@ -834,36 +1056,15 @@ const PeoplePage: React.FC = () => {
                             />
                           </FormControl>
                           <div className="space-y-1 leading-none">
-                            <FormLabel>Primary Applicant</FormLabel>
+                            <FormLabel>Notifying Only</FormLabel>
                             <FormDescription>
-                              This person will be the main applicant for the probate application
+                              This person will be notified but won't be actively involved in the probate process
                             </FormDescription>
                           </div>
                         </FormItem>
                       )}
                     />
-                  )}
-                  
-                  <FormField
-                    control={form.control}
-                    name="isNotifying"
-                    render={({ field }) => (
-                      <FormItem className="flex items-start space-x-3 space-y-0">
-                        <FormControl>
-                          <Checkbox 
-                            checked={field.value} 
-                            onCheckedChange={field.onChange}
-                          />
-                        </FormControl>
-                        <div className="space-y-1 leading-none">
-                          <FormLabel>Notifying Only</FormLabel>
-                          <FormDescription>
-                            This person will be notified but won't be actively involved in the probate process
-                          </FormDescription>
-                        </div>
-                      </FormItem>
-                    )}
-                  />
+                  </div>
                   
                   <DialogFooter>
                     <Button 
