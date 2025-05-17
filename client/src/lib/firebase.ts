@@ -1,63 +1,64 @@
-import { initializeApp } from 'firebase/app';
+import { initializeApp } from "firebase/app";
+import { getAuth, signInWithRedirect, GoogleAuthProvider, getRedirectResult } from "firebase/auth";
 
-// Determine the appropriate authDomain based on the current environment
-const getAuthDomain = () => {
-  const currentHost = window.location.hostname;
-  
-  // Check if we're on the probateswift.com domain
-  if (currentHost.includes('probateswift.com')) {
-    return 'probateswift.com';
-  }
-  
-  // Check if we're on the replit.app domain
-  if (currentHost.includes('replit.app')) {
-    return currentHost; // Use the full replit.app hostname
-  }
-  
-  // Default for development environment - use Firebase default
-  return `${import.meta.env.VITE_FIREBASE_PROJECT_ID}.firebaseapp.com`;
-};
-
-// Firebase configuration using environment variables
 const firebaseConfig = {
   apiKey: import.meta.env.VITE_FIREBASE_API_KEY,
-  authDomain: getAuthDomain(),
+  authDomain: `${import.meta.env.VITE_FIREBASE_PROJECT_ID}.firebaseapp.com`,
   projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID,
   storageBucket: `${import.meta.env.VITE_FIREBASE_PROJECT_ID}.appspot.com`,
   appId: import.meta.env.VITE_FIREBASE_APP_ID,
 };
 
 // Initialize Firebase
-export const FirebaseApp = initializeApp(firebaseConfig);
+const app = initializeApp(firebaseConfig);
 
-// Validate Firebase configuration
-const validateFirebaseConfig = () => {
-  const requiredVars = [
-    'VITE_FIREBASE_API_KEY', 
-    'VITE_FIREBASE_PROJECT_ID', 
-    'VITE_FIREBASE_APP_ID'
-  ];
-  
-  const missingVars = requiredVars.filter(varName => !import.meta.env[varName]);
-  
-  if (missingVars.length > 0) {
-    console.error(`Firebase initialization failed: Missing environment variables: ${missingVars.join(', ')}`);
-    return false;
-  }
-  
-  // Log current domain for debugging
-  console.log('Current domain:', window.location.hostname);
-  console.log('Full host:', window.location.host);
-  console.log('Full URL:', window.location.href);
-  
-  return true;
-};
+// Initialize Firebase Authentication and get a reference to the service
+export const auth = getAuth(app);
+export const googleProvider = new GoogleAuthProvider();
 
-// Log validation result
-const isConfigValid = validateFirebaseConfig();
-
-if (!isConfigValid) {
-  console.error('Firebase is not properly configured. Google authentication may not work.');
+// Call this function when the user clicks on the "Login with Google" button
+export function loginWithGoogle() {
+  signInWithRedirect(auth, googleProvider);
 }
 
-export default FirebaseApp;
+// Call this function on page load when the user is redirected back to your site
+export async function handleRedirectResult() {
+  try {
+    const result = await getRedirectResult(auth);
+    if (result) {
+      // This gives you a Google Access Token. You can use it to access Google APIs.
+      const credential = GoogleAuthProvider.credentialFromResult(result);
+      const token = credential?.accessToken;
+      
+      // The signed-in user info.
+      const user = result.user;
+      
+      // Return user info for authentication with backend
+      return {
+        user,
+        token,
+        success: true
+      };
+    }
+    return { success: false };
+  } catch (error: any) {
+    // Handle Errors here.
+    console.error("Firebase auth error:", error);
+    const errorCode = error.code;
+    const errorMessage = error.message;
+    
+    // The email of the user's account used.
+    const email = error.customData?.email;
+    
+    // The AuthCredential type that was used.
+    const credential = GoogleAuthProvider.credentialFromError(error);
+    
+    return {
+      success: false,
+      errorCode,
+      errorMessage,
+      email,
+      credential
+    };
+  }
+}
