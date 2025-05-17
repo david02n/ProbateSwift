@@ -1378,6 +1378,21 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.json(mockAddressResponse);
       }
       
+      // Check if we're looking up a specific address ID
+      const { id } = req.query;
+      if (id && typeof id === 'string') {
+        try {
+          console.log(`Fetching full address details for id: ${id}`);
+          const response = await axios.get(`https://api.getAddress.io/get/${id}?api-key=${apiKey}`);
+          console.log('Successfully received full address details from GetAddress.io');
+          return res.json(response.data);
+        } catch (detailError: any) {
+          console.error("Error fetching address details:", detailError.message);
+          return res.status(500).json({ error: "Failed to retrieve address details" });
+        }
+      }
+      
+      // Otherwise look up addresses by postcode
       try {
         console.log(`Fetching addresses for postcode: ${postcode}`);
         // Format the postcode (remove spaces)
@@ -1388,14 +1403,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         const response = await axios.get(`https://api.getAddress.io/autocomplete/${encodeURIComponent(formattedPostcode)}?api-key=${apiKey}&all=true`);
         console.log('Successfully received address data from GetAddress.io');
         
-        // Transform the response to the format our frontend expects
-        const transformedResponse = {
-          postcode: postcode,
-          addresses: response.data.suggestions || []
-        };
-        
-        console.log(`Found ${transformedResponse.addresses.length} addresses`);
-        return res.json(transformedResponse);
+        // Just pass through the API response
+        return res.json(response.data);
       } catch (apiError: any) {
         console.error("API error with GetAddress.io:", apiError.message);
         

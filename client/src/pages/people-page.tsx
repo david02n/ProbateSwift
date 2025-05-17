@@ -243,21 +243,14 @@ const PeoplePage: React.FC = () => {
       // Process addresses from the GetAddress.io API response
       let suggestions: PostcodeLookupSuggestion[] = [];
       
-      // Check if we have addresses in the response
-      if (data.addresses && Array.isArray(data.addresses)) {
-        // The autocomplete endpoint returns an array of suggestion objects
-        suggestions = data.addresses.map((suggestion: any, index: number) => {
-          // Suggestion could be a string or an object with an 'address' property
-          const addressText = typeof suggestion === 'string' 
-            ? suggestion 
-            : suggestion.address || suggestion.text || '';
-          
-          return {
-            id: `${postcode}-${index}`,
-            address: addressText.includes(postcode) ? addressText : `${addressText}, ${postcode}`,
-            rawAddress: typeof suggestion === 'object' ? suggestion : null
-          };
-        });
+      // Check if we have suggestions in the response (GetAddress.io autocomplete format)
+      if (data.suggestions && Array.isArray(data.suggestions)) {
+        // Map the suggestions directly from the API response
+        suggestions = data.suggestions.map((suggestion: any) => ({
+          id: suggestion.id || `${postcode}-${Math.random().toString(36).substring(2, 9)}`,
+          address: suggestion.address || '',
+          rawAddress: suggestion
+        }));
       }
       
       console.log("Processed address suggestions:", suggestions);
@@ -280,10 +273,10 @@ const PeoplePage: React.FC = () => {
     }
   };
   
-  // Function to process the selected address and populate form fields
+  // Function to fetch and process the selected address details from the GetAddress.io API
   const fetchAddressDetails = async (id: string) => {
     try {
-      // Find the selected address from our suggestions
+      // Find the selected address suggestion
       const selectedAddress = addressSuggestions.find(suggestion => suggestion.id === id);
       
       if (!selectedAddress) {
@@ -292,52 +285,32 @@ const PeoplePage: React.FC = () => {
       
       console.log("Selected address:", selectedAddress);
       
-      // Format from GetAddress.io: "Building Name/Number, Street Name, Locality, Town/City, County, Postcode"
-      // The selectedAddress.address will be in format "Full Address, Postcode"
-      const fullAddress = selectedAddress.address;
+      setIsLoadingAddresses(true);
       
-      // Extract the postcode (last part)
-      const addressParts = fullAddress.split(', ');
-      const postcode = addressParts[addressParts.length - 1];
+      // Get the full address details from the API
+      const response = await fetch(`/api/address-lookup?id=${encodeURIComponent(id)}`);
       
-      // Now extract the address components
-      // Remove the postcode from the address parts
-      addressParts.pop();
-      
-      let addressLine1 = '';
-      let addressLine2 = '';
-      let city = '';
-      let county = '';
-      
-      // GetAddress.io typically returns components in this order:
-      // [0] = Building number/name
-      // [1] = Street name
-      // [Optional] = Locality
-      // [n-2] = Town/City (where n is array length)
-      // [n-1] = County (where n is array length)
-      
-      if (addressParts.length > 0) {
-        // Building number/name + Street = Address Line 1
-        if (addressParts.length >= 2) {
-          addressLine1 = addressParts.slice(0, 2).join(', ');
-          
-          // If there are more than 3 parts, use the middle ones for address line 2
-          if (addressParts.length >= 4) {
-            addressLine2 = addressParts.slice(2, addressParts.length - 2).join(', ');
-            city = addressParts[addressParts.length - 2];
-            county = addressParts[addressParts.length - 1];
-          } 
-          // If there are exactly 3 parts, use the last one for city
-          else if (addressParts.length === 3) {
-            city = addressParts[2];
-          }
-        } else {
-          // If there's only one part, use it as address line 1
-          addressLine1 = addressParts[0];
-        }
+      if (!response.ok) {
+        throw new Error(`Address lookup failed with status: ${response.status}`);
       }
       
-      console.log("Parsed address components:", {
+      const addressData = await response.json();
+      console.log("Received full address data:", addressData);
+      
+      // Map the returned fields to our form fields according to the specified mapping
+      const addressLine1 = addressData.line_1 || ''; // BUILDING AND STREET
+      const addressLine2 = addressData.line_2 || ''; // SECOND LINE OF ADDRESS
+      const city = addressData.town_or_city || ''; // TOWN OR CITY
+      let county = addressData.county || ''; // COUNTY (primary selection)
+      
+      // If county is empty, try using district as a fallback
+      if (!county && addressData.district) {
+        county = addressData.district; // COUNTY (secondary selection)
+      }
+      
+      const postcode = addressData.postcode || '';
+      
+      console.log("Mapped address components:", {
         addressLine1,
         addressLine2,
         city,
@@ -361,12 +334,14 @@ const PeoplePage: React.FC = () => {
         description: "The address has been filled in the form. You can now edit or complete any missing details if needed.",
       });
     } catch (error) {
-      console.error("Error processing address details:", error);
+      console.error("Error fetching address details:", error);
       toast({
-        title: "Failed to process address",
-        description: "There was an error processing the address details. Please try again or enter your address manually.",
+        title: "Failed to get address details",
+        description: "There was an error retrieving the address details. Please try again or enter your address manually.",
         variant: "destructive",
       });
+    } finally {
+      setIsLoadingAddresses(false);
     }
   };
   
