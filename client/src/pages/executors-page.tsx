@@ -370,7 +370,7 @@ const PeoplePage: React.FC = () => {
         <div className="container mx-auto px-4 py-8 flex justify-center items-center h-[50vh]">
           <div className="text-center">
             <Loader2 className="h-10 w-10 animate-spin mx-auto text-primary mb-4" />
-            <p className="text-gray-600">Loading executor information...</p>
+            <p className="text-gray-600">Loading people information...</p>
           </div>
         </div>
       </div>
@@ -412,9 +412,9 @@ const PeoplePage: React.FC = () => {
         <div className="max-w-6xl mx-auto">
           {/* Page Title */}
           <div className="mb-8">
-            <h1 className="text-2xl font-bold mb-2">Executors</h1>
+            <h1 className="text-2xl font-bold mb-2">People</h1>
             <p className="text-gray-600">
-              Manage executor details and professional representatives
+              Manage people involved in the probate process
             </p>
           </div>
           
@@ -423,10 +423,10 @@ const PeoplePage: React.FC = () => {
             <CardHeader>
               <CardTitle className="flex items-center">
                 <Users className="h-5 w-5 mr-2 text-primary" />
-                Estate Executors
+                People
               </CardTitle>
               <CardDescription>
-                People legally responsible for administering the estate
+                People involved in the probate process with different roles
               </CardDescription>
             </CardHeader>
             <CardContent>
@@ -453,7 +453,7 @@ const PeoplePage: React.FC = () => {
                               </h3>
                               {executor.isPrimary && (
                                 <span className="ml-2 text-xs bg-primary/10 text-primary px-2 py-0.5 rounded-full">
-                                  Primary Executor
+                                  Primary Applicant
                                 </span>
                               )}
                             </div>
@@ -509,7 +509,7 @@ const PeoplePage: React.FC = () => {
                   ))
                 ) : (
                   <div className="text-center py-6 text-gray-500">
-                    <p>No executors have been added yet.</p>
+                    <p>No people have been added yet.</p>
                   </div>
                 )}
                 
@@ -529,7 +529,7 @@ const PeoplePage: React.FC = () => {
                   }}
                 >
                   <UserPlus className="h-8 w-8 mx-auto text-gray-400 mb-2" />
-                  <p className="text-gray-600 mb-3">Add another executor</p>
+                  <p className="text-gray-600 mb-3">Add another person</p>
                   <Button 
                     className="bg-primary hover:bg-primary/90" 
                     onClick={(e) => {
@@ -949,4 +949,4 @@ const PeoplePage: React.FC = () => {
   );
 };
 
-export default ExecutorsPage;
+export default PeoplePage;
