@@ -165,6 +165,7 @@ const PeoplePage: React.FC = () => {
   const [isPersonFromDocModalOpen, setIsPersonFromDocModalOpen] = useState(false);
   const [selectedDocumentType, setSelectedDocumentType] = useState<string | null>(null);
   const [isProcessingDocument, setIsProcessingDocument] = useState(false);
+  const [selectedDocumentId, setSelectedDocumentId] = useState<string | null>(null);
   
   // Fetch documents when modal is open
   const { data: documentList = [] } = useQuery<Document[]>({
@@ -1892,14 +1893,34 @@ const PeoplePage: React.FC = () => {
                     <div className="flex flex-col space-y-2">
                       <label className="text-sm font-medium">Select from uploaded documents</label>
                       {selectedDocumentType && selectedDocumentType !== 'other' ? (
-                        <Select>
+                        <Select 
+                          value={selectedDocumentId || undefined}
+                          onValueChange={(value) => {
+                            // Find the selected document by ID
+                            const selectedDoc = documentList.find((doc: any) => doc.id.toString() === value);
+                            if (selectedDoc) {
+                              console.log("Selected document:", selectedDoc);
+                              setSelectedDocumentId(value);
+                            }
+                          }}
+                        >
                           <SelectTrigger>
                             <SelectValue placeholder="Select an uploaded document" />
                           </SelectTrigger>
                           <SelectContent>
-                            {/* This will be populated with actual documents from your documents tab */}
-                            <SelectItem value="example1">Will_Draft_Final.pdf</SelectItem>
-                            <SelectItem value="example2">Death_Certificate.pdf</SelectItem>
+                            {/* Filter documents by the selected type */}
+                            {documentList
+                              .filter((doc: any) => doc.type === selectedDocumentType)
+                              .map((doc: any) => (
+                                <SelectItem key={doc.id} value={doc.id.toString()}>
+                                  {doc.filename}
+                                </SelectItem>
+                              ))}
+                            {documentList.filter((doc: any) => doc.type === selectedDocumentType).length === 0 && (
+                              <SelectItem value="none" disabled>
+                                No {selectedDocumentType.replace('_', ' ')} documents found
+                              </SelectItem>
+                            )}
                           </SelectContent>
                         </Select>
                       ) : (
@@ -1908,8 +1929,9 @@ const PeoplePage: React.FC = () => {
                             <SelectValue placeholder="Select an uploaded document" />
                           </SelectTrigger>
                           <SelectContent>
-                            <SelectItem value="example1">Will_Draft_Final.pdf</SelectItem>
-                            <SelectItem value="example2">Death_Certificate.pdf</SelectItem>
+                            <SelectItem value="none">
+                              Please select a document type first
+                            </SelectItem>
                           </SelectContent>
                         </Select>
                       )}
@@ -2065,16 +2087,37 @@ const PeoplePage: React.FC = () => {
                       // Start document processing
                       setIsProcessingDocument(true);
                       
-                      // Get the latest death certificate
-                      const latestCert = deathCerts[0];
+                      // Get either the selected document or the latest death certificate
+                      let selectedCert: any;
+                      
+                      if (selectedDocumentId) {
+                        // Use the selected document
+                        selectedCert = documentList.find((doc: any) => doc.id.toString() === selectedDocumentId);
+                        if (!selectedCert) {
+                          toast({
+                            title: "Document Not Found",
+                            description: "The selected document could not be found",
+                            variant: "destructive"
+                          });
+                          setIsProcessingDocument(false);
+                          return;
+                        }
+                      } else {
+                        // Fallback to the latest document
+                        selectedCert = deathCerts[0];
+                        toast({
+                          title: "Using Latest Document",
+                          description: "Using the most recently uploaded death certificate",
+                        });
+                      }
                       
                       try {
                         // First make a direct call to the webhook to get fresh extracted fields
-                        console.log("Calling fileupload-dc webhook to get extracted fields for document ID:", latestCert.id);
+                        console.log("Calling fileupload-dc webhook to get extracted fields for document ID:", selectedCert.id);
                         
                         try {
                           // Call the webhook with the document ID to get the extracted data
-                          const webhookResponse = await fetch(`https://n8n.probateswift.com/webhook/fileupload-dc?documentId=${latestCert.id}`);
+                          const webhookResponse = await fetch(`https://n8n.probateswift.com/webhook/fileupload-dc?documentId=${selectedCert.id}`);
                           
                           if (webhookResponse.ok) {
                             const extractedFields = await webhookResponse.json();
@@ -2097,7 +2140,7 @@ const PeoplePage: React.FC = () => {
                                 isApplicant: false,
                                 needsMoreInfo: true,
                                 relationshipToDeceased: 'Deceased',
-                                documentId: latestCert.id
+                                documentId: selectedCert.id
                               };
                               
                               // Add additional fields if available
@@ -2141,13 +2184,13 @@ const PeoplePage: React.FC = () => {
                         }
                         
                         // Fallback: Extract document data from notes if webhook call fails
-                        if (latestCert.notes) {
-                          console.log("Processing document notes:", latestCert.notes);
+                        if (selectedCert.notes) {
+                          console.log("Processing document notes:", selectedCert.notes);
                           let extractedData = null;
                           
                           try {
                             // Parse the JSON from the notes
-                            const notesObj = JSON.parse(latestCert.notes);
+                            const notesObj = JSON.parse(selectedCert.notes);
                             
                             // Handle webhook response structure if present
                             if (notesObj.webhookResponse && notesObj.webhookResponse.content) {
@@ -2173,7 +2216,7 @@ const PeoplePage: React.FC = () => {
                           let personAlreadyCreated = false;
                           
                           try {
-                            const notesObj = JSON.parse(latestCert.notes);
+                            const notesObj = JSON.parse(selectedCert.notes);
                             if (notesObj.personCreated === true) {
                               personAlreadyCreated = true;
                               console.log("Person already created from this document");
