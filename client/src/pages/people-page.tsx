@@ -642,6 +642,7 @@ const PeoplePage: React.FC = () => {
       isApplicant: data.isApplicant,
       isNotifying: data.isNotifying,
       status: status,
+      needsMoreInfo: !requiredFieldsFilled || data.needsMoreInfo || false,
       // Legacy fields for backward compatibility
       address: data.addressLine1 || null,
       phone: data.phoneMobile || data.phoneHome || null,
@@ -1624,11 +1625,11 @@ const PeoplePage: React.FC = () => {
                               userId: user?.id
                             };
                             
-                            if (isEditing) {
+                            if (isEditing && currentExecutor) {
                               // Update existing record
                               updateExecutorMutation.mutate({
-                                id: editingExecutorId!,
-                                data: formData
+                                id: currentExecutor.id,
+                                executorData: formData
                               });
                             } else {
                               // Create new record

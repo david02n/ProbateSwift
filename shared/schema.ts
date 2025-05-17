@@ -78,6 +78,7 @@ export const executors = pgTable("executors", {
   isNotifying: boolean("is_notifying").default(false), // Whether this person is notifying only
   personPosition: integer("person_position"), // Internal position (1-4)
   status: text("status").default("pending"), // pending, accepted, declined
+  needsMoreInfo: boolean("needs_more_info").default(false), // Flag for incomplete records
   // Legacy fields maintained for compatibility
   address: text("address"),
   phone: text("phone"),
@@ -226,6 +227,7 @@ export const insertExecutorSchema = createInsertSchema(executors)
     isNotifying: true,
     personPosition: true,
     status: true,
+    needsMoreInfo: true,
     // Legacy fields included for compatibility
     address: true,
     phone: true,
