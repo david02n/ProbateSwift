@@ -228,8 +228,9 @@ const PeoplePage: React.FC = () => {
       const data = await response.json();
       console.log("Address lookup response:", data);
       
-      // Make sure we got addresses back
-      if (!data.addresses || data.addresses.length === 0) {
+      // Make sure we got addresses back in either format
+      if ((!data.suggestions || !Array.isArray(data.suggestions) || data.suggestions.length === 0) && 
+          (!data.addresses || !Array.isArray(data.addresses) || data.addresses.length === 0)) {
         toast({
           title: "No addresses found",
           description: "No addresses were found for this postcode. Please check the postcode or enter your address manually.",
