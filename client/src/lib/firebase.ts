@@ -1,25 +1,36 @@
 import { initializeApp } from "firebase/app";
 import { getAuth, GoogleAuthProvider } from "firebase/auth";
+import { getAnalytics } from "firebase/analytics";
 
-// Firebase configuration using environment variables
+// Firebase configuration with your provided values
 const firebaseConfig = {
-  apiKey: import.meta.env.VITE_FIREBASE_API_KEY,
-  authDomain: `${import.meta.env.VITE_FIREBASE_PROJECT_ID}.firebaseapp.com`,
-  projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID,
-  storageBucket: `${
-    import.meta.env.VITE_FIREBASE_PROJECT_ID
-  }.appspot.com`,
-  appId: import.meta.env.VITE_FIREBASE_APP_ID,
+  apiKey: "AIzaSyCWeCvuiXsoQCdn_E4yRDh2QT4j4-fQBo0",
+  authDomain: "probate-458709.firebaseapp.com",
+  projectId: "probate-458709",
+  storageBucket: "probate-458709.firebasestorage.app",
+  messagingSenderId: "321971954611",
+  appId: "1:321971954611:web:580f68844b10e7e6e6e1c6",
+  measurementId: "G-1YW4Q67L65"
 };
 
 // Initialize Firebase
 const app = initializeApp(firebaseConfig);
+let analytics;
+
+// Only initialize analytics in browser environment
+if (typeof window !== 'undefined') {
+  try {
+    analytics = getAnalytics(app);
+  } catch (e) {
+    console.warn('Analytics initialization error:', e);
+  }
+}
 
 // Initialize Firebase Authentication and get a reference to the service
 export const auth = getAuth(app);
 export const googleProvider = new GoogleAuthProvider();
 
-// Configure Google Auth Provider with minimal parameters
+// Configure Google Auth Provider with optimal parameters
 googleProvider.setCustomParameters({
   prompt: 'select_account'
 });
