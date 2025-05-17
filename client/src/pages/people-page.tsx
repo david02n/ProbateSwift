@@ -1520,13 +1520,22 @@ const PeoplePage: React.FC = () => {
                         render={({ field }) => (
                           <FormItem>
                             <FormLabel>Relationship to the deceased</FormLabel>
-                            <Select onValueChange={field.onChange} value={field.value || ""}>
+                            <Select onValueChange={(value) => {
+                              field.onChange(value);
+                              // Reset relationship fields if "Deceased" is selected
+                              if (value === "Deceased") {
+                                form.setValue("isExecutor", false);
+                                form.setValue("isApplicant", false);
+                                form.setValue("isNotifying", false);
+                              }
+                            }} value={field.value || ""}>
                               <FormControl>
                                 <SelectTrigger>
                                   <SelectValue placeholder="Select relationship to the deceased" />
                                 </SelectTrigger>
                               </FormControl>
                               <SelectContent>
+                                <SelectItem value="Deceased">Deceased</SelectItem>
                                 <SelectItem value="Spouse/Partner">Spouse/Partner</SelectItem>
                                 <SelectItem value="Child">Child</SelectItem>
                                 <SelectItem value="Parent">Parent</SelectItem>
@@ -1542,77 +1551,81 @@ const PeoplePage: React.FC = () => {
                       />
                     )}
                     
-                    {/* Role checkboxes with improved styling */}
-                    <div className="bg-gray-50 p-4 rounded-md mt-4 border border-gray-100">
-                      <div className="space-y-4">
-                        {!isLegalProfessional && activeCaseId && (
-                          <FormField
-                            control={form.control}
-                            name="isExecutor"
-                            render={({ field }) => (
-                              <FormItem className="flex items-start space-x-3 space-y-0">
-                                <FormControl>
-                                  <Checkbox 
-                                    checked={field.value} 
-                                    onCheckedChange={field.onChange}
-                                  />
-                                </FormControl>
-                                <div className="space-y-1 leading-none">
-                                  <FormLabel className="font-medium">Serve as an executor</FormLabel>
-                                  <FormDescription className="text-xs">
-                                    This person is named as an executor in the will
-                                  </FormDescription>
-                                </div>
-                              </FormItem>
-                            )}
-                          />
-                        )}
-                        
-                        {!isLegalProfessional && (
-                          <FormField
-                            control={form.control}
-                            name="isApplicant"
-                            render={({ field }) => (
-                              <FormItem className="flex items-start space-x-3 space-y-0 border-t border-gray-200 pt-3">
-                                <FormControl>
-                                  <Checkbox 
-                                    checked={field.value} 
-                                    onCheckedChange={field.onChange}
-                                  />
-                                </FormControl>
-                                <div className="space-y-1 leading-none">
-                                  <FormLabel className="font-medium">Primary Applicant</FormLabel>
-                                  <FormDescription className="text-xs">
-                                    This person will be the main applicant for the probate application
-                                  </FormDescription>
-                                </div>
-                              </FormItem>
-                            )}
-                          />
-                        )}
-                        
-                        {!isLegalProfessional && (
-                          <FormField
-                            control={form.control}
-                            name="isNotifying"
-                            render={({ field }) => (
-                              <FormItem className="flex items-start space-x-3 space-y-0 border-t border-gray-200 pt-3">
-                                <FormControl>
-                                  <Checkbox 
-                                    checked={field.value} 
-                                    onCheckedChange={field.onChange}
-                                  />
-                                </FormControl>
-                                <div className="space-y-1 leading-none">
-                                  <FormLabel className="font-medium">Notifying Only</FormLabel>
-                                  <FormDescription className="text-xs">
-                                    This person will be notified but won't be actively involved in the probate process
-                                  </FormDescription>
-                                </div>
-                              </FormItem>
-                            )}
-                          />
-                        )}
+                    {/* Role checkboxes - only shown when not Deceased */}
+                    {form.watch("relationshipToDeceased") !== "Deceased" && (
+                      <div className="bg-gray-50 p-4 rounded-md mt-4 border border-gray-100">
+                        <div className="space-y-4">
+                          {!isLegalProfessional && activeCaseId && (
+                            <FormField
+                              control={form.control}
+                              name="isExecutor"
+                              render={({ field }) => (
+                                <FormItem className="flex items-start space-x-3 space-y-0">
+                                  <FormControl>
+                                    <Checkbox 
+                                      checked={field.value} 
+                                      onCheckedChange={field.onChange}
+                                    />
+                                  </FormControl>
+                                  <div className="space-y-1 leading-none">
+                                    <FormLabel className="font-medium">Serve as an executor</FormLabel>
+                                    <FormDescription className="text-xs">
+                                      This person is named as an executor in the will
+                                    </FormDescription>
+                                  </div>
+                                </FormItem>
+                              )}
+                            />
+                          )}
+                          
+                          {!isLegalProfessional && (
+                            <FormField
+                              control={form.control}
+                              name="isApplicant"
+                              render={({ field }) => (
+                                <FormItem className="flex items-start space-x-3 space-y-0 border-t border-gray-200 pt-3">
+                                  <FormControl>
+                                    <Checkbox 
+                                      checked={field.value} 
+                                      onCheckedChange={field.onChange}
+                                    />
+                                  </FormControl>
+                                  <div className="space-y-1 leading-none">
+                                    <FormLabel className="font-medium">Primary Applicant</FormLabel>
+                                    <FormDescription className="text-xs">
+                                      This person will be the main applicant for the probate application
+                                    </FormDescription>
+                                  </div>
+                                </FormItem>
+                              )}
+                            />
+                          )}
+                          
+                          {!isLegalProfessional && (
+                            <FormField
+                              control={form.control}
+                              name="isNotifying"
+                              render={({ field }) => (
+                                <FormItem className="flex items-start space-x-3 space-y-0 border-t border-gray-200 pt-3">
+                                  <FormControl>
+                                    <Checkbox 
+                                      checked={field.value} 
+                                      onCheckedChange={field.onChange}
+                                    />
+                                  </FormControl>
+                                  <div className="space-y-1 leading-none">
+                                    <FormLabel className="font-medium">Notifying Only</FormLabel>
+                                    <FormDescription className="text-xs">
+                                      This person will be notified but won't be actively involved in the probate process
+                                    </FormDescription>
+                                  </div>
+                                </FormItem>
+                              )}
+                            />
+                          )}
+                        </div>
+                      </div>
+                    )}
                       </div>
                     </div>
                   </div>
