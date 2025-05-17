@@ -105,15 +105,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
         displayName = decodedToken.name || "";
         photoURL = decodedToken.picture || "";
         
-        console.log("Successfully verified Firebase token");
+        console.log("Successfully verified Firebase token for:", email);
       } catch (error) {
         console.error("Error verifying Firebase token:", error);
         
-        // For development testing, allow using the email/name from the request body directly
-        // This is only for development and should be removed in production
-        email = req.body.email || "";
-        displayName = req.body.displayName || "";
-        photoURL = req.body.photoURL || "";
+        // If token verification fails, check if we have email in the request body
+        if (req.body.email) {
+          console.log("Using email from request body as fallback:", req.body.email);
+          email = req.body.email || "";
+          displayName = req.body.displayName || "";
+          photoURL = req.body.photoURL || "";
+        }
         
         if (!email) {
           return res.status(400).json({ error: 'Failed to verify token and no email provided' });

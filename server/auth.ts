@@ -208,13 +208,25 @@ export function setupAuth(app: Express) {
     // Create session settings with enhanced cross-domain cookie support
     const currentSettings: session.SessionOptions = {
       secret: process.env.SESSION_SECRET || "probate-swift-session-secret",
-      resave: true, // Changed to true to ensure session is saved on every request
-      saveUninitialized: true, // Changed to true to create session for all requests
+      resave: true, // Ensure session is saved on every request
+      saveUninitialized: true, // Create session for all requests
       store: storage.sessionStore,
       cookie: cookieSettings,
-      name: 'probswft.sid', // Use consistent cookie name across all environments
+      name: 'probswft.sid', // Consistent cookie name 
       proxy: true, // Trust proxy headers for secure cookie detection
     };
+    
+    // For production domains, create a visible marker cookie that service workers can use
+    if (isProbateSwift) {
+      res.cookie('ps_auth_marker', 'active', {
+        secure: true,
+        sameSite: 'none',
+        httpOnly: false, // Make this visible to JS
+        maxAge: 1000 * 60 * 60 * 24 * 7, // 1 week
+        path: '/',
+        domain: domain || undefined
+      });
+    }
     
     // Create and use session with the appropriate settings
     session(currentSettings)(req, res, next);

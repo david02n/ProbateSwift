@@ -1,0 +1,94 @@
+🧠 Diagnosis Summary
+You're getting:
+
+401 Unauthorized on GET https://probateswift.com/api/user
+
+The error is from your Express server, not Firebase
+
+The request has cookies (probateswft.sid=...) that likely store session info
+
+It’s coming from a service worker, which may affect how credentials are passed
+
+Request does not include Authorization headers (which is expected if relying on session cookies)
+
+You're using cookies for auth, but the browser may be blocking cookies or not sending them correctly in production due to CORS, SameSite, or secure flags
+
+🔥 Most Likely Problem: Session Cookie Misconfiguration
+When using session cookies (e.g., express-session, Firebase Admin SDK, or Passport.js), if cookies aren’t sent correctly, your backend sees an unauthenticated request.
+
+🔒 What To Check (and Fix)
+Ensure cookie is SameSite=None and Secure for cross-origin use
+If you're using custom Express sessions, update your cookie config:
+
+js
+Copy
+Edit
+app.use(session({
+  name: 'probswft.sid',
+  secret: 'yourSecret',
+  resave: false,
+  saveUninitialized: false,
+  cookie: {
+    secure: true,            // Required for HTTPS
+    httpOnly: true,
+    sameSite: 'None'         // Crucial for cross-origin and service workers
+  }
+}));
+Set credentials: 'include' on frontend fetch/XHR
+In your frontend:
+
+js
+Copy
+Edit
+fetch('/api/user', {
+  method: 'GET',
+  credentials: 'include' // ensures cookies are sent
+});
+CORS settings on your Express backend
+Your Express server must allow credentials:
+
+js
+Copy
+Edit
+app.use(cors({
+  origin: 'https://probateswift.com',
+  credentials: true
+}));
+Check if your service worker is modifying requests
+If your frontend uses a service worker (PWA, offline caching), it may be:
+
+intercepting requests without passing cookies
+
+unintentionally stripping auth headers
+
+🔧 Try disabling the service worker temporarily in production and see if the issue goes away:
+
+js
+Copy
+Edit
+navigator.serviceWorker.getRegistrations().then(function(registrations) {
+  for(let registration of registrations) {
+    registration.unregister()
+  }
+});
+✅ Immediate Fix Plan
+ Set sameSite: 'None', secure: true for cookies
+
+ Confirm frontend fetch uses credentials: 'include'
+
+ Confirm Express cors() is configured with credentials: true
+
+ Check if service worker is impacting fetch or request context
+
+🧪 Want to Test Quickly?
+Run this from your browser console:
+
+js
+Copy
+Edit
+fetch('/api/user', {
+  method: 'GET',
+  credentials: 'include'
+}).then(res => res.json()).then(console.log).catch(console.error);
+If this works, it's a sign the service worker or frontend logic is causing the issue.
+
