@@ -273,7 +273,7 @@ const PeoplePage: React.FC = () => {
     }
   };
   
-  // Function to fetch and process the selected address details from the GetAddress.io API
+  // Function to handle the selected address - directly parse from the address string
   const fetchAddressDetails = async (id: string) => {
     try {
       // Find the selected address suggestion
@@ -287,85 +287,49 @@ const PeoplePage: React.FC = () => {
       
       setIsLoadingAddresses(true);
       
-      // The suggestions from GetAddress.io include a direct URL to the details
-      if (!selectedAddress.rawAddress) {
-        throw new Error('Address data is missing');
+      // Extract address components from the full address string
+      // For example: "73 St. Andrews Road, Southsea, Hampshire, PO5 1ES"
+      // Format is typically: Building/Street, City, County, Postcode
+      const fullAddress = selectedAddress.address;
+      const addressParts = fullAddress.split(', ');
+      
+      // Parse the address parts
+      const extractedPostcode = addressParts[addressParts.length - 1]; // Last part is postcode
+      const extractedAddressLine1 = addressParts[0]; // First part is building/street
+      
+      let extractedAddressLine2 = '';
+      let extractedCity = '';
+      let extractedCounty = '';
+      
+      // Handle different address formats based on number of parts
+      if (addressParts.length === 4) {
+        // Format: Building/Street, City, County, Postcode
+        extractedCity = addressParts[1];
+        extractedCounty = addressParts[2];
+      } else if (addressParts.length === 3) {
+        // Format: Building/Street, City, Postcode
+        extractedCity = addressParts[1];
+      } else if (addressParts.length > 4) {
+        // Format with multiple address lines
+        extractedAddressLine2 = addressParts[1];
+        extractedCity = addressParts[addressParts.length - 3];
+        extractedCounty = addressParts[addressParts.length - 2];
       }
       
-      // Get the ID directly from the selected suggestion
-      const detailsId = selectedAddress.rawAddress.id;
-      
-      console.log("Fetching details for address ID:", detailsId);
-      
-      // Get the full address details from the API
-      const response = await fetch(`/api/address-lookup?id=${encodeURIComponent(detailsId)}`);
-      
-      if (!response.ok) {
-        throw new Error(`Address lookup failed with status: ${response.status}`);
-      }
-      
-      const addressData = await response.json();
-      console.log("Received full address data:", addressData);
-      
-      // Map the returned fields to our form fields according to the specified mapping
-      // First try the fields as shown in your example JSON structure
-      let addressLine1 = addressData.line_1 || ''; // BUILDING AND STREET
-      let addressLine2 = addressData.line_2 || ''; // SECOND LINE OF ADDRESS
-      let city = addressData.town_or_city || ''; // TOWN OR CITY
-      let county = addressData.county || ''; // COUNTY (primary selection)
-      let postcode = addressData.postcode || '';
-      
-      // If those aren't available, try the formatted_address array
-      if (addressData.formatted_address && Array.isArray(addressData.formatted_address)) {
-        // Formatted address has this structure:
-        // [0] = Building name/company (e.g., "Prime Minister & First Lord of the Treasury")
-        // [1] = Address line 1 (e.g., "10 Downing Street")
-        // [2] = Address line 2 (often empty)
-        // [3] = Town/City (e.g., "London")
-        // [4] = County (often empty)
-        
-        if (!addressLine1 && addressData.formatted_address[0]) {
-          addressLine1 = addressData.formatted_address[0];
-        }
-        
-        if (!addressLine2 && addressData.formatted_address[1]) {
-          addressLine2 = addressData.formatted_address[1];
-        }
-        
-        // If line 2 is empty but line 3 has content, use it for line 2
-        if (!addressLine2 && addressData.formatted_address[2]) {
-          addressLine2 = addressData.formatted_address[2];
-        }
-        
-        if (!city && addressData.formatted_address[3]) {
-          city = addressData.formatted_address[3];
-        }
-        
-        // Try to get county from the last element if not already set
-        if (!county && addressData.formatted_address[4]) {
-          county = addressData.formatted_address[4];
-        }
-      }
-      
-      // If county is empty, try using district as a fallback
-      if (!county && addressData.district) {
-        county = addressData.district;
-      }
-      
-      console.log("Mapped address components:", {
-        addressLine1,
-        addressLine2,
-        city,
-        county,
-        postcode
+      console.log("Parsed address components:", {
+        addressLine1: extractedAddressLine1,
+        addressLine2: extractedAddressLine2,
+        city: extractedCity,
+        county: extractedCounty,
+        postcode: extractedPostcode
       });
       
       // Fill the form with the address details
-      form.setValue("addressLine1", addressLine1);
-      form.setValue("addressLine2", addressLine2);
-      form.setValue("city", city);
-      form.setValue("county", county);
-      form.setValue("postCode", postcode);
+      form.setValue("addressLine1", extractedAddressLine1);
+      form.setValue("addressLine2", extractedAddressLine2);
+      form.setValue("city", extractedCity);
+      form.setValue("county", extractedCounty);
+      form.setValue("postCode", extractedPostcode);
       
       // Close the suggestions dropdown
       setShowAddressSuggestions(false);
@@ -376,10 +340,10 @@ const PeoplePage: React.FC = () => {
         description: "The address has been filled in the form. You can now edit or complete any missing details if needed.",
       });
     } catch (error) {
-      console.error("Error fetching address details:", error);
+      console.error("Error processing address:", error);
       toast({
-        title: "Failed to get address details",
-        description: "There was an error retrieving the address details. Please try again or enter your address manually.",
+        title: "Failed to process address",
+        description: "There was an error processing the address. Please try again or enter your address manually.",
         variant: "destructive",
       });
     } finally {
