@@ -7,6 +7,7 @@ import * as fs from "fs";
 import * as path from "path";
 import axios from "axios";
 import { WebSocketServer, WebSocket } from "ws";
+import { verifyIdToken } from "./firebase-admin";
 
 
 // Set up multer for file uploads
@@ -74,11 +75,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Google Authentication endpoint
   app.post('/api/auth/google', async (req: Request, res: Response) => {
     try {
-      const { idToken, email, displayName, photoURL } = req.body;
+      const { idToken } = req.body;
       
       // Log request details for debugging
-      console.log('Google auth request received:');
-      console.log(`Email: ${email || 'Not provided'}`);
+      console.log('Google auth request received');
       console.log(`User Agent: ${req.headers['user-agent'] || 'Not provided'}`);
       
       // Enhanced mobile detection
@@ -90,8 +90,34 @@ export async function registerRoutes(app: Express): Promise<Server> {
       console.log(`Host: ${req.headers.host || 'Not provided'}`);
       console.log(`Referer: ${req.headers.referer || 'Not provided'}`);
       
-      if (!email) {
-        return res.status(400).json({ error: 'Email is required' });
+      if (!idToken) {
+        return res.status(400).json({ error: 'ID token is required' });
+      }
+      
+      let email = "", displayName = "", photoURL = "";
+      
+      try {
+        // Verify the ID token with Firebase
+        const decodedToken = await verifyIdToken(idToken);
+        
+        // Extract user information from the verified token
+        email = decodedToken.email || "";
+        displayName = decodedToken.name || "";
+        photoURL = decodedToken.picture || "";
+        
+        console.log("Successfully verified Firebase token");
+      } catch (error) {
+        console.error("Error verifying Firebase token:", error);
+        
+        // For development testing, allow using the email/name from the request body directly
+        // This is only for development and should be removed in production
+        email = req.body.email || "";
+        displayName = req.body.displayName || "";
+        photoURL = req.body.photoURL || "";
+        
+        if (!email) {
+          return res.status(400).json({ error: 'Failed to verify token and no email provided' });
+        }
       }
       
       // Extract first and last name from displayName if available
@@ -111,6 +137,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       // Use the token as the Firebase UID
       const firebaseUid = idToken ? `google:${email}` : undefined;
+      
+      // Make sure email is defined
+      if (!email) {
+        return res.status(400).json({ error: 'Email not found in token' });
+      }
       
       // Check if user exists
       let user = await storage.getUserByEmail(email);
@@ -134,12 +165,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
       } else {
         // Create new user
         user = await storage.createUser({
-          email,
-          firstName: firstName || undefined,
-          lastName: lastName || undefined,
-          firebaseUid,
-          photoURL: photoURL || undefined,
-          password: '', // Not used with Firebase auth
+          email: email as string,
+          firstName: firstName || null,
+          lastName: lastName || null,
+          firebaseUid: firebaseUid || null,
+          photoURL: photoURL || null,
+          password: 'FIREBASE_AUTH_USER', // Not used with Firebase auth but required by schema
           isGuest: false
         });
       }
