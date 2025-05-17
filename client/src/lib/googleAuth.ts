@@ -52,6 +52,13 @@ export const signInWithGoogle = async () => {
   console.log('- Hostname:', window.location.hostname);
   console.log('- Firebase authDomain:', auth.app.options.authDomain);
   
+  // Detect mobile browsers - especially iOS which needs special handling
+  const userAgent = navigator.userAgent;
+  const isMobile = /Mobi|Android|iPhone|iPad|iPod/i.test(userAgent);
+  const isIOS = /iPad|iPhone|iPod/i.test(userAgent);
+  
+  console.log('- Device type:', isMobile ? (isIOS ? 'iOS Mobile' : 'Android Mobile') : 'Desktop');
+  
   // Set custom parameters
   provider.setCustomParameters({
     prompt: 'select_account',
@@ -59,8 +66,15 @@ export const signInWithGoogle = async () => {
     redirect_uri: getReturnUrl()
   });
   
+  // For iOS devices, we should go straight to redirect as popup rarely works correctly
+  if (isIOS) {
+    console.log('iOS device detected, using redirect for better compatibility');
+    await signInWithRedirect(auth, provider);
+    return null; // No immediate result with redirect flow
+  }
+  
   try {
-    // First try with popup, which is more reliable on most browsers
+    // For non-iOS devices, first try with popup, which is more reliable on most browsers
     console.log('Attempting Google sign-in with popup...');
     const result = await signInWithPopup(auth, provider);
     console.log('Popup sign-in successful, user:', result.user.email);

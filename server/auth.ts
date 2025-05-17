@@ -184,7 +184,7 @@ export function setupAuth(app: Express) {
     const cookieSettings: session.CookieOptions = {
       secure: true, // Always use secure cookies in production
       maxAge: 1000 * 60 * 60 * 24 * 7, // 1 week
-      sameSite: 'none', // Use 'none' for cross-site support on all browsers
+      sameSite: isMobile ? 'lax' : 'none', // Use 'lax' for mobile browsers which handle 'none' poorly
       httpOnly: true,
     };
     

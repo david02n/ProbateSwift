@@ -1,0 +1,66 @@
+Request URL
+https://probateswift.com/api/user
+Request Method
+GET
+Status Code
+401 Unauthorized
+Remote Address
+34.111.179.208:443
+Referrer Policy
+strict-origin-when-cross-origin
+access-control-allow-credentials
+true
+access-control-expose-headers
+Access-Control-Allow-Origin,Access-Control-Allow-Credentials,Set-Cookie
+alt-svc
+h3=":443"; ma=2592000,h3-29=":443"; ma=2592000
+content-length
+29
+content-type
+application/json; charset=utf-8
+date
+Sat, 17 May 2025 21:48:52 GMT
+etag
+W/"1d-TthZhBRJQAzVgIhlWqxc3frMMMg"
+server
+Google Frontend
+strict-transport-security
+max-age=63072000; includeSubDomains
+vary
+Origin
+via
+1.1 google
+x-cloud-trace-context
+283fb7e82464d8dd1760f1824287a7e1
+x-powered-by
+Express
+:authority
+probateswift.com
+:method
+GET
+:path
+/api/user
+:scheme
+https
+accept
+*/*
+accept-encoding
+gzip, deflate, br, zstd
+accept-language
+en-GB,en-US;q=0.9,en;q=0.8
+cookie
+rl_page_init_referrer=RudderEncrypt%3AU2FsdGVkX19QA0IgR%2B0rC09JqMKT2KG9JGPbsifXZdo%3D; rl_page_init_referring_domain=RudderEncrypt%3AU2FsdGVkX19CDjylTvjVqQx%2FHpkLRHcL3rA5kUeX3YA%3D; connect.sid=s%3A4C8l__VOIXDchqz1as_T53shQeXXzju_.Xuz2ILiTurqZudQgPWnzi1lCm%2F%2B2qrRT80Zi%2BMnpCWk; rl_anonymous_id=RudderEncrypt%3AU2FsdGVkX19Be2hmUzu1D2XiLZt1VXxH9fcdFj3dggxGWnZE%2FTSbNa5jIIPbIngB01BZdhmv%2BVcXLP5kweYVow%3D%3D; rl_user_id=RudderEncrypt%3AU2FsdGVkX18wpJ1mbBlarmmM%2F33S0anXisEF95fT6YxVIBM7nvGA%2F2oaL1Sd2Hq3TNPcjUg%2B1NCfdcZgEsm5OIt9VoLMe8IxJaZYN4hkHIS7DwMZ7mNYs7LnpR1hUpViz2BuxerHWfeT%2B%2Fw9LHit6HeRP8cN8P1%2FEyTLJkt848c%3D; rl_trait=RudderEncrypt%3AU2FsdGVkX1%2BlM8gv0GZnKi3aQ1iHbPn7VU29LxsxJdY%2FZF3TSHdOOdQNQ9Fw4yCV44DUcuSSoobnHJHW7k8id%2FWf3PVJR49MBT%2FtUd84pTa8ExRWrPi49jinKGX1qE8Bwu%2FHz1jH6aoepC84IiVEoA%3D%3D; ph_phc_4URIAm1uYfJO7j8kWSe0J8lc8IqnstRLS7Jx8NcakHo_posthog=%7B%22distinct_id%22%3A%223d00a52042d9fe3788821ec0c5e68a2835041b2d478692b6195af64dc923e96a%234b940a07-1c51-4f97-a429-139e57414874%22%2C%22%24sesid%22%3A%5Bnull%2Cnull%2Cnull%5D%2C%22%24epp%22%3Atrue%2C%22%24initial_person_info%22%3A%7B%22r%22%3A%22%24direct%22%2C%22u%22%3A%22https%3A%2F%2Fn8n.probateswift.com%2Fsetup%22%7D%7D; rl_session=RudderEncrypt%3AU2FsdGVkX19pRb9jbUosGCqTIRO1axCGd3FNGsfJXcdoQQsjVt%2B0G6bTS%2FquNTxvrPujMohtA66%2F1ecGqBTZMH5s62qQwoBSBuaqEFbN%2FKwqtdoP2HUkDSferZR8yXsQ9sIJWmPOjcOxhflV38IR9w%3D%3D
+if-none-match
+W/"15f-K/Supl1mlrgAsO7asp7hFrRQrSY"
+priority
+u=1, i
+referer
+https://probateswift.com/auth
+sec-fetch-dest
+empty
+sec-fetch-mode
+cors
+sec-fetch-site
+same-origin
+user-agent
+Mozilla/5.0 (iPhone; CPU iPhone OS 16_6 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/16.6 Mobile/15E148 Safari/604.1
