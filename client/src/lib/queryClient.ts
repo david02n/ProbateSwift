@@ -92,7 +92,21 @@ export const getQueryFn: <T>(options: {
   ({ on401: unauthorizedBehavior }) =>
   async ({ queryKey }) => {
     try {
-      const url = queryKey[0] as string;
+      const baseUrl = queryKey[0] as string;
+      const caseId = queryKey[1] as number | undefined;
+      
+      // Construct URL with caseId if provided and the endpoint supports it
+      let url = baseUrl;
+      
+      // Check if we have a caseId and if the endpoint should use it
+      if (caseId !== undefined && (
+          baseUrl === '/api/assets' || 
+          baseUrl === '/api/liabilities' || 
+          baseUrl === '/api/executors' || 
+          baseUrl === '/api/documents'
+        )) {
+        url = `${baseUrl}/${caseId}`;
+      }
       
       // For debugging in production environments
       const origin = window.location.origin;
