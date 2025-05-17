@@ -9,8 +9,9 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
-import { Loader2, FileText, Upload, CheckCircle, AlertCircle } from 'lucide-react';
+import { Loader2, FileText, Upload, CheckCircle, AlertCircle, User, UserPlus } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+import { Switch } from '@/components/ui/switch';
 import { ProbateCase } from '@shared/schema';
 
 // Document types and their corresponding webhook endpoints
@@ -77,10 +78,16 @@ const SpecializedDocumentUploader: React.FC<SpecializedDocumentUploaderProps> = 
   const [isUploading, setIsUploading] = useState(false);
   const [uploadProgress, setUploadProgress] = useState(0);
   const [uploadedDocumentId, setUploadedDocumentId] = useState<number | null>(null);
+  const [createPersonRecord, setCreatePersonRecord] = useState(false);
   
   // Get the document type info
   const docInfo = DOCUMENT_TYPES[documentType];
   const isGeneralDocument = documentType === 'general';
+  
+  // Determine if this document type can be associated with a person
+  const isPersonRelatedDocument = documentType === 'death_certificate' || 
+                                 documentType === 'id_document' || 
+                                 documentType === 'will';
   
   // Get the user's active case
   const { data: probateCases, isLoading: isLoadingCases } = useQuery<ProbateCase[]>({
@@ -185,6 +192,11 @@ const SpecializedDocumentUploader: React.FC<SpecializedDocumentUploaderProps> = 
       formData.append('usage', values.usage);
     }
     
+    // Add the create person flag if selected
+    if (isPersonRelatedDocument) {
+      formData.append('createPersonRecord', createPersonRecord.toString());
+    }
+    
     // Add webhook endpoint information
     formData.append('webhookUrl', docInfo.webhookEndpoint);
     
@@ -279,6 +291,34 @@ const SpecializedDocumentUploader: React.FC<SpecializedDocumentUploaderProps> = 
                 )}
               />
               
+              {/* Toggle switch for person-related documents */}
+              {isPersonRelatedDocument && (
+                <div className="flex items-center space-x-2 py-4 border-t border-b border-gray-100">
+                  <Switch
+                    id="create-person-record"
+                    checked={createPersonRecord}
+                    onCheckedChange={setCreatePersonRecord}
+                    disabled={isUploading}
+                  />
+                  <div className="flex-1">
+                    <label
+                      htmlFor="create-person-record"
+                      className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 flex items-center"
+                    >
+                      <UserPlus className="h-4 w-4 mr-2 text-primary" />
+                      Create a person record from this document
+                    </label>
+                    <p className="text-sm text-muted-foreground mt-1">
+                      {documentType === 'death_certificate' 
+                        ? "Extract deceased's details and create a person record"
+                        : documentType === 'id_document'
+                        ? "Extract individual's details and create a person record"
+                        : "Create an executor/beneficiary record from this document"}
+                    </p>
+                  </div>
+                </div>
+              )}
+
               {isGeneralDocument && (
                 <>
                   <FormField
