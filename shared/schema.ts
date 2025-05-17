@@ -54,7 +54,7 @@ export const probateCases = pgTable("probate_cases", {
 // Relationships will be manually handled in queries
 
 // People model - anyone involved in the probate process (executors, applicants, attorneys, etc.)
-export const executors = pgTable("executors", {
+export const executors = pgTable("people", {
   id: serial("id").primaryKey(),
   caseId: integer("case_id").references(() => probateCases.id).notNull(),
   userId: integer("user_id").references(() => users.id).notNull(), // Who created this person

@@ -308,7 +308,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // API routes for executors
+  // API routes for people (formerly executors)
   app.get("/api/executors", async (req, res) => {
     if (!req.isAuthenticated()) {
       return res.status(401).json({ error: "Authentication required" });
@@ -325,11 +325,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       // Use the first case if no specific case is specified
       const defaultCaseId = cases[0].id;
-      const executors = await storage.getExecutorsByCaseId(defaultCaseId);
-      res.json(executors);
+      const people = await storage.getPeopleByCaseId(defaultCaseId);
+      res.json(people);
     } catch (error) {
-      console.error("Error fetching executors:", error);
-      res.status(500).json({ error: "Failed to fetch executors" });
+      console.error("Error fetching people:", error);
+      res.status(500).json({ error: "Failed to fetch people" });
     }
   });
   
@@ -347,11 +347,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(404).json({ error: "Probate case not found" });
       }
       
-      const executors = await storage.getExecutorsByCaseId(caseId);
-      res.json(executors);
+      const people = await storage.getPeopleByCaseId(caseId);
+      res.json(people);
     } catch (error) {
-      console.error("Error fetching executors:", error);
-      res.status(500).json({ error: "Failed to fetch executors" });
+      console.error("Error fetching people:", error);
+      res.status(500).json({ error: "Failed to fetch people" });
     }
   });
 

@@ -55,9 +55,10 @@ export interface IStorage {
   createProbateCase(caseData: InsertProbateCase): Promise<ProbateCase>;
   updateProbateCase(id: number, caseData: Partial<InsertProbateCase>): Promise<ProbateCase | undefined>;
   
-  // Executor methods
+  // People/Executor methods - "executors" table renamed to "people"
   getExecutor(id: number): Promise<Executor | undefined>;
   getExecutorsByCaseId(caseId: number): Promise<Executor[]>;
+  getPeopleByCaseId(caseId: number): Promise<Executor[]>;  // New method for renamed table
   createExecutor(executorData: InsertExecutor): Promise<Executor>;
   updateExecutor(id: number, executorData: Partial<InsertExecutor>): Promise<Executor | undefined>;
   deleteExecutor(id: number): Promise<void>;
@@ -703,34 +704,50 @@ export class DatabaseStorage implements IStorage {
     return updatedCase;
   }
 
-  // Executor methods
+  // People methods (formerly executors)
   async getExecutor(id: number): Promise<Executor | undefined> {
-    const [result] = await db.select().from(executors).where(eq(executors.id, id));
+    // Keeping same method name for backward compatibility
+    const people = pgTable("people", { ...executors }); // Create reference to the people table with executor schema
+    const [result] = await db.select().from(people).where(eq(people.id, id));
     return result;
   }
 
   async getExecutorsByCaseId(caseId: number): Promise<Executor[]> {
-    return await db.select().from(executors).where(eq(executors.caseId, caseId));
+    // Keeping same method name for backward compatibility
+    const people = pgTable("people", { ...executors }); // Create reference to the people table with executor schema
+    return await db.select().from(people).where(eq(people.caseId, caseId));
+  }
+
+  // New method with renamed table but same functionality
+  async getPeopleByCaseId(caseId: number): Promise<Executor[]> {
+    const people = pgTable("people", { ...executors }); // Create reference to the people table with executor schema
+    return await db.select().from(people).where(eq(people.caseId, caseId));
   }
 
   async createExecutor(executorData: InsertExecutor): Promise<Executor> {
-    const [result] = await db.insert(executors).values(executorData).returning();
+    // Keeping same method name for backward compatibility
+    const people = pgTable("people", { ...executors }); // Create reference to the people table with executor schema
+    const [result] = await db.insert(people).values(executorData).returning();
     return result;
   }
 
   async updateExecutor(id: number, executorData: Partial<InsertExecutor>): Promise<Executor | undefined> {
+    // Keeping same method name for backward compatibility
+    const people = pgTable("people", { ...executors }); // Create reference to the people table with executor schema
     const [updatedExecutor] = await db
-      .update(executors)
+      .update(people)
       .set({ ...executorData, updatedAt: new Date() })
-      .where(eq(executors.id, id))
+      .where(eq(people.id, id))
       .returning();
     return updatedExecutor;
   }
   
   async deleteExecutor(id: number): Promise<void> {
+    // Keeping same method name for backward compatibility
+    const people = pgTable("people", { ...executors }); // Create reference to the people table with executor schema
     await db
-      .delete(executors)
-      .where(eq(executors.id, id));
+      .delete(people)
+      .where(eq(people.id, id));
   }
 
   // Estate Asset methods
