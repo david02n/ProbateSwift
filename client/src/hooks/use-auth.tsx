@@ -162,7 +162,38 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   // Logout mutation
   const logoutMutation = useMutation({
     mutationFn: async () => {
-      await apiRequest("POST", "/api/logout");
+      // First sign out from Firebase
+      try {
+        console.log("Logging out from Firebase");
+        const firebaseModule = await import('../lib/firebase');
+        const auth = firebaseModule.auth;
+        
+        // Sign out from Firebase first
+        await auth.signOut();
+        console.log("Successfully logged out from Firebase");
+      } catch (e) {
+        console.error("Error signing out from Firebase:", e);
+        // Continue with logout process even if Firebase logout fails
+      }
+      
+      // Clear all Firebase tokens from storage
+      console.log("Clearing all Firebase tokens from storage");
+      localStorage.removeItem('firebase_id_token');
+      sessionStorage.removeItem('firebase_id_token');
+      
+      // Clear mobile auth data if present
+      localStorage.removeItem('mobile_auth_success');
+      localStorage.removeItem('mobile_auth_user');
+      localStorage.removeItem('mobile_auth_timestamp');
+      
+      // Then call the backend logout API
+      try {
+        await apiRequest("POST", "/api/logout");
+        console.log("Successfully called backend logout API");
+      } catch (e) {
+        console.error("Error calling backend logout API:", e);
+        // Continue with cleanup process even if API call fails
+      }
     },
     onSuccess: () => {
       // Clear all query cache data including user data
@@ -171,24 +202,46 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       // Explicitly set user data to null
       queryClient.setQueryData(["/api/user"], null);
       
+      // Additional token cleanup for production
+      if (window.location.hostname.includes('probateswift.com')) {
+        console.log("PRODUCTION: Additional token cleanup for probateswift.com");
+        
+        // Clear any global tokens that might exist
+        if ((window as any).__lastAuthToken) {
+          (window as any).__lastAuthToken = null;
+        }
+        
+        if ((window as any).__authDebug) {
+          (window as any).__authDebug = null;
+        }
+      }
+      
       toast({
         title: "Logged out",
         description: "You have been successfully logged out",
       });
       
-      // Force page reload to ensure all state is reset
-      window.location.href = "/?logout=" + new Date().getTime();
+      // Force page reload with special logout parameter to ensure all state is reset
+      const timestamp = new Date().getTime();
+      window.location.href = `/?logout=${timestamp}&t=${timestamp}`;
     },
     onError: (error: Error) => {
+      console.error("Logout mutation error:", error);
+      
       toast({
-        title: "Logout failed",
-        description: error.message,
+        title: "Logout process completed with warnings",
+        description: "You've been logged out, but there were some warnings. Please refresh the page.",
         variant: "destructive",
       });
       
-      // Even on error, try to redirect to home page
+      // Clear tokens even on error
+      localStorage.removeItem('firebase_id_token');
+      sessionStorage.removeItem('firebase_id_token');
+      
+      // Force page reload even on error
       setTimeout(() => {
-        window.location.href = "/";
+        const timestamp = new Date().getTime();
+        window.location.href = `/?logout=${timestamp}&forceClear=true`;
       }, 1500);
     },
   });
