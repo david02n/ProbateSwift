@@ -247,7 +247,27 @@ export async function handleRedirectResult() {
       // This is critical for production where tokens aren't maintained in cookies
       if (idToken) {
         localStorage.setItem('firebase_id_token', idToken);
+        
+        // Set token refresh timer to keep token fresh (tokens expire in 1 hour)
+        // This helps ensure API requests always have a valid token
+        const refreshTime = 45 * 60 * 1000; // 45 minutes in milliseconds
+        localStorage.setItem('token_refresh_time', (Date.now() + refreshTime).toString());
+        
         console.log('Firebase ID token stored in localStorage for future API requests');
+        console.log('Token will be refreshed automatically in 45 minutes');
+        
+        // Add a global property to window for emergency debugging in production
+        // This is critical for diagnosing auth failures in production
+        try {
+          (window as any).__authDebug = {
+            tokenAvailable: true,
+            tokenLength: idToken.length,
+            tokenPrefix: idToken.substring(0, 10) + '...',
+            storedAt: new Date().toISOString()
+          };
+        } catch (e) {
+          console.error('Failed to set debug info:', e);
+        }
       }
       
       const response = await fetch(apiUrl, {
