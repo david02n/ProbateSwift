@@ -1,0 +1,102 @@
+✅ Summary Diagnosis
+You’re using OAuth PKCE (OAuthGenericPKCE) to handle authentication, and the access token is required to be attached to requests via a bearer header (in BearerAuthedRequest).
+
+In production, it seems:
+
+The OAuth login completes, but
+
+The token is either not set correctly or not being passed with the request to /api/user
+
+Therefore, the backend (e.g. Express) returns a 401 Unauthorized
+
+🔍 Key Observations from Your Code
+1. ✅ Your ChromeNetwork class:
+Injects the token with:
+
+ts
+Copy
+Edit
+request = await BearerAuthedRequest(...);
+2. ✅ Your ChromeNetworkProxy class:
+Sends requests via chrome.runtime.sendMessage()
+
+Relies on another part of the app to set the token
+
+3. ⚠️ The problem is likely this:
+Your this.token is not set in ChromeNetwork at the time /api/user is called — either:
+
+The token is not stored correctly after OAuth
+
+Or the request is made before the token is set
+
+✅ Confirm This Theory
+In ChromeNetwork, add a debug log:
+
+ts
+Copy
+Edit
+async get(url, options) {
+  console.log('[TOKEN]', this.token); // Check if null
+  ...
+}
+If it’s null during /api/user, then you’ve confirmed the issue.
+
+🛠 Fix Options
+✅ Option 1: Set the token explicitly after login
+Wherever you're calling this:
+
+ts
+Copy
+Edit
+platform.flow.login();
+Make sure you call:
+
+ts
+Copy
+Edit
+platform.network.setToken(token);
+Or ensure platform.network.setToken(token) is inside your onTokenChange() handler.
+
+✅ Option 2: Delay API calls until token is ready
+If the frontend tries to call /api/user immediately after page load, and the token hasn’t been initialized, then you'll always get a 401.
+
+Make sure your platform.network only calls authenticated endpoints after the token is confirmed set.
+
+For example:
+
+ts
+Copy
+Edit
+await platform.flow.login();
+await platform.network.setToken(token);
+// now safely call /api/user
+🛠 Option 3: Handle session expiration properly
+If the BearerAuthedRequest fails due to an expired token, it should:
+
+Attempt token refresh via this.oauth
+
+Or trigger a logout/reauthentication
+
+Double-check the logic in:
+
+ts
+Copy
+Edit
+BearerAuthedRequest(...)
+Make sure it attempts to refresh or fallback if token is expired.
+
+🔐 Additional Security Notes
+Also, ensure:
+
+Your API server expects Bearer token in Authorization header, not just cookies
+
+You are not mixing session-based and token-based auth unless explicitly handled
+
+✅ Final Checklist
+Check	What
+✅ setToken() is called	Immediately after OAuth login
+✅ Token is not null	When GET /api/user is triggered
+✅ Backend accepts bearer token	And validates it correctly
+✅ No race condition	Don’t call protected routes before token is set
+
+If you share your BearerAuthedRequest logic and where you call setToken() after login, I can confirm the exact point of failure.

@@ -72,6 +72,140 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Set up authentication routes and middleware
   setupAuth(app);
   
+  // User profile route with enhanced token validation
+  app.get('/api/user', (req: Request, res: Response) => {
+    // Check for Bearer token in Authorization header
+    const authHeader = req.headers.authorization;
+    if (authHeader && authHeader.startsWith('Bearer ')) {
+      // Token-based authentication (for production)
+      const token = authHeader.substring(7); // Remove 'Bearer ' prefix
+      console.log('Bearer token authentication attempt');
+      
+      // Verify the token (using Firebase Admin)
+      verifyIdToken(token)
+        .then(async (decodedToken) => {
+          const email = decodedToken.email;
+          console.log('Token verified successfully for:', email);
+          
+          // Find the user by email
+          const user = await storage.getUserByEmail(email);
+          
+          if (!user) {
+            return res.status(401).json({ error: 'User not found' });
+          }
+          
+          // Update last login time
+          await storage.updateUserLastLogin(user.id);
+          
+          // Login the user into the session as well
+          req.login(user, (err) => {
+            if (err) {
+              console.error('Session login error:', err);
+              // Still return user, even if session login fails
+            }
+            
+            return res.json(user);
+          });
+        })
+        .catch((error) => {
+          console.error('Token verification failed:', error);
+          // Fall back to session-based auth
+          checkSessionAuth();
+        });
+    } else {
+      // Regular session-based authentication
+      checkSessionAuth();
+    }
+    
+    // Helper function for session-based authentication
+    function checkSessionAuth() {
+      if (!req.isAuthenticated()) {
+        console.log('Session authentication failed - no valid session');
+        console.log('Session ID:', req.sessionID || 'None');
+        console.log('Cookies:', req.headers.cookie ? 'Present' : 'None');
+        return res.status(401).json({ error: 'Not authenticated' });
+      }
+      
+      console.log('Session authentication successful for:', req.user?.email);
+      return res.json(req.user);
+    }
+  });
+  
+  // Session refresh endpoint - helps fix cross-domain cookie issues
+  app.post('/api/session-refresh', (req: Request, res: Response) => {
+    const { verificationToken, idToken } = req.body;
+    
+    console.log('Session refresh requested');
+    console.log('Session ID:', req.sessionID || 'None');
+    console.log('Verification token:', verificationToken ? 'Present' : 'None');
+    console.log('ID token:', idToken ? 'Present' : 'None');
+    
+    // If user is already authenticated, just refresh the session
+    if (req.isAuthenticated()) {
+      req.session.save((err) => {
+        if (err) {
+          console.error('Session save error during refresh:', err);
+          return res.status(500).json({ error: 'Session save failed' });
+        }
+        
+        console.log('Session refreshed successfully for authenticated user');
+        return res.status(200).json({ 
+          status: 'success',
+          user: req.user
+        });
+      });
+      return;
+    }
+    
+    // If we have an ID token, try to authenticate with it
+    if (idToken) {
+      verifyIdToken(idToken)
+        .then(async (decodedToken) => {
+          const email = decodedToken.email;
+          console.log('Token verified successfully during refresh for:', email);
+          
+          const user = await storage.getUserByEmail(email);
+          if (!user) {
+            return res.status(401).json({ error: 'User not found' });
+          }
+          
+          // Login the user into the session
+          req.login(user, (err) => {
+            if (err) {
+              console.error('Session login error during refresh:', err);
+              return res.status(500).json({ error: 'Session login failed' });
+            }
+            
+            // Save the session explicitly
+            req.session.save((saveErr) => {
+              if (saveErr) {
+                console.error('Session save error:', saveErr);
+                return res.status(500).json({ error: 'Session save failed' });
+              }
+              
+              console.log('Session created successfully during refresh');
+              return res.status(200).json({ 
+                status: 'success',
+                user
+              });
+            });
+          });
+        })
+        .catch((error) => {
+          console.error('Token verification failed during refresh:', error);
+          return res.status(401).json({ 
+            error: 'Authentication failed', 
+            details: error.message 
+          });
+        });
+    } else {
+      return res.status(401).json({ 
+        error: 'No authentication method available',
+        canRecover: false
+      });
+    }
+  });
+  
   // Google Authentication endpoint
   app.post('/api/auth/google', async (req: Request, res: Response) => {
     try {
