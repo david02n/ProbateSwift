@@ -25,7 +25,18 @@ function Router() {
   const router = useRouter();
   
   // This effect ensures we clean up any hash fragments that might cause issues
+  // and initializes Firebase token refreshing for cross-domain auth
   useEffect(() => {
+    // Set up token refresh mechanism for production environments
+    import('./lib/firebase').then(module => {
+      if (typeof module.initTokenRefresh === 'function') {
+        module.initTokenRefresh();
+        console.log('Initialized Firebase token refresh mechanism');
+      }
+    }).catch(err => {
+      console.error('Failed to initialize token refresh:', err);
+    });
+    
     // Remove hash from URL if present (can cause issues on some mobile browsers)
     if (window.location.hash && window.location.hash !== '#/') {
       console.log('Removing hash fragment:', window.location.hash);

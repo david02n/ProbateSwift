@@ -169,6 +169,36 @@ export async function signInWithGoogle() {
   }
 }
 
+// Set up automatic token refresh to keep Firebase ID tokens fresh
+function setupTokenRefresh() {
+  // Firebase tokens expire after 1 hour, refresh every 45 minutes
+  const refreshInterval = 45 * 60 * 1000; // 45 minutes
+  
+  // Clear any existing refresh timer
+  if ((window as any).__tokenRefreshTimer) {
+    clearInterval((window as any).__tokenRefreshTimer);
+  }
+  
+  // Set up new refresh timer
+  (window as any).__tokenRefreshTimer = setInterval(async () => {
+    try {
+      console.log('Refreshing Firebase ID token...');
+      const currentUser = auth.currentUser;
+      if (currentUser) {
+        const freshToken = await currentUser.getIdToken(true);
+        localStorage.setItem('firebase_id_token', freshToken);
+        console.log('Firebase ID token refreshed successfully');
+      } else {
+        console.log('No user logged in, token refresh skipped');
+      }
+    } catch (error) {
+      console.error('Failed to refresh token:', error);
+    }
+  }, refreshInterval);
+  
+  console.log('Token refresh mechanism activated');
+}
+
 // Function to handle redirect result
 export async function handleRedirectResult() {
   try {
@@ -195,8 +225,20 @@ export async function handleRedirectResult() {
       // Log successful authentication
       console.log('User authenticated via redirect:', user.email);
       
-      // Get the ID token to send to the backend
+      // Get the ID token to send to the backend and store for API requests
       const idToken = await user.getIdToken();
+      
+      // Store token in localStorage for API requests (important for cross-domain auth)
+      localStorage.setItem('firebase_id_token', idToken);
+      
+      // Set token refresh timer to keep token fresh
+      const refreshTime = 45 * 60 * 1000; // 45 minutes
+      localStorage.setItem('token_refresh_time', (Date.now() + refreshTime).toString());
+      
+      // Set up automatic token refresh
+      setupTokenRefresh();
+      
+      console.log('Firebase ID token obtained and stored for API requests');
       
       console.log('ID token retrieved, sending to backend');
       

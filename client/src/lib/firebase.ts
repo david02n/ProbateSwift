@@ -35,4 +35,44 @@ googleProvider.setCustomParameters({
   prompt: 'select_account'
 });
 
+// Helper function to get fresh tokens and maintain auth state across domains
+// This is critical for production environments where cookies don't work cross-domain
+export async function getFreshToken(): Promise<string | null> {
+  try {
+    const currentUser = auth.currentUser;
+    if (currentUser) {
+      // Force token refresh
+      const token = await currentUser.getIdToken(true);
+      
+      // Save to localStorage for cross-domain API requests
+      localStorage.setItem('firebase_id_token', token);
+      return token;
+    }
+  } catch (error) {
+    console.error('Error getting fresh token:', error);
+  }
+  
+  // Try to get cached token from localStorage as fallback
+  return localStorage.getItem('firebase_id_token');
+}
+
+// Setup function to keep token fresh (call this on app initialization)
+export function initTokenRefresh() {
+  // Set up interval to refresh token
+  const refreshInterval = 45 * 60 * 1000; // 45 minutes
+  
+  setInterval(async () => {
+    const user = auth.currentUser;
+    if (user) {
+      try {
+        const token = await user.getIdToken(true);
+        localStorage.setItem('firebase_id_token', token);
+        console.log('Token refreshed automatically');
+      } catch (e) {
+        console.error('Failed to refresh token:', e);
+      }
+    }
+  }, refreshInterval);
+}
+
 export default app;

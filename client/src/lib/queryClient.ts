@@ -66,29 +66,53 @@ export async function apiRequest(
       (fetchOptions.headers as Record<string, string>)["Content-Type"] = "application/json";
     }
     
-    // Add Firebase ID token as a Bearer token if available
-    // This fixes production authentication issues when cookies are not maintained
+    // Enhanced token handling for production environments 
     try {
-      // Check for Firebase
-      const firebaseAuth = (window as any).firebase?.auth?.();
-      if (firebaseAuth) {
-        // Try to get current user
-        const currentUser = firebaseAuth.currentUser;
-        if (currentUser) {
-          // Get the token
-          const idToken = await currentUser.getIdToken(true);
-          if (idToken) {
-            console.log("[API Request] Adding Firebase ID token as Bearer token");
-            (fetchOptions.headers as Record<string, string>)["Authorization"] = `Bearer ${idToken}`;
+      // Try to get a fresh token using our dedicated helper
+      const getFreshToken = async (): Promise<string | null> => {
+        try {
+          // Dynamic import to avoid circular dependencies
+          const module = await import('./firebase');
+          if (typeof module.getFreshToken === 'function') {
+            return await module.getFreshToken();
           }
+        } catch (e) {
+          console.error('[API Request] Error importing getFreshToken:', e);
         }
+        
+        // Fallback implementation if dynamic import fails
+        try {
+          const auth = (window as any).firebase?.auth?.();
+          if (auth?.currentUser) {
+            const token = await auth.currentUser.getIdToken(true);
+            if (token) {
+              localStorage.setItem('firebase_id_token', token);
+              return token;
+            }
+          }
+        } catch (e) {
+          console.error('[API Request] Fallback token retrieval failed:', e);
+        }
+        
+        // Last resort - try localStorage
+        return localStorage.getItem('firebase_id_token');
+      };
+      
+      // Get token and add to headers if available
+      const token = await getFreshToken();
+      if (token) {
+        console.log("[API Request] Adding Firebase ID token as Bearer token");
+        (fetchOptions.headers as Record<string, string>)["Authorization"] = `Bearer ${token}`;
+        
+        // Set a debug property to help with production troubleshooting
+        (window as any).__authDebug = {
+          ...(window as any).__authDebug || {},
+          lastTokenRefresh: new Date().toISOString(),
+          tokenAvailable: true,
+          tokenLength: token.length
+        };
       } else {
-        // Try to get token from localStorage for mobile or fallback cases
-        const savedToken = localStorage.getItem('firebase_id_token');
-        if (savedToken) {
-          console.log("[API Request] Using saved Firebase ID token from localStorage");
-          (fetchOptions.headers as Record<string, string>)["Authorization"] = `Bearer ${savedToken}`;
-        }
+        console.log("[API Request] No Firebase token available");
       }
     } catch (tokenError) {
       console.error("[API Request] Error getting Firebase token:", tokenError);
@@ -181,31 +205,45 @@ export const getQueryFn: <T>(options: {
         mode: "cors", // Enable CORS for cross-domain requests
       };
       
-      // Add Firebase ID token as a Bearer token if available - fixes production auth issues
+      // Enhanced token handling for production environments
       try {
-        // Try Firebase auth if available in window context
-        const firebaseAuth = (window as any).firebase?.auth?.();
-        if (firebaseAuth) {
-          // Get the current user if logged in
-          const currentUser = firebaseAuth.currentUser;
-          if (currentUser) {
-            // Get a fresh token and add it to Authorization header
-            const idToken = await currentUser.getIdToken(true);
-            if (idToken) {
-              console.log("[Query] Adding Firebase ID token as Bearer token");
-              (fetchOptions.headers as Record<string, string>)["Authorization"] = `Bearer ${idToken}`;
-              
-              // Also cache the token in localStorage for other API calls
-              localStorage.setItem('firebase_id_token', idToken);
+        // Try to get a fresh token using our dedicated helper
+        const getFreshToken = async (): Promise<string | null> => {
+          try {
+            // Dynamic import to avoid circular dependencies
+            const module = await import('./firebase');
+            if (typeof module.getFreshToken === 'function') {
+              return await module.getFreshToken();
             }
+          } catch (e) {
+            console.error('[Query] Error importing getFreshToken:', e);
           }
+          
+          // Fallback implementation if dynamic import fails
+          try {
+            const auth = (window as any).firebase?.auth?.();
+            if (auth?.currentUser) {
+              const token = await auth.currentUser.getIdToken(true);
+              if (token) {
+                localStorage.setItem('firebase_id_token', token);
+                return token;
+              }
+            }
+          } catch (e) {
+            console.error('[Query] Fallback token retrieval failed:', e);
+          }
+          
+          // Last resort - try localStorage
+          return localStorage.getItem('firebase_id_token');
+        };
+        
+        // Get token and add to headers if available
+        const token = await getFreshToken();
+        if (token) {
+          console.log("[Query] Adding Firebase ID token as Bearer token");
+          (fetchOptions.headers as Record<string, string>)["Authorization"] = `Bearer ${token}`;
         } else {
-          // Try to get token from localStorage for mobile or fallback cases
-          const savedToken = localStorage.getItem('firebase_id_token');
-          if (savedToken) {
-            console.log("[Query] Using saved Firebase ID token from localStorage");
-            (fetchOptions.headers as Record<string, string>)["Authorization"] = `Bearer ${savedToken}`;
-          }
+          console.log("[Query] No Firebase token available");
         }
       } catch (tokenError) {
         console.error("[Query] Error getting Firebase token:", tokenError);
