@@ -88,7 +88,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
           console.log('Token verified successfully for:', email);
           
           // Find the user by email - ensure email is not undefined
-          const user = email ? await storage.getUserByEmail(email) : null;
+          let user = null;
+          if (email && email.length > 0) {
+            try {
+              user = await storage.getUserByEmail(email);
+            } catch (error) {
+              console.error('Error finding user by email:', error);
+            }
+          }
           
           if (!user) {
             return res.status(401).json({ error: 'User not found' });
@@ -161,10 +168,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
     if (idToken) {
       verifyIdToken(idToken)
         .then(async (decodedToken) => {
-          const email = decodedToken.email;
+          const email = decodedToken.email || '';
           console.log('Token verified successfully during refresh for:', email);
           
-          const user = await storage.getUserByEmail(email);
+          // Only attempt to find user if email is not empty
+          let user = null;
+          if (email && email.length > 0) {
+            try {
+              user = await storage.getUserByEmail(email);
+            } catch (error) {
+              console.error('Error finding user by email:', error);
+            }
+          }
           if (!user) {
             return res.status(401).json({ error: 'User not found' });
           }
