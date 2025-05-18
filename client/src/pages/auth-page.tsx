@@ -291,7 +291,7 @@ const AuthPage: React.FC<AuthPageProps> = ({ tab }) => {
 
   return (
     <div className="flex min-h-screen bg-gradient-to-br from-soft-grey to-white">
-      <div className="text-xs text-gray-400 absolute bottom-1 right-2">v1.0.9-May18-2300</div>
+      <div className="text-xs text-gray-400 absolute bottom-1 right-2">v1.0.10-May18-2330</div>
       <div className="flex flex-col md:flex-row w-full">
         {/* Authentication Form Column */}
         <div className="w-full md:w-1/2 p-6 md:p-12 flex items-center justify-center">
