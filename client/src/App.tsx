@@ -27,9 +27,44 @@ function Router() {
   // This effect ensures we clean up any hash fragments that might cause issues
   // and initializes Firebase token refreshing for cross-domain auth
   useEffect(() => {
-    // Ensure Firebase Auth initializes properly and wait for its status
-    // This is critical for production environments where auth state must be loaded
-    // before making API calls that require tokens
+    // DIRECT FIX: Override fetch to always include Firebase token
+    const originalFetch = window.fetch;
+    window.fetch = async function(resource, options = {}) {
+      if (typeof resource === 'string' && resource.includes('/api/')) {
+        console.log(`DIRECT TOKEN FIX: Adding token to ${resource}`);
+        try {
+          // Try to get token directly from Firebase
+          const firebaseModule = await import('./lib/firebase');
+          const auth = firebaseModule.auth;
+          const user = auth.currentUser;
+          
+          if (user) {
+            console.log(`DIRECT TOKEN FIX: User logged in as ${user.email}`);
+            const token = await user.getIdToken(true);
+            
+            // Initialize headers if they don't exist
+            options.headers = options.headers || {};
+            
+            // Add token to headers
+            options.headers = {
+              ...options.headers,
+              'Authorization': `Bearer ${token}`
+            };
+            
+            console.log('DIRECT TOKEN FIX: Added Authorization header with Bearer token');
+          } else {
+            console.log('DIRECT TOKEN FIX: No user logged in, skipping token');
+          }
+        } catch (e) {
+          console.error('DIRECT TOKEN FIX: Error adding token', e);
+        }
+      }
+      
+      return originalFetch.call(this, resource, options);
+    };
+    console.log('DIRECT TOKEN FIX: Installed fetch interceptor v1.0.13-2355');
+    
+    // Still initialize Firebase normally
     import('./lib/firebase').then(async module => {
       try {
         // Wait for auth initialization before refreshing tokens
