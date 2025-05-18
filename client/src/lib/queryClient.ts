@@ -51,16 +51,48 @@ export async function apiRequest(
     // Customize fetch options for cross-domain requests in production
     const fetchOptions: RequestInit = {
       method,
-      headers: data ? { 
-        "Content-Type": "application/json",
-        // Add headers to support CORS with credentials
+      headers: {
+        // Default headers for all requests
         "Accept": "application/json",
         "X-Requested-With": "XMLHttpRequest"
-      } : {},
+      },
       body: data ? JSON.stringify(data) : undefined,
       credentials: "include", // Always include cookies
       mode: "cors", // Enable CORS
     };
+    
+    // Add content-type header if there's data
+    if (data) {
+      (fetchOptions.headers as Record<string, string>)["Content-Type"] = "application/json";
+    }
+    
+    // Add Firebase ID token as a Bearer token if available
+    // This fixes production authentication issues when cookies are not maintained
+    try {
+      // Check for Firebase
+      const firebaseAuth = (window as any).firebase?.auth?.();
+      if (firebaseAuth) {
+        // Try to get current user
+        const currentUser = firebaseAuth.currentUser;
+        if (currentUser) {
+          // Get the token
+          const idToken = await currentUser.getIdToken(true);
+          if (idToken) {
+            console.log("[API Request] Adding Firebase ID token as Bearer token");
+            (fetchOptions.headers as Record<string, string>)["Authorization"] = `Bearer ${idToken}`;
+          }
+        }
+      } else {
+        // Try to get token from localStorage for mobile or fallback cases
+        const savedToken = localStorage.getItem('firebase_id_token');
+        if (savedToken) {
+          console.log("[API Request] Using saved Firebase ID token from localStorage");
+          (fetchOptions.headers as Record<string, string>)["Authorization"] = `Bearer ${savedToken}`;
+        }
+      }
+    } catch (tokenError) {
+      console.error("[API Request] Error getting Firebase token:", tokenError);
+    }
     
     // Log the request configuration
     console.log(`[API Request] Credentials mode: ${fetchOptions.credentials}`);
@@ -148,6 +180,36 @@ export const getQueryFn: <T>(options: {
         credentials: "include", // Always include cookies
         mode: "cors", // Enable CORS for cross-domain requests
       };
+      
+      // Add Firebase ID token as a Bearer token if available - fixes production auth issues
+      try {
+        // Try Firebase auth if available in window context
+        const firebaseAuth = (window as any).firebase?.auth?.();
+        if (firebaseAuth) {
+          // Get the current user if logged in
+          const currentUser = firebaseAuth.currentUser;
+          if (currentUser) {
+            // Get a fresh token and add it to Authorization header
+            const idToken = await currentUser.getIdToken(true);
+            if (idToken) {
+              console.log("[Query] Adding Firebase ID token as Bearer token");
+              (fetchOptions.headers as Record<string, string>)["Authorization"] = `Bearer ${idToken}`;
+              
+              // Also cache the token in localStorage for other API calls
+              localStorage.setItem('firebase_id_token', idToken);
+            }
+          }
+        } else {
+          // Try to get token from localStorage for mobile or fallback cases
+          const savedToken = localStorage.getItem('firebase_id_token');
+          if (savedToken) {
+            console.log("[Query] Using saved Firebase ID token from localStorage");
+            (fetchOptions.headers as Record<string, string>)["Authorization"] = `Bearer ${savedToken}`;
+          }
+        }
+      } catch (tokenError) {
+        console.error("[Query] Error getting Firebase token:", tokenError);
+      }
       
       // In certain browsers, SameSite=None cookies require secure flag
       // Log detailed configuration info for debugging
