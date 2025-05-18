@@ -109,10 +109,51 @@ export async function apiRequest(
           ...(window as any).__authDebug || {},
           lastTokenRefresh: new Date().toISOString(),
           tokenAvailable: true,
-          tokenLength: token.length
+          tokenLength: token.length,
+          domain: window.location.hostname
         };
+        
+        // CRITICAL FIX: For probateswift.com and replit.app domains
+        // Always ensure the token is properly stored in localStorage for subsequent requests
+        if (window.location.hostname.includes('probateswift.com') || 
+            window.location.hostname.includes('replit.app')) {
+          
+          console.log(`[Auth] Storing token for domain: ${window.location.hostname}`);
+          
+          // Store token in both storage options for resilience
+          localStorage.setItem('firebase_id_token', token);
+          sessionStorage.setItem('firebase_id_token', token);
+          
+          // Store authentication status
+          localStorage.setItem('auth_status', 'authenticated');
+          localStorage.setItem('auth_time', Date.now().toString());
+          localStorage.setItem('auth_domain', window.location.hostname);
+        }
       } else {
-        console.log("[API Request] No Firebase token available");
+        console.log("[API Request] No Firebase token available - check authentication state");
+        
+        // Debug auth state for troubleshooting
+        try {
+          const module = await import('./firebase');
+          const currentUser = module.auth.currentUser;
+          if (currentUser) {
+            console.log("[Auth Debug] Firebase reports user is logged in but no token available");
+            console.log(`[Auth Debug] User email: ${currentUser.email}`);
+            
+            // Force token refresh
+            try {
+              const emergencyToken = await currentUser.getIdToken(true);
+              console.log("[Auth Recovery] Successfully obtained emergency token");
+              (fetchOptions.headers as Record<string, string>)["Authorization"] = `Bearer ${emergencyToken}`;
+            } catch (e) {
+              console.error("[Auth Recovery] Failed to obtain emergency token:", e);
+            }
+          } else {
+            console.log("[Auth Debug] Firebase reports no user is logged in");
+          }
+        } catch (e) {
+          console.error("[Auth Debug] Error checking Firebase auth state:", e);
+        }
       }
     } catch (tokenError) {
       console.error("[API Request] Error getting Firebase token:", tokenError);
