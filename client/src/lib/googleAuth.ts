@@ -205,11 +205,11 @@ export async function handleRedirectResult() {
       const domain = window.location.hostname;
       const isProd = domain.includes('probateswift.com');
       
-      // For production, use the full URL to avoid any proxy issues
-      // Critical fix: For probateswift.com, we need absolute URL to ensure same-origin request
-      // Critical fix for production: Always use relative URL to avoid CORS issues
-      // This ensures the request goes to the same origin as the page
-      const apiUrl = '/api/auth/google';
+      // Critical fix: Use a fully-qualified URL for production but relative URL for development
+      // This ensures proper cross-domain cookie handling in both environments
+      const apiUrl = isProd 
+        ? `https://${domain}/api/auth/google`
+        : '/api/auth/google';
       
       console.log(`Using API URL: ${apiUrl} for domain: ${domain}`);
       

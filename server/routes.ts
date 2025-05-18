@@ -147,16 +147,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
         }
       }
       
-      // Log detailed authentication info for debugging
-      console.log("📊 Authentication Summary:");
-      console.log(`📧 Email: ${email}`);
-      console.log(`👤 Display Name: ${displayName || "Not provided"}`);
-      console.log(`🌐 Domain: ${domain || "Not provided"}`);
-      console.log(`🔑 Client Firebase UID: ${clientFirebaseUid || "Not provided"}`);
-      console.log(`🔐 Verification Token: ${verificationToken || "Not provided"}`);
-      console.log(`💡 Final Firebase UID: ${finalFirebaseUid}`);
-      
-      
       // Extract first and last name from displayName if available
       let firstName = null;
       let lastName = null;
@@ -173,7 +163,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
       
       // Use the client-provided Firebase UID or generate one from the email
-      const finalFirebaseUid = clientFirebaseUid || (idToken ? `google:${email}` : `google:${email}`);
+      let finalFirebaseUid = clientFirebaseUid || (idToken ? `google:${email}` : `google:${email}`);
+      
+      // Log detailed authentication info for debugging
+      console.log("📊 Authentication Summary:");
+      console.log(`📧 Email: ${email}`);
+      console.log(`👤 Display Name: ${displayName || "Not provided"}`);
+      console.log(`🌐 Domain: ${domain || "Not provided"}`);
+      console.log(`🔑 Client Firebase UID: ${clientFirebaseUid || "Not provided"}`);
+      console.log(`🔐 Verification Token: ${verificationToken || "Not provided"}`);
+      console.log(`💡 Final Firebase UID: ${finalFirebaseUid}`);
       
       // Make sure email is defined
       if (!email) {
@@ -273,11 +272,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
             sameSite: 'none' | 'lax' | 'strict';
             maxAge: number;
             domain?: string;
+            path: string;
           } = {
             httpOnly: false, // Make visible to JavaScript
             secure: true,
             sameSite: 'none', // Always use 'none' for cross-origin support 
-            maxAge: 1000 * 60 * 60 * 24 * 7 // 7 days
+            maxAge: 1000 * 60 * 60 * 24 * 7, // 7 days
+            path: '/'
           };
           
           // Set domain appropriately
