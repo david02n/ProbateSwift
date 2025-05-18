@@ -7,6 +7,7 @@ import * as path from "path";
 import axios from "axios";
 import { WebSocketServer, WebSocket } from "ws";
 import { firebaseAuthMiddleware } from "./auth-middleware";
+import { verifyIdToken } from "./firebase-admin";
 
 // Set up multer for file uploads
 const uploadDir = path.join(process.cwd(), "uploads");
@@ -90,9 +91,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get('/api/user', firebaseAuthMiddleware, (req: Request, res: Response) => {
     // The middleware has already validated the token and attached the user
     const user = req.user;
-    if (!user) {
-      return res.status(401).json({ error: 'User not authenticated' });
-    }
     
     // Return user profile
     return res.json({
@@ -109,10 +107,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get('/api/assessment', firebaseAuthMiddleware, async (req: Request, res: Response) => {
     try {
       const user = req.user;
-      if (!user) {
-        return res.status(401).json({ error: 'User not authenticated' });
-      }
-      
       const assessment = await storage.getAssessmentByUserId(user.id);
       res.json(assessment);
     } catch (error) {
@@ -125,10 +119,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get('/api/probate-cases', firebaseAuthMiddleware, async (req: Request, res: Response) => {
     try {
       const user = req.user;
-      if (!user) {
-        return res.status(401).json({ error: 'User not authenticated' });
-      }
-      
       const cases = await storage.getProbateCasesByUserId(user.id);
       res.json(cases);
     } catch (error) {
@@ -141,10 +131,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post('/api/probate-cases', firebaseAuthMiddleware, async (req: Request, res: Response) => {
     try {
       const user = req.user;
-      if (!user) {
-        return res.status(401).json({ error: 'User not authenticated' });
-      }
-      
       const { assessmentId, estateName, estateValue } = req.body;
       
       const newCase = await storage.createProbateCase({
@@ -166,10 +152,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get('/api/assets/:caseId', firebaseAuthMiddleware, async (req: Request, res: Response) => {
     try {
       const user = req.user;
-      if (!user) {
-        return res.status(401).json({ error: 'User not authenticated' });
-      }
-      
       const caseId = parseInt(req.params.caseId);
       
       // Verify case belongs to user
@@ -190,10 +172,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get('/api/liabilities/:caseId', firebaseAuthMiddleware, async (req: Request, res: Response) => {
     try {
       const user = req.user;
-      if (!user) {
-        return res.status(401).json({ error: 'User not authenticated' });
-      }
-      
       const caseId = parseInt(req.params.caseId);
       
       // Verify case belongs to user
@@ -210,14 +188,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Get people for a case (replacing executors)
-  app.get('/api/people/:caseId', firebaseAuthMiddleware, async (req: Request, res: Response) => {
+  // Get executors for a case
+  app.get('/api/executors/:caseId', firebaseAuthMiddleware, async (req: Request, res: Response) => {
     try {
       const user = req.user;
-      if (!user) {
-        return res.status(401).json({ error: 'User not authenticated' });
-      }
-      
       const caseId = parseInt(req.params.caseId);
       
       // Verify case belongs to user
@@ -226,11 +200,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(403).json({ error: 'Access denied' });
       }
       
-      const people = await storage.getPeopleByCaseId(caseId);
-      res.json(people);
+      const executors = await storage.getExecutorsByCaseId(caseId);
+      res.json(executors);
     } catch (error) {
-      console.error('Error getting people:', error);
-      res.status(500).json({ error: 'Failed to get people records' });
+      console.error('Error getting executors:', error);
+      res.status(500).json({ error: 'Failed to get executors' });
     }
   });
 
@@ -238,10 +212,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get('/api/documents/:caseId', firebaseAuthMiddleware, async (req: Request, res: Response) => {
     try {
       const user = req.user;
-      if (!user) {
-        return res.status(401).json({ error: 'User not authenticated' });
-      }
-      
       const caseId = parseInt(req.params.caseId);
       
       // Verify case belongs to user
@@ -262,10 +232,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post('/api/documents/upload', firebaseAuthMiddleware, upload.single('file'), async (req: Request, res: Response) => {
     try {
       const user = req.user;
-      if (!user) {
-        return res.status(401).json({ error: 'User not authenticated' });
-      }
-      
       const { caseId, type, notes } = req.body;
       
       if (!req.file) {
@@ -301,10 +267,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post('/api/assessment', firebaseAuthMiddleware, async (req: Request, res: Response) => {
     try {
       const user = req.user;
-      if (!user) {
-        return res.status(401).json({ error: 'User not authenticated' });
-      }
-      
       const assessmentData = { ...req.body, userId: user.id };
       
       const assessment = await storage.createAssessment(assessmentData);
@@ -315,15 +277,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Create person (replacing executor)
-  app.post('/api/people', firebaseAuthMiddleware, async (req: Request, res: Response) => {
+  // Create executor
+  app.post('/api/executors', firebaseAuthMiddleware, async (req: Request, res: Response) => {
     try {
       const user = req.user;
-      if (!user) {
-        return res.status(401).json({ error: 'User not authenticated' });
-      }
-      
-      const { caseId, ...personData } = req.body;
+      const { caseId, ...executorData } = req.body;
       
       // Verify case belongs to user
       const probateCase = await storage.getProbateCaseById(parseInt(caseId));
@@ -331,16 +289,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(403).json({ error: 'Access denied' });
       }
       
-      const person = await storage.createPerson({
-        ...personData,
+      const executor = await storage.createExecutor({
+        ...executorData,
         caseId: parseInt(caseId),
         userId: user.id
       });
       
-      res.status(201).json(person);
+      res.status(201).json(executor);
     } catch (error) {
-      console.error('Error creating person:', error);
-      res.status(500).json({ error: 'Failed to create person' });
+      console.error('Error creating executor:', error);
+      res.status(500).json({ error: 'Failed to create executor' });
     }
   });
 
@@ -348,10 +306,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post('/api/assets', firebaseAuthMiddleware, async (req: Request, res: Response) => {
     try {
       const user = req.user;
-      if (!user) {
-        return res.status(401).json({ error: 'User not authenticated' });
-      }
-      
       const { caseId, ...assetData } = req.body;
       
       // Verify case belongs to user
@@ -376,10 +330,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post('/api/liabilities', firebaseAuthMiddleware, async (req: Request, res: Response) => {
     try {
       const user = req.user;
-      if (!user) {
-        return res.status(401).json({ error: 'User not authenticated' });
-      }
-      
       const { caseId, ...liabilityData } = req.body;
       
       // Verify case belongs to user
@@ -400,33 +350,23 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Update person
-  app.put('/api/people/:id', firebaseAuthMiddleware, async (req: Request, res: Response) => {
+  // Update executor
+  app.put('/api/executors/:id', firebaseAuthMiddleware, async (req: Request, res: Response) => {
     try {
       const user = req.user;
-      if (!user) {
-        return res.status(401).json({ error: 'User not authenticated' });
-      }
+      const executorId = parseInt(req.params.id);
       
-      const personId = parseInt(req.params.id);
-      
-      // Verify person belongs to user
-      const person = await storage.getPersonById(personId);
-      if (!person) {
-        return res.status(404).json({ error: 'Person not found' });
-      }
-      
-      // Check case ownership
-      const probateCase = await storage.getProbateCaseById(person.caseId);
-      if (!probateCase || probateCase.userId !== user.id) {
+      // Verify executor belongs to user
+      const executor = await storage.getExecutorById(executorId);
+      if (!executor || executor.userId !== user.id) {
         return res.status(403).json({ error: 'Access denied' });
       }
       
-      const updatedPerson = await storage.updatePerson(personId, req.body);
-      res.json(updatedPerson);
+      const updatedExecutor = await storage.updateExecutor(executorId, req.body);
+      res.json(updatedExecutor);
     } catch (error) {
-      console.error('Error updating person:', error);
-      res.status(500).json({ error: 'Failed to update person' });
+      console.error('Error updating executor:', error);
+      res.status(500).json({ error: 'Failed to update executor' });
     }
   });
 
@@ -434,10 +374,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.put('/api/assets/:id', firebaseAuthMiddleware, async (req: Request, res: Response) => {
     try {
       const user = req.user;
-      if (!user) {
-        return res.status(401).json({ error: 'User not authenticated' });
-      }
-      
       const assetId = parseInt(req.params.id);
       
       // Verify asset belongs to user's case
@@ -463,10 +399,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.put('/api/liabilities/:id', firebaseAuthMiddleware, async (req: Request, res: Response) => {
     try {
       const user = req.user;
-      if (!user) {
-        return res.status(401).json({ error: 'User not authenticated' });
-      }
-      
       const liabilityId = parseInt(req.params.id);
       
       // Verify liability belongs to user's case
@@ -499,7 +431,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       try {
         // Verify the token using Firebase Admin
-        const { verifyIdToken } = await import('./firebase-admin');
         const decodedToken = await verifyIdToken(idToken);
         
         // Extract user info from the token
@@ -533,9 +464,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
             lastName,
             firebaseUid,
             photoURL: picture,
-            isGuest: false,
-            createdAt: new Date(),
-            lastLogin: new Date()
+            isGuest: false
           });
           
           console.log('Created new user from Google auth');
@@ -543,16 +472,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
           // Update existing user with Firebase UID
           await storage.updateUser(user.id, { 
             firebaseUid,
-            lastLogin: new Date(),
             ...(picture ? { photoURL: picture } : {})
           });
-        } else {
-          // Just update last login
-          await storage.updateUser(user.id, { lastLogin: new Date() });
         }
         
-        // Return user data and the token for client-side storage
-        res.header('x-auth-token', idToken);
+        // Return user data
         return res.json({
           id: user.id,
           email: user.email,
@@ -602,7 +526,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       });
       
       res.json(response.data);
-    } catch (error: any) {
+    } catch (error) {
       console.error('Error looking up address:', error);
       res.status(error.response?.status || 500).json({ 
         error: 'Address lookup failed',

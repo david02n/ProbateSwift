@@ -1,5 +1,5 @@
 import { initializeApp } from "firebase/app";
-import { getAuth, GoogleAuthProvider } from "firebase/auth";
+import { getAuth, GoogleAuthProvider, signInWithPopup, signInWithRedirect } from "firebase/auth";
 import { getAnalytics } from "firebase/analytics";
 
 // Firebase configuration with your provided values
@@ -34,6 +34,9 @@ export const googleProvider = new GoogleAuthProvider();
 googleProvider.setCustomParameters({
   prompt: 'select_account'
 });
+
+// Export sign-in methods directly
+export { signInWithPopup, signInWithRedirect };
 
 // Helper function to get fresh tokens and maintain auth state across domains
 // This is critical for production environments where cookies don't work cross-domain

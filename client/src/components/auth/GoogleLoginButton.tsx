@@ -1,7 +1,8 @@
 import React from 'react';
 import { Button } from '@/components/ui/button';
 import { FcGoogle } from 'react-icons/fc';
-import { signInWithGoogle } from '@/lib/googleAuth';
+// Import our new token-based authentication function
+import { signInWithGoogle } from '@/lib/firebase-auth';
 import { useToast } from '@/hooks/use-toast';
 
 interface GoogleLoginButtonProps {

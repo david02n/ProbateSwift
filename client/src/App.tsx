@@ -3,7 +3,7 @@ import { queryClient } from "./lib/queryClient";
 import { QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
-import { AuthProvider } from "@/hooks/use-auth";
+import { AuthProvider } from "./context/AuthContext";
 import NotFound from "@/pages/not-found";
 import Home from "@/pages/Home";
 import AuthPage from "@/pages/auth-page";
@@ -27,14 +27,19 @@ function Router() {
   // This effect ensures we clean up any hash fragments that might cause issues
   // and initializes Firebase token refreshing for cross-domain auth
   useEffect(() => {
-    // Set up token refresh mechanism for production environments
-    import('./lib/firebase').then(module => {
-      if (typeof module.initTokenRefresh === 'function') {
-        module.initTokenRefresh();
-        console.log('Initialized Firebase token refresh mechanism');
+    // Initialize our new token-based authentication system
+    import('./lib/firebase-auth').then(module => {
+      if (typeof module.initFirebaseAuth === 'function') {
+        module.initFirebaseAuth();
+        console.log('Initialized Firebase token-based authentication');
+      }
+      
+      if (typeof module.setupTokenRefresh === 'function') {
+        module.setupTokenRefresh();
+        console.log('Set up token refresh mechanism for improved auth reliability');
       }
     }).catch(err => {
-      console.error('Failed to initialize token refresh:', err);
+      console.error('Failed to initialize token authentication:', err);
     });
     
     // Remove hash from URL if present (can cause issues on some mobile browsers)
