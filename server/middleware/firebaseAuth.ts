@@ -113,9 +113,14 @@ export function createFirebaseAuthMiddleware() {
         }
         
         // STEP 5: Session compatibility - maintain for backward compatibility
-        req.session.userId = user.id;
-        req.session.isLoggedIn = true;
-        req.session.firebaseUid = uid as string;
+        // Check if session exists before trying to set properties
+        if (req.session) {
+          req.session.userId = user.id;
+          req.session.isLoggedIn = true;
+          req.session.firebaseUid = uid as string;
+        } else {
+          console.log('Firebase auth: Session object not available for token auth');
+        }
         
         // Attach user to request for route handlers
         req.user = user;
