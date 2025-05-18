@@ -1,0 +1,88 @@
+Yes — it's still the same fundamental issue.
+
+🔴 Your frontend is calling /api/user without a Firebase ID token.
+Key lines from your log:
+yaml
+Copy
+Edit
+User authenticated: false
+[Query] No Firebase token available - attempting emergency retrieval
+[Query Response] Status: 401
+This confirms:
+
+Firebase does not consider the user logged in
+
+Therefore, there's no ID token to attach to the request
+
+So your backend returns a 401 Unauthorized — as expected
+
+✅ What This Means
+The issue is no longer just about headers or cookies — now it’s:
+
+❗ Firebase Auth is not successfully logging the user in before your app calls /api/user.
+
+🔍 What's probably happening
+Your app is:
+
+Immediately calling /api/user on page load, before Firebase Auth has a chance to initialize and detect the current user.
+
+Not waiting for Firebase to emit onAuthStateChanged
+
+Making the request anyway, resulting in:
+
+arduino
+Copy
+Edit
+No Firebase token available – attempting emergency retrieval
+✅ How to Fix It Properly
+You must wait until Firebase Auth is initialized and a user is logged in before calling your protected endpoints.
+
+Example fix:
+js
+Copy
+Edit
+import { getAuth, onAuthStateChanged } from 'firebase/auth';
+
+const auth = getAuth();
+
+onAuthStateChanged(auth, async (user) => {
+  if (user) {
+    const idToken = await user.getIdToken();
+
+    const res = await fetch('/api/user', {
+      headers: {
+        Authorization: `Bearer ${idToken}`
+      }
+    });
+
+    const data = await res.json();
+    console.log('✅ Authenticated user:', data);
+  } else {
+    console.log('❌ User not authenticated');
+  }
+});
+🧪 How to Confirm It's Working
+In DevTools > Network, on the request to /api/user, you should see this under Request Headers:
+
+makefile
+Copy
+Edit
+Authorization: Bearer eyJhbGciOi...
+If you don’t see it, you’re either:
+
+Not logged in
+
+Not waiting for Firebase Auth to be ready
+
+Not attaching the token correctly
+
+✅ TL;DR
+You're still calling your backend without a Firebase ID token
+
+You need to wait until onAuthStateChanged() confirms the user is logged in
+
+Then call getIdToken() and pass it in the request
+
+Until then, 401 is expected
+
+Let me know if you want a working code snippet you can copy/paste into your Vite app to prove this live.

@@ -35,6 +35,27 @@ googleProvider.setCustomParameters({
   prompt: 'select_account'
 });
 
+// Helper function to wait for Firebase Auth to initialize
+// This addresses the race condition where API calls happen before Firebase Auth is ready
+export function waitForAuthInit(): Promise<void> {
+  return new Promise((resolve) => {
+    // Check if auth is already initialized with a user
+    if (auth.currentUser) {
+      return resolve();
+    }
+    
+    // Otherwise wait for auth state to change
+    const unsubscribe = auth.onAuthStateChanged((user) => {
+      // Clean up the listener to avoid memory leaks
+      unsubscribe();
+      
+      // Auth state has loaded (user may be null, that's fine)
+      // The key is that Firebase has had a chance to check for a user
+      resolve();
+    });
+  });
+}
+
 // Helper function to get fresh tokens and maintain auth state across domains
 // This is critical for production environments where cookies don't work cross-domain
 export async function getFreshToken(): Promise<string | null> {
@@ -44,6 +65,9 @@ export async function getFreshToken(): Promise<string | null> {
   if (isProduction) {
     console.log('PRODUCTION: Getting Firebase token for probateswift.com');
   }
+  
+  // Wait for Firebase Auth to initialize before attempting to get token
+  await waitForAuthInit();
   
   try {
     const currentUser = auth.currentUser;
