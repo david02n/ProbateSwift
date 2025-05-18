@@ -243,10 +243,18 @@ export async function handleRedirectResult() {
         idToken: '***REDACTED***' // Don't log the actual token
       });
       
+      // Store the token in localStorage for use by other API requests
+      // This is critical for production where tokens aren't maintained in cookies
+      if (idToken) {
+        localStorage.setItem('firebase_id_token', idToken);
+        console.log('Firebase ID token stored in localStorage for future API requests');
+      }
+      
       const response = await fetch(apiUrl, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
+          'Authorization': `Bearer ${idToken}` // Add Bearer token authentication
         },
         body: JSON.stringify(userData),
         credentials: 'include', // Critical for cookies to be included

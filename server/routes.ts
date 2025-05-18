@@ -84,11 +84,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Verify the token (using Firebase Admin)
       verifyIdToken(token)
         .then(async (decodedToken) => {
-          const email = decodedToken.email;
+          const email = decodedToken.email || '';
           console.log('Token verified successfully for:', email);
           
-          // Find the user by email
-          const user = await storage.getUserByEmail(email);
+          // Find the user by email - ensure email is not undefined
+          const user = email ? await storage.getUserByEmail(email) : null;
           
           if (!user) {
             return res.status(401).json({ error: 'User not found' });
