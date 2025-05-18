@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ProbateSwift</title>
+  <link rel="stylesheet" href="/index.css">
+</head>
+<body>
+  <div id="root">
+    <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100vh; font-family: system-ui, sans-serif;">
+      <h1>ProbateSwift</h1>
+      <p>Token-based Authentication System v1.0.10-May18-2350</p>
+      <p>The full application is available in production at <a href="https://probateswift.com">probateswift.com</a></p>
+      <p>Implemented token-based authentication to fix 401 Unauthorized errors in production.</p>
+      <div style="margin-top: 20px; padding: 20px; background-color: #f5f5f5; border-radius: 8px; max-width: 600px;">
+        <h3>Authentication Changes Summary:</h3>
+        <ul>
+          <li>Created a token-based authentication system that adds Firebase tokens to all API requests</li>
+          <li>Implemented automatic token refresh to prevent expiration</li>
+          <li>Patched fetch to ensure all API calls include valid authentication tokens</li>
+          <li>Added detailed logging for production debugging</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</body>
+</html>
