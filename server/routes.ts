@@ -92,13 +92,44 @@ export async function registerRoutes(app: Express): Promise<Server> {
           if (email && email.length > 0) {
             try {
               user = await storage.getUserByEmail(email);
+              
+              // Auto-create user if they don't exist but have valid Firebase token
+              if (!user) {
+                console.log('Auto-creating user from Firebase token:', email);
+                // Create new user with Firebase data
+                const firebaseUid = decodedToken.uid || decodedToken.sub || '';
+                const displayName = decodedToken.name || '';
+                
+                // Split display name into first/last name if possible
+                let firstName = '', lastName = '';
+                if (displayName) {
+                  const nameParts = displayName.split(' ');
+                  firstName = nameParts[0] || '';
+                  lastName = nameParts.slice(1).join(' ') || '';
+                }
+                
+                try {
+                  user = await storage.createUser({
+                    email,
+                    password: '', // Empty password for OAuth users
+                    firstName,
+                    lastName,
+                    firebaseUid,
+                    isGuest: false
+                  });
+                  console.log('Successfully created new user from Firebase auth:', email);
+                } catch (createError) {
+                  console.error('Failed to create user from Firebase token:', createError);
+                }
+              }
             } catch (error) {
               console.error('Error finding user by email:', error);
             }
           }
           
           if (!user) {
-            return res.status(401).json({ error: 'User not found' });
+            console.error('Could not find or create user for email:', email);
+            return res.status(401).json({ error: 'User not found and could not be created' });
           }
           
           // Update last login time
@@ -144,7 +175,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
     
     console.log('Session refresh requested');
     console.log('Session ID:', req.sessionID || 'None');
-    console.log('Verification token:', verificationToken ? 'Present' : 'None');
+    console.log('Firebase ID token:', idToken ? 'Present' : 'None');
+    
+    // Enhanced debugging for production environments
+    const isProd = req.hostname.includes('probateswift.com');
+    const isReplit = req.hostname.includes('replit');
+    console.log('Environment:', isProd ? 'Production' : (isReplit ? 'Replit' : 'Development'));
+    console.log('Host:', req.hostname);
+    console.log('Origin:', req.headers.origin || 'None');
+    console.log('User agent:', req.headers['user-agent']?.substring(0, 50) + '...' || 'None');
     console.log('ID token:', idToken ? 'Present' : 'None');
     
     // If user is already authenticated, just refresh the session
