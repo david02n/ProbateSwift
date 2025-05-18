@@ -38,6 +38,11 @@ export async function getFirebaseToken(forceRefresh = false): Promise<string | n
  * to Authorization headers for all API requests
  */
 export function patchFetchWithTokenAuth() {
+  // EMERGENCY FIX: Skip patching fetch to restore site functionality
+  console.log('Token auth temporarily disabled for emergency recovery');
+  
+  // For reference, this is the original implementation we'll restore later:
+  /*
   const originalFetch = window.fetch;
   
   window.fetch = async function(input, init = {}) {
@@ -75,6 +80,7 @@ export function patchFetchWithTokenAuth() {
     // Fall back to original fetch if any errors or not an API request
     return originalFetch(input, init);
   };
+  */
   
   console.log('Patched fetch with token authentication');
 }
