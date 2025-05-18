@@ -283,6 +283,36 @@ export async function handleRedirectResult() {
         console.error('Error processing state data:', parseError);
       }
       
+      // After successful authentication, make a second request to confirm session
+      console.log('Making follow-up request to verify session is established');
+      try {
+        const verifyResponse = await fetch('/api/user', {
+          credentials: 'include' // Critical for sending cookies
+        });
+        
+        if (verifyResponse.ok) {
+          console.log('✅ Session verification successful - user is properly authenticated');
+        } else {
+          console.warn('⚠️ Session verification failed - server returned:', verifyResponse.status);
+          // Try to force a refresh of the cookies by doing a direct fetch to the root domain
+          if (isProd) {
+            console.log('Attempting session recovery for production domain');
+            await fetch(`https://${domain}/api/session-refresh`, {
+              method: 'POST',
+              credentials: 'include',
+              headers: {
+                'Content-Type': 'application/json'
+              },
+              body: JSON.stringify({
+                verificationToken: sessionVerificationToken
+              })
+            });
+          }
+        }
+      } catch (verifyError) {
+        console.error('Error during session verification:', verifyError);
+      }
+      
       // Return the user data from the server
       return await response.json();
     }
