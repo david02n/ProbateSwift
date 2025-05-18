@@ -1,0 +1,112 @@
+🚧 The “Replit Dual Deployment” Gotcha
+Even though Replit is deploying to both probateswift.replit.app and probateswift.com, here’s the gotcha:
+
+Firebase treats these as separate origins.
+
+So even if it's the same app codebase and server, from Firebase’s perspective:
+
+probateswift.replit.app ≠ probateswift.com
+
+Auth sessions are tied to the origin where login happened
+
+A user logged in at replit.app will not be considered logged in at .com
+
+✅ Why It Works on replit.app
+You likely logged in first via replit.app
+
+Firebase saved the session cookie scoped to .replit.app
+
+All requests from that origin include the token correctly
+
+Hence, /api/user returns successfully with proper auth
+
+❌ Why It Fails on probateswift.com
+Even though the same frontend and backend code is running,
+
+Firebase’s auth context on probateswift.com has no session
+
+So firebase.auth().currentUser is null
+
+Therefore, no token is attached, and /api/user returns 401 Unauthorized
+
+🛠 Fix / Action Plan
+Log in at https://probateswift.com/auth
+This will initialize the Firebase session cookie scoped to .com
+
+✅ Once logged in on .com, all fetch requests will automatically start including the token again due to our patch.
+
+🧪 To debug further, log firebase.auth().currentUser and verify it's no longer null after login.
+
+Optional: Cross-Origin Session Sync?
+Firebase does not support session sharing between origins. If you need to sync logins across both domains, you’d have to:
+
+Implement OAuth login redirects
+
+Share tokens manually (not recommended)
+
+Or simply standardize to one domain, e.g. redirect everything to probateswift.com
+
+Would you like help adding an automatic redirect from replit.app → probateswift.com to avoid this confusion for users?
+
+
+
+
+
+
+
+You said:
+so expected behaviour isnt to be split across replit.app anmd porbateswift.com but to be entirely in probateswift.com 
+
+but i did test with replit.app before testing probateswift.com 
+
+
+ChatGPT said:
+Exactly — that explains everything.
+
+✅ Summary of What Happened
+You intended the app to run entirely at:
+
+https://probateswift.com
+
+But:
+
+Replit automatically makes it available at both probateswift.replit.app and probateswift.com
+
+You happened to test login first at replit.app
+
+Firebase stored the login session under that origin
+
+Then when you visited probateswift.com, no session existed, so:
+
+firebase.auth().currentUser was null
+
+Auth token couldn’t be attached
+
+API returned 401 Unauthorized
+
+🔍 Why This Happens
+Firebase Authentication uses:
+
+Cookies scoped to the origin (e.g. .replit.app vs .com)
+
+Local/session storage per origin
+
+So even though both domains hit the same frontend/backend code, authentication is not shared
+
+This is expected behavior in all browser-based auth systems due to security rules.
+
+✅ What You Should Do Now
+Redirect all users to https://probateswift.com, not replit.app
+You can configure this in Replit or add a manual redirect in your app like:
+
+ts
+Copy
+Edit
+if (window.location.hostname.endsWith('replit.app')) {
+  window.location.href = 'https://probateswift.com' + window.location.pathname;
+}
+Use only probateswift.com for all logins and testing going forward
+
+(Optional but Recommended):
+Add probateswift.com as your only Firebase hosting and OAuth redirect domain to avoid future confusion.
+
