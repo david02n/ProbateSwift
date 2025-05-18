@@ -25,21 +25,16 @@ function Router() {
   const router = useRouter();
   
   // This effect ensures we clean up any hash fragments that might cause issues
-  // and initializes Firebase token refreshing for cross-domain auth
+  // and initializes authentication helpers for cross-domain auth
   useEffect(() => {
-    // Initialize our new token-based authentication system
-    import('./lib/firebase-auth').then(module => {
-      if (typeof module.initFirebaseAuth === 'function') {
-        module.initFirebaseAuth();
-        console.log('Initialized Firebase token-based authentication');
-      }
-      
-      if (typeof module.setupTokenRefresh === 'function') {
-        module.setupTokenRefresh();
-        console.log('Set up token refresh mechanism for improved auth reliability');
+    // Initialize auth helper to fix 401 errors in production
+    import('./lib/auth-helper').then(module => {
+      if (typeof module.initAuthHelper === 'function') {
+        module.initAuthHelper();
+        console.log('Initialized auth helper for improved production reliability');
       }
     }).catch(err => {
-      console.error('Failed to initialize token authentication:', err);
+      console.error('Failed to initialize auth helper:', err);
     });
     
     // Remove hash from URL if present (can cause issues on some mobile browsers)
