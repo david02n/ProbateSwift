@@ -37,6 +37,13 @@ const upload = multer({
 export async function registerRoutes(app: Express): Promise<Server> {
   // Create a HTTP server for the express app
   const httpServer = createServer(app);
+  
+  // Register Firebase token authentication middleware
+  // This middleware adds support for Bearer token authorization
+  // which is critical for cross-domain authentication in production
+  const firebaseAuthMiddleware = createFirebaseAuthMiddleware();
+  app.use(firebaseAuthMiddleware);
+  console.log('Firebase Bearer token authentication middleware registered');
 
   // Initialize WebSocket Server for real-time notifications
   const wss = new WebSocketServer({ 

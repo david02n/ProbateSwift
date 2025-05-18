@@ -36,7 +36,8 @@ export function createFirebaseAuthMiddleware() {
     // STEP 1: First check if session is already authenticated (backward compatibility)
     if (req.session?.isLoggedIn && req.session?.userId) {
       try {
-        const user = await storage.getUserById(req.session.userId);
+        // Use the storage interface to find user
+        const user = await storage.getUser(req.session.userId);
         if (user) {
           // User found in session - attach to request and continue
           req.user = user;
