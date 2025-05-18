@@ -24,17 +24,16 @@ function Router() {
   const [location] = useLocation();
   const router = useRouter();
   
-  // This effect ensures we clean up any hash fragments that might cause issues
-  // and initializes authentication helpers for cross-domain auth
+  // This effect initializes token-based authentication to fix 401 errors in production
   useEffect(() => {
-    // Initialize auth helper to fix 401 errors in production
-    import('./lib/auth-helper').then(module => {
-      if (typeof module.initAuthHelper === 'function') {
-        module.initAuthHelper();
-        console.log('Initialized auth helper for improved production reliability');
+    // Initialize token auth (fixes 401 Unauthorized errors in production)
+    import('./lib/token-auth').then(module => {
+      if (typeof module.initTokenAuth === 'function') {
+        module.initTokenAuth();
+        console.log('Initialized token-based authentication - v1.0.10-May18-2340');
       }
     }).catch(err => {
-      console.error('Failed to initialize auth helper:', err);
+      console.error('Failed to initialize token auth:', err);
     });
     
     // Remove hash from URL if present (can cause issues on some mobile browsers)
