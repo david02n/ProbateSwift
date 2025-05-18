@@ -9,6 +9,41 @@ import { getAuth } from "firebase/auth";
 console.log('DOMAIN CHECK: Current domain is: ' + window.location.hostname);
 console.log('AUTHENTICATION FIX: Ensuring tokens work on probateswift.com');
 
+// Add specific debugging for Firebase auth state changes
+import { onAuthStateChanged } from "firebase/auth";
+import { getAuth } from "firebase/auth";
+
+// Set up auth state listener for debugging 
+setTimeout(() => {
+  const auth = getAuth();
+  onAuthStateChanged(auth, (user) => {
+    console.log('[DEBUG] Firebase auth state changed!');
+    console.log('[DEBUG] Firebase user:', user ? {
+      email: user.email,
+      uid: user.uid,
+      emailVerified: user.emailVerified,
+      isAnonymous: user.isAnonymous,
+      hasToken: !!user.getIdToken
+    } : 'No user logged in');
+    
+    // If user is logged in, immediately try getting a token
+    if (user) {
+      user.getIdToken(true).then(token => {
+        console.log('[DEBUG] Successfully retrieved token:', token.substring(0, 15) + '...');
+        localStorage.setItem('debug_token', token);
+      }).catch(error => {
+        console.error('[DEBUG] Error getting token:', error);
+      });
+    }
+  });
+  
+  // Check auth status immediately
+  const currentUser = auth.currentUser;
+  console.log('[DEBUG] Firebase current user check:', currentUser ? 
+    `${currentUser.email} (${currentUser.uid})` : 'No user logged in');
+    
+}, 1000); // Delay slightly to ensure Firebase is initialized
+
 // ADVANCED TOKEN FIX FOR ALL API REQUESTS - v1.0.16-May18-2400
 // This guarantees that all API requests will include the Firebase token
 const originalFetch = window.fetch;
