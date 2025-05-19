@@ -17,78 +17,58 @@ const GoogleLoginButton = ({ className = '' }: GoogleLoginButtonProps) => {
     try {
       setIsLoading(true);
       
-      // Create a fresh Google provider instance
+      // Create a fresh provider for each login attempt
       const provider = new GoogleAuthProvider();
       
-      // Set custom parameters - always offer account selection
-      provider.setCustomParameters({
-        prompt: 'select_account'
+      // Simple popup login - no fancy parameters
+      console.log('Starting Google popup login');
+      const result = await signInWithPopup(auth, provider);
+      
+      console.log('✅ Logged in:', result.user.email);
+      
+      // Get token for API requests
+      const token = await result.user.getIdToken();
+      localStorage.setItem('firebase_id_token', token);
+      
+      // Send token to backend
+      const response = await fetch('/api/auth/google', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          idToken: token,
+          email: result.user.email
+        }),
+        credentials: 'include'
       });
       
-      console.log('Using simple popup login flow');
-      
-      // Simple popup authentication - direct and reliable
-      const result = await signInWithPopup(auth, provider);
-      console.log('✅ Google login successful:', result.user.email);
-      
-      if (result.user) {
-        // Get the token for backend authentication
-        const idToken = await result.user.getIdToken();
-        
-        // Store token for API requests
-        localStorage.setItem('firebase_id_token', idToken);
-        
-        // Verify with backend
-        const response = await fetch('/api/auth/google', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${idToken}`
-          },
-          body: JSON.stringify({
-            idToken,
-            email: result.user.email,
-            displayName: result.user.displayName
-          }),
-          credentials: 'include'
+      if (response.ok) {
+        console.log('Backend auth successful');
+        toast({
+          title: 'Success',
+          description: 'You are now logged in',
+          variant: 'default',
         });
-        
-        if (response.ok) {
-          console.log('Backend authentication successful');
-          
-          // Show success toast
-          toast({
-            title: 'Login Successful',
-            description: 'You have been logged in successfully.',
-            variant: 'default',
-          });
-          
-          // Redirect to dashboard after successful login
-          window.location.href = '/';
-        } else {
-          throw new Error('Backend authentication failed');
-        }
+        window.location.href = '/';
+      } else {
+        throw new Error('Backend auth failed');
       }
+      
     } catch (error: any) {
-      console.error('Google login error:', error);
+      console.error('❌ Google login failed:', error);
       
-      // Handle different error types with specific messages
-      let errorMessage = 'There was a problem logging in with Google. Please try again.';
+      let message = 'Login failed. Please try again.';
       
-      if (error.code) {
-        // Firebase auth error codes
-        if (error.code === 'auth/popup-blocked') {
-          errorMessage = 'Login popup was blocked by your browser. Please allow popups for this site.';
-        } else if (error.code === 'auth/popup-closed-by-user') {
-          errorMessage = 'Login was cancelled. Please try again to log in.';
-        } else if (error.code === 'auth/unauthorized-domain') {
-          errorMessage = 'This domain is not authorized for authentication. Please contact support.';
-        }
+      if (error.code === 'auth/popup-blocked') {
+        message = 'Please allow popups for this site and try again.';
+      } else if (error.code === 'auth/popup-closed-by-user') {
+        message = 'Login was cancelled. Please try again.';
       }
       
       toast({
-        title: 'Google Login Failed',
-        description: errorMessage,
+        title: 'Login Failed',
+        description: message,
         variant: 'destructive',
       });
     } finally {

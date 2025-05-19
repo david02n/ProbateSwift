@@ -2,21 +2,17 @@ import { initializeApp } from "firebase/app";
 import { getAuth, GoogleAuthProvider } from "firebase/auth";
 import { getAnalytics } from "firebase/analytics";
 
-// Firebase configuration with domain-specific auth settings
+// SIMPLE TWO-ENVIRONMENT SETUP
+
+// Get current hostname for environment detection
 const hostname = window.location.hostname;
+const isProd = hostname.includes('probateswift.com');
 
-// Determine environment type
-const isProbateswiftCom = hostname === 'probateswift.com' || hostname === 'www.probateswift.com';
-const isReplitDev = hostname.includes('replit.dev');
-const isReplitApp = hostname.includes('replit.app');
-
-// Configure Firebase with environment-appropriate settings
+// Pick the right Firebase config based on environment
 const firebaseConfig = {
   apiKey: "AIzaSyCWeCvuiXsoQCdn_E4yRDh2QT4j4-fQBo0",
-  // Dynamic authDomain based on environment
-  // For development in Replit: use the Replit domain
-  // For production: use probateswift.com
-  authDomain: isReplitDev ? hostname : "probateswift.com",
+  // Set auth domain based on environment
+  authDomain: isProd ? "probateswift.com" : "probate-458709.firebaseapp.com",
   projectId: "probate-458709",
   storageBucket: "probate-458709.firebasestorage.app",
   messagingSenderId: "321971954611",
@@ -24,8 +20,8 @@ const firebaseConfig = {
   measurementId: "G-1YW4Q67L65"
 };
 
-// Log which configuration we're using for debugging purposes
-console.log(`[Firebase] Using authDomain: ${firebaseConfig.authDomain} on ${hostname}`);
+// Log which configuration we're using for debugging
+console.log(`[Firebase] Using authDomain: ${firebaseConfig.authDomain} (${isProd ? 'Production' : 'Development'})`);
 
 // Initialize Firebase
 const app = initializeApp(firebaseConfig);
