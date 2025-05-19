@@ -13,67 +13,79 @@ const GoogleLoginButton = ({ className = '' }: GoogleLoginButtonProps) => {
   const { toast } = useToast();
   const [isLoading, setIsLoading] = React.useState(false);
 
-  const handleGoogleLogin = async () => {
-    try {
-      setIsLoading(true);
-      
-      // Create a fresh provider for each login attempt
-      const provider = new GoogleAuthProvider();
-      
-      // Simple popup login - no fancy parameters
-      console.log('Starting Google popup login');
-      const result = await signInWithPopup(auth, provider);
-      
-      console.log('✅ Logged in:', result.user.email);
-      
-      // Get token for API requests
-      const token = await result.user.getIdToken();
-      localStorage.setItem('firebase_id_token', token);
-      
-      // Send token to backend
-      const response = await fetch('/api/auth/google', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          idToken: token,
-          email: result.user.email
-        }),
-        credentials: 'include'
-      });
-      
-      if (response.ok) {
+  const handleGoogleLogin = () => {
+    // Don't set loading state until AFTER popup completes
+    // This prevents the spinner from blocking the popup
+    
+    // Create a fresh provider for each login attempt
+    const provider = new GoogleAuthProvider();
+    
+    // Simple popup login with promise chain (not async/await)
+    console.log('Starting Google popup login');
+    
+    // Using promise chain for better popup handling
+    signInWithPopup(auth, provider)
+      .then((result) => {
+        console.log('✅ Logged in:', result.user.email);
+        setIsLoading(true); // Now we can show loading
+        
+        // Get token for API requests
+        return result.user.getIdToken().then(token => {
+          localStorage.setItem('firebase_id_token', token);
+          
+          // Return both token and user for next step
+          return { token, user: result.user };
+        });
+      })
+      .then(({ token, user }) => {
+        // Send token to backend
+        return fetch('/api/auth/google', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            idToken: token,
+            email: user.email
+          }),
+          credentials: 'include'
+        });
+      })
+      .then(response => {
+        if (!response.ok) {
+          throw new Error('Backend auth failed');
+        }
+        
         console.log('Backend auth successful');
         toast({
           title: 'Success',
           description: 'You are now logged in',
           variant: 'default',
         });
+        
+        // Redirect to dashboard
         window.location.href = '/';
-      } else {
-        throw new Error('Backend auth failed');
-      }
-      
-    } catch (error: any) {
-      console.error('❌ Google login failed:', error);
-      
-      let message = 'Login failed. Please try again.';
-      
-      if (error.code === 'auth/popup-blocked') {
-        message = 'Please allow popups for this site and try again.';
-      } else if (error.code === 'auth/popup-closed-by-user') {
-        message = 'Login was cancelled. Please try again.';
-      }
-      
-      toast({
-        title: 'Login Failed',
-        description: message,
-        variant: 'destructive',
+      })
+      .catch((error) => {
+        console.error('❌ Google login failed:', error);
+        
+        let message = 'Login failed. Please try again.';
+        
+        if (error.code === 'auth/popup-blocked') {
+          message = 'Please allow popups for this site and try again.';
+        } else if (error.code === 'auth/popup-closed-by-user') {
+          message = 'Login was cancelled. Please try again.';
+        }
+        
+        toast({
+          title: 'Login Failed',
+          description: message,
+          variant: 'destructive',
+        });
+      })
+      .finally(() => {
+        setIsLoading(false);
       });
-    } finally {
-      setIsLoading(false);
-    }
   };
 
   return (

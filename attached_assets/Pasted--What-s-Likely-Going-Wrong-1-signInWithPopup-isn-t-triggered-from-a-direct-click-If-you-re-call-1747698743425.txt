@@ -1,0 +1,106 @@
+🔍 What’s Likely Going Wrong
+✅ 1. signInWithPopup isn’t triggered from a direct click
+If you’re calling signInWithPopup(...) anywhere outside a direct onClick, modern browsers block the popup without throwing visible errors.
+
+✅ Fix:
+Ensure the Google login is strictly inside a click event like this:
+
+tsx
+Copy
+Edit
+const handleGoogleLogin = () => {
+  const provider = new GoogleAuthProvider();
+  signInWithPopup(auth, provider)
+    .then((result) => {
+      // handle success
+    })
+    .catch((error) => {
+      // handle error
+    });
+};
+
+<button onClick={handleGoogleLogin}>Continue with Google</button>
+Don't wrap this in any debounce, async useEffect, or external modal.
+
+⚠️ 2. Service worker (PWA) is hijacking the Firebase auth flow
+Your Firebase handler routes (/__auth__/handler) might be cached, intercepted, or routed by your app’s service worker — especially likely on Replit with PWA support enabled.
+
+✅ Fix:
+In your sw.js, exclude Firebase’s internal routes:
+
+js
+Copy
+Edit
+self.addEventListener("fetch", (event) => {
+  if (event.request.url.includes("/__/auth/")) return; // Let browser handle it
+  // ...other cache logic
+});
+Or — for now — disable the service worker entirely for testing.
+
+🧨 3. Popup blocked by browser setting or cross-domain mismatch
+Even if it used to work, modern Chrome/Edge browsers now enforce stricter popup and cross-origin rules:
+
+Popup must originate from same domain as authDomain
+
+authDomain must match your Firebase config exactly
+
+signInWithPopup() requires SameSite=None; Secure cookie compatibility
+
+✅ Fix:
+Make sure:
+
+Firebase authDomain is probateswift.com (not replit.app)
+
+Site is HTTPS (not localhost or mixed content)
+
+You aren't mixing www.probateswift.com vs probateswift.com (pick one and redirect consistently)
+
+✅ Want a Quick Sanity Test?
+Try this minimal working test outside your current app:
+
+Set up a fresh HTML file with this:
+
+html
+Copy
+Edit
+<!DOCTYPE html>
+<html>
+  <head><title>Test Login</title></head>
+  <body>
+    <button id="googleBtn">Login with Google</button>
+    <script type="module">
+      import { initializeApp } from "https://www.gstatic.com/firebasejs/9.22.2/firebase-app.js";
+      import { getAuth, GoogleAuthProvider, signInWithPopup } from "https://www.gstatic.com/firebasejs/9.22.2/firebase-auth.js";
+
+      const firebaseConfig = {
+        apiKey: "YOUR_API_KEY",
+        authDomain: "probateswift.com",
+        projectId: "your-project-id",
+      };
+
+      const app = initializeApp(firebaseConfig);
+      const auth = getAuth(app);
+
+      document.getElementById("googleBtn").onclick = () => {
+        const provider = new GoogleAuthProvider();
+        signInWithPopup(auth, provider).then((result) => {
+          console.log("Success:", result.user);
+        }).catch((error) => {
+          console.error("Error:", error);
+        });
+      };
+    </script>
+  </body>
+</html>
+Replace with your real Firebase values.
+
+Deploy to probateswift.com/test.html.
+
+If this works → the issue is 100% your React app or service worker logic.
+
+🧠 Final Thoughts
+✅ Yes, popup is the right approach — it’s faster, simpler, and avoids all the pain of redirect flows.
+
+🚫 The redirect route is brittle and flaky unless your full path handling is air-tight.
+
+🧪 Just test signInWithPopup() cleanly, in isolation first.
