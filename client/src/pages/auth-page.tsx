@@ -102,8 +102,8 @@ const AuthPage: React.FC<AuthPageProps> = ({ tab }) => {
         const isProductionDomain = window.location.hostname.includes('probateswift.com');
         console.log('Authentication Environment:', isProductionDomain ? 'Production' : 'Development/Testing');
         
-        // Get the redirect result from Firebase
-        const result = await handleRedirectResult();
+        // Get the redirect result directly from Firebase - this is the critical fix
+        const result = await getRedirectResult(auth);
         
         if (result) {
           console.log('Authentication redirect processed successfully');

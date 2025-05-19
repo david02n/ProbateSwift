@@ -12,9 +12,9 @@ const isProbateswiftCom = hostname === 'probateswift.com' || hostname === 'www.p
 // Configure Firebase with the appropriate authDomain based on current hostname
 const firebaseConfig = {
   apiKey: "AIzaSyCWeCvuiXsoQCdn_E4yRDh2QT4j4-fQBo0",
-  // For development environment and testing, use current hostname directly as authDomain
-  // This is critical to allow Google OAuth to complete the redirect
-  authDomain: window.location.hostname, 
+  // Use probateswift.com as the authDomain for all environments
+  // This ensures Google OAuth works consistently regardless of where you're accessing from
+  authDomain: "probate-458709.firebaseapp.com",
   projectId: "probate-458709",
   storageBucket: "probate-458709.firebasestorage.app",
   messagingSenderId: "321971954611",
