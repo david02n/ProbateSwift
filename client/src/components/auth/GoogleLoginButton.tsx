@@ -20,8 +20,13 @@ const GoogleLoginButton = ({ className = '' }: GoogleLoginButtonProps) => {
     // Create a fresh provider for each login attempt
     const provider = new GoogleAuthProvider();
     
+    // Force account selection every time
+    provider.setCustomParameters({
+      prompt: 'select_account'
+    });
+    
     // Simple popup login with promise chain (not async/await)
-    console.log('Starting Google popup login');
+    console.log('Starting Google popup login with account selection');
     
     // Using promise chain for better popup handling
     signInWithPopup(auth, provider)
