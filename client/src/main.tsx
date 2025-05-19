@@ -2,16 +2,12 @@ import { createRoot } from "react-dom/client";
 import App from "./App";
 import "./index.css";
 import { registerServiceWorker } from "./serviceWorkerRegistration";
-import { getAuth } from "firebase/auth";
+import { getAuth, onAuthStateChanged } from "firebase/auth";
 
 // STANDARD APPROACH: We want to use probateswift.com as our primary domain
 // Just log the domain for debugging purposes
 console.log('DOMAIN CHECK: Current domain is: ' + window.location.hostname);
 console.log('AUTHENTICATION FIX: Ensuring tokens work on probateswift.com');
-
-// Add specific debugging for Firebase auth state changes
-import { onAuthStateChanged } from "firebase/auth";
-import { getAuth } from "firebase/auth";
 
 // Set up auth state listener for debugging 
 setTimeout(() => {
