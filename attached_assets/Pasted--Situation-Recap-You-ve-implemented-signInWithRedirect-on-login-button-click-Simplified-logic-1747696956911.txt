@@ -1,0 +1,111 @@
+🧭 Situation Recap
+You've implemented:
+
+signInWithRedirect() on login button click
+
+Simplified logic to avoid earlier blockers
+
+But:
+
+You still don’t get the Google account chooser
+
+You don’t get redirected to Google
+
+You land on /auth → stuck on a loading spinner → no user returned
+
+🚨 Key Diagnostic Signs
+From your logs and experience:
+
+Firebase loads handler?... (meaning signInWithRedirect starts)
+
+You never see account selection
+
+No getRedirectResult() callback is ever triggered with a user
+
+That suggests Firebase’s redirect flow never completes — and the issue is almost certainly one of these three things:
+
+✅ 1. authDomain mismatch = 🔒 OAuth redirect silently fails
+If your firebase.initializeApp() uses:
+
+ts
+Copy
+Edit
+authDomain: "probate-458709.firebaseapp.com",
+…but you’re hosted at https://probateswift.com, Google cannot redirect properly.
+
+✅ Fix:
+In firebase.ts, ensure:
+
+ts
+Copy
+Edit
+authDomain: "probateswift.com", // must match current browser domain
+✅ 2. Missing getRedirectResult() on /auth page
+Firebase must complete login with this call after redirect:
+
+ts
+Copy
+Edit
+getRedirectResult(auth)
+If that code isn’t running in a useEffect on the page you return to, login cannot complete.
+
+✅ Fix example:
+
+ts
+Copy
+Edit
+useEffect(() => {
+  getRedirectResult(auth)
+    .then((result) => {
+      if (result?.user) {
+        // ✅ user is logged in
+        router.push("/dashboard");
+      }
+    })
+    .catch((error) => {
+      console.error("Login error", error);
+    });
+}, []);
+Make sure:
+
+/auth is the post-login landing page
+
+That logic runs on load
+
+✅ 3. Cookies blocked or SameSite=None missing = 🧹 session fails
+If cookies like ps_auth_root don’t persist between redirect → return, Firebase can’t finish login.
+
+✅ Fix:
+Ensure any auth cookies:
+
+http
+Copy
+Edit
+Set-Cookie: ...; Secure; SameSite=None
+Also test in non-incognito Chrome, as Safari or Incognito often block 3rd-party auth cookies.
+
+🔬 Developer Debug Checklist
+✅ Check	What to confirm
+authDomain	Must be "probateswift.com" in config
+Google provider setup	signInWithRedirect(new GoogleAuthProvider()) must fire on button
+Return page	Must have getRedirectResult(auth)
+Domain whitelisting	probateswift.com and www.probateswift.com in Firebase console
+Cookies	Not blocked by browser or missing SameSite=None
+Redirect from Google	Watch in Network tab: do you return to /auth after accounts.google.com?
+
+💬 Suggested Message to Developer
+We're still seeing the login flow break before reaching Google's account chooser. Here's the likely issue:
+
+authDomain in firebaseConfig must match the actual domain we're serving from — i.e. "probateswift.com", not firebaseapp.com
+
+On /auth, getRedirectResult(auth) needs to run in a useEffect to complete the login
+
+Confirm that Google’s redirect is actually returning to /auth after login. If not, there's a domain or cookie issue.
+
+Can you:
+
+Double check the authDomain value?
+
+Add console logs to verify getRedirectResult() is running and if result.user is returned?
+
+Confirm browser cookies are being accepted?
