@@ -3,18 +3,20 @@ import { getAuth, GoogleAuthProvider } from "firebase/auth";
 import { getAnalytics } from "firebase/analytics";
 
 // Firebase configuration with domain-specific auth settings
-// As recommended, we're using probateswift.com as the authDomain when on that domain
 const hostname = window.location.hostname;
 
-// Determine if we're on the probateswift.com domain
+// Determine environment type
 const isProbateswiftCom = hostname === 'probateswift.com' || hostname === 'www.probateswift.com';
+const isReplitDev = hostname.includes('replit.dev');
+const isReplitApp = hostname.includes('replit.app');
 
-// Configure Firebase with the appropriate authDomain based on current hostname
+// Configure Firebase with environment-appropriate settings
 const firebaseConfig = {
   apiKey: "AIzaSyCWeCvuiXsoQCdn_E4yRDh2QT4j4-fQBo0",
-  // Explicitly set authDomain to probateswift.com for all environments
-  // This is essential for Google authentication to work properly
-  authDomain: "probateswift.com",
+  // Dynamic authDomain based on environment
+  // For development in Replit: use the Replit domain
+  // For production: use probateswift.com
+  authDomain: isReplitDev ? hostname : "probateswift.com",
   projectId: "probate-458709",
   storageBucket: "probate-458709.firebasestorage.app",
   messagingSenderId: "321971954611",
