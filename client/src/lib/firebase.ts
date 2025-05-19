@@ -2,16 +2,27 @@ import { initializeApp } from "firebase/app";
 import { getAuth, GoogleAuthProvider } from "firebase/auth";
 import { getAnalytics } from "firebase/analytics";
 
-// Firebase configuration with your provided values
+// Firebase configuration with domain-specific auth settings
+// As recommended, we're using probateswift.com as the authDomain when on that domain
+const hostname = window.location.hostname;
+
+// Determine if we're on the probateswift.com domain
+const isProbateswiftCom = hostname === 'probateswift.com' || hostname === 'www.probateswift.com';
+
+// Configure Firebase with the appropriate authDomain based on current hostname
 const firebaseConfig = {
   apiKey: "AIzaSyCWeCvuiXsoQCdn_E4yRDh2QT4j4-fQBo0",
-  authDomain: "probate-458709.firebaseapp.com",
+  // Use the actual domain as authDomain when on probateswift.com
+  authDomain: isProbateswiftCom ? "probateswift.com" : "probate-458709.firebaseapp.com",
   projectId: "probate-458709",
   storageBucket: "probate-458709.firebasestorage.app",
   messagingSenderId: "321971954611",
   appId: "1:321971954611:web:580f68844b10e7e6e6e1c6",
   measurementId: "G-1YW4Q67L65"
 };
+
+// Log which configuration we're using for debugging purposes
+console.log(`[Firebase] Using authDomain: ${firebaseConfig.authDomain} on ${hostname}`);
 
 // Initialize Firebase
 const app = initializeApp(firebaseConfig);

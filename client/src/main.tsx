@@ -4,21 +4,25 @@ import "./index.css";
 import { registerServiceWorker } from "./serviceWorkerRegistration";
 import { getAuth, onAuthStateChanged } from "firebase/auth";
 
-// DOMAIN REDIRECTS FOR CONSISTENCY
-// Redirect www.probateswift.com to probateswift.com (no www)
+// DOMAIN REDIRECTS FOR CONSISTENCY - v1.0.17-May19-0830
+// This handles redirects between www/non-www and replit.app/custom domain
 const hostname = window.location.hostname;
 console.log('DOMAIN CHECK: Current domain is: ' + hostname);
 
-// Handle redirects for consistency
-if (hostname.startsWith('www.')) {
-  // Remove the www prefix from the domain
+// Handle multiple types of redirects for domain consistency
+if (hostname.includes('replit.app')) {
+  // Redirect from replit.app to probateswift.com
+  console.log(`DOMAIN REDIRECT: Redirecting from ${hostname} (replit.app) to probateswift.com`);
+  // Preserve the path and query parameters when redirecting
+  window.location.href = window.location.href.replace(hostname, 'probateswift.com');
+} else if (hostname.startsWith('www.')) {
+  // Remove the www prefix from any domain
   const nonWwwDomain = hostname.replace(/^www\./, '');
   console.log(`DOMAIN REDIRECT: Redirecting from ${hostname} to ${nonWwwDomain}`);
-  
   // Preserve the path and query parameters when redirecting
   window.location.href = window.location.href.replace(hostname, nonWwwDomain);
 } else {
-  console.log('DOMAIN CHECK: No www prefix detected, no redirect needed');
+  console.log('DOMAIN CHECK: Using correct canonical domain: ' + hostname);
 }
 
 console.log('AUTHENTICATION FIX: Ensuring tokens work on probateswift.com');

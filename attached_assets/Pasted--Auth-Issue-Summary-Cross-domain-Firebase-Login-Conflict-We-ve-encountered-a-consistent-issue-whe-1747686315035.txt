@@ -1,0 +1,65 @@
+🔧 Auth Issue Summary: Cross-domain Firebase Login Conflict
+We’ve encountered a consistent issue where logging in on https://probateswift.com fails to authenticate the user (401 on /api/user), even though:
+
+The domain is registered and authorized in Firebase.
+
+The login is initiated directly on https://probateswift.com/auth.
+
+We are not trying to persist sessions between domains (e.g. from probateswift.replit.app to probateswift.com).
+
+❗ The Problem
+When a user logs into our app at probateswift.replit.app, Firebase stores the login credentials (auth tokens/cookies) scoped to that domain.
+
+If the user then accesses probateswift.com, even with a clean login attempt:
+
+Firebase does not detect a user because the login session is domain-specific.
+
+The login flow might misfire if the authDomain or redirect/callback settings are not correctly aligned with probateswift.com.
+
+The frontend reports 401 Unauthorized from /api/user despite setting auth cookies.
+
+✅ What Needs to Be Fixed
+Ensure Firebase is properly configured for probateswift.com:
+
+In firebaseConfig, make sure authDomain is explicitly set to probateswift.com (not replit.app, web.app, etc).
+
+Example:
+
+js
+Copy
+Edit
+const firebaseConfig = {
+  apiKey: "xxx",
+  authDomain: "probateswift.com",
+  ...
+};
+Add both versions of the domain in Firebase console:
+
+https://probateswift.com ✅
+
+https://www.probateswift.com ✅
+(These are already present — just confirming they must match precisely.)
+
+Update all login-related redirects:
+
+If using Firebase redirect auth (instead of popup), ensure continueUrl or redirectUrl also points to https://probateswift.com/auth.
+
+Clear conflicting localStorage/cookies from other domains before testing:
+
+Especially from replit.app, since this might create stale auth state.
+
+(Optional) Force app to use canonical domain:
+
+If www. version is not preferred, enforce redirect to probateswift.com using a 301 in your Replit hosting config or a client-side redirect.
+
+👩‍💻 Developer Action Summary
+ Confirm Firebase config uses probateswift.com as the authDomain
+
+ Confirm login is initiated from the same domain (no redirection via replit.app)
+
+ Ensure login and callback flow are scoped correctly to probateswift.com
+
+ Test auth flow cleanly from https://probateswift.com/auth using an incognito window
+
+ Verify /api/user returns 200 post-login
+
