@@ -1,10 +1,9 @@
 import React from 'react';
 import { Button } from '@/components/ui/button';
 import { FcGoogle } from 'react-icons/fc';
-import { signInWithGoogle } from '@/lib/googleAuth';
 import { useToast } from '@/hooks/use-toast';
-import { auth, googleProvider } from '@/lib/firebase';
-import { signInWithRedirect } from 'firebase/auth';
+import { auth } from '@/lib/firebase';
+import { GoogleAuthProvider, signInWithPopup } from 'firebase/auth';
 
 interface GoogleLoginButtonProps {
   className?: string;
@@ -18,57 +17,58 @@ const GoogleLoginButton = ({ className = '' }: GoogleLoginButtonProps) => {
     try {
       setIsLoading(true);
       
-      // Detect mobile device
-      const isMobile = /Mobi|Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
-      const isIOS = /iPad|iPhone|iPod/i.test(navigator.userAgent);
+      // Create a fresh Google provider instance
+      const provider = new GoogleAuthProvider();
       
-      // Get domain information for debugging and analytics
-      const domain = window.location.hostname;
-      const fullHost = window.location.host;
-      const isProd = domain.includes('probateswift.com');
-      const isReplit = domain.includes('replit');
-      
-      console.log('Starting Google login from:', fullHost);
-      console.log('Environment type:', isProd ? 'Production' : (isReplit ? 'Replit' : 'Development'));
-      console.log('Device type:', isMobile ? (isIOS ? 'iOS' : 'Mobile') : 'Desktop');
-      console.log('Current path:', window.location.pathname);
-      
-      // Store the current URL as return URL
-      localStorage.setItem('auth_return_url', window.location.href);
-      localStorage.setItem('auth_timestamp', Date.now().toString());
-      
-      // Configure Google provider parameters
-      googleProvider.setCustomParameters({
+      // Set custom parameters - always offer account selection
+      provider.setCustomParameters({
         prompt: 'select_account'
       });
       
-      console.log('DIRECT FIX: Using signInWithRedirect directly for more reliable auth flow');
+      console.log('Using simple popup login flow');
       
-      // Use Firebase's signInWithRedirect directly
-      // This is more reliable than using our wrapper function
-      await signInWithRedirect(auth, googleProvider);
+      // Simple popup authentication - direct and reliable
+      const result = await signInWithPopup(auth, provider);
+      console.log('✅ Google login successful:', result.user.email);
       
-      return;
-      
-      // The following code will only execute if the redirect fails
-      // as a fallback, try the original method
-      console.log('Redirect failed, falling back to original method');
-      const result = await signInWithGoogle();
-      
-      if (result) {
-        console.log('Google login successful, redirecting to dashboard');
+      if (result.user) {
+        // Get the token for backend authentication
+        const idToken = await result.user.getIdToken();
         
-        // Show success toast
-        toast({
-          title: 'Login Successful',
-          description: 'You have been logged in successfully.',
-          variant: 'default',
+        // Store token for API requests
+        localStorage.setItem('firebase_id_token', idToken);
+        
+        // Verify with backend
+        const response = await fetch('/api/auth/google', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${idToken}`
+          },
+          body: JSON.stringify({
+            idToken,
+            email: result.user.email,
+            displayName: result.user.displayName
+          }),
+          credentials: 'include'
         });
         
-        // Redirect to dashboard after successful login
-        window.location.href = '/';
+        if (response.ok) {
+          console.log('Backend authentication successful');
+          
+          // Show success toast
+          toast({
+            title: 'Login Successful',
+            description: 'You have been logged in successfully.',
+            variant: 'default',
+          });
+          
+          // Redirect to dashboard after successful login
+          window.location.href = '/';
+        } else {
+          throw new Error('Backend authentication failed');
+        }
       }
-      
     } catch (error: any) {
       console.error('Google login error:', error);
       
@@ -83,14 +83,6 @@ const GoogleLoginButton = ({ className = '' }: GoogleLoginButtonProps) => {
           errorMessage = 'Login was cancelled. Please try again to log in.';
         } else if (error.code === 'auth/unauthorized-domain') {
           errorMessage = 'This domain is not authorized for authentication. Please contact support.';
-          // Log detailed domain information to help diagnose the issue
-          console.error('Unauthorized domain error:', {
-            domain: window.location.hostname,
-            fullHost: window.location.host,
-            origin: window.location.origin,
-            path: window.location.pathname,
-            href: window.location.href
-          });
         }
       }
       
