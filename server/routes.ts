@@ -2200,8 +2200,27 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       // Get deceased form fields
       const deceasedFormFields = await storage.getDeceasedFormFields(personId);
+      
+      // If form fields don't exist, create a new record with default values
       if (!deceasedFormFields) {
-        return res.status(404).json({ error: 'Deceased form fields not found' });
+        try {
+          console.log(`Creating new deceased form fields record for person ID: ${personId}`);
+          const newFormFields = await storage.createDeceasedFormFields({
+            personId,
+            wasKnownByOtherNames: false,
+            otherNamesHeldAssets: [],
+            domicileInEnglandOrWales: false,
+            hadForeignAssets: false,
+            landWasSettled: false,
+            executorsApplying: false,
+            hasAdoptionHistory: false,
+            adoptedRelatives: []
+          });
+          return res.json(newFormFields);
+        } catch (error) {
+          console.error('Error creating new deceased form fields:', error);
+          return res.status(500).json({ error: 'Failed to create deceased form fields' });
+        }
       }
       
       return res.json(deceasedFormFields);
