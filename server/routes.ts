@@ -2172,6 +2172,132 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
   
   // Postcode lookup endpoint (proxy to getAddress.io)
+  // Deceased Form Fields API endpoints
+  
+  // GET endpoint to retrieve deceased form fields for a specific person
+  app.get('/api/deceased-form-fields/:personId', async (req: Request, res: Response) => {
+    try {
+      if (!req.isAuthenticated()) {
+        return res.status(401).json({ error: 'Unauthorized' });
+      }
+      
+      const personId = parseInt(req.params.personId);
+      if (isNaN(personId)) {
+        return res.status(400).json({ error: 'Invalid person ID' });
+      }
+      
+      // Check if the executor/person exists and belongs to the current user
+      const person = await storage.getExecutor(personId);
+      if (!person) {
+        return res.status(404).json({ error: 'Person not found' });
+      }
+      
+      // Check if the case belongs to the current user
+      const probateCase = await storage.getProbateCase(person.caseId);
+      if (!probateCase || probateCase.userId !== req.user?.id) {
+        return res.status(403).json({ error: 'Access denied' });
+      }
+      
+      // Get deceased form fields
+      const deceasedFormFields = await storage.getDeceasedFormFields(personId);
+      if (!deceasedFormFields) {
+        return res.status(404).json({ error: 'Deceased form fields not found' });
+      }
+      
+      return res.json(deceasedFormFields);
+    } catch (error) {
+      console.error('Error retrieving deceased form fields:', error);
+      return res.status(500).json({ error: 'Internal server error' });
+    }
+  });
+  
+  // PATCH endpoint to update deceased form fields
+  app.patch('/api/deceased-form-fields/:personId', async (req: Request, res: Response) => {
+    try {
+      if (!req.isAuthenticated()) {
+        return res.status(401).json({ error: 'Unauthorized' });
+      }
+      
+      const personId = parseInt(req.params.personId);
+      if (isNaN(personId)) {
+        return res.status(400).json({ error: 'Invalid person ID' });
+      }
+      
+      // Check if the executor/person exists and belongs to the current user
+      const person = await storage.getExecutor(personId);
+      if (!person) {
+        return res.status(404).json({ error: 'Person not found' });
+      }
+      
+      // Check if the case belongs to the current user
+      const probateCase = await storage.getProbateCase(person.caseId);
+      if (!probateCase || probateCase.userId !== req.user?.id) {
+        return res.status(403).json({ error: 'Access denied' });
+      }
+      
+      // Get existing deceased form fields
+      const existingFormFields = await storage.getDeceasedFormFields(personId);
+      
+      // If form fields don't exist, create them
+      if (!existingFormFields) {
+        try {
+          const newFormFields = await storage.createDeceasedFormFields({
+            personId,
+            ...req.body
+          });
+          return res.status(201).json(newFormFields);
+        } catch (error: any) {
+          return res.status(400).json({ error: error.message });
+        }
+      }
+      
+      // Update existing form fields
+      try {
+        const updatedFormFields = await storage.updateDeceasedFormFields(personId, req.body);
+        return res.json(updatedFormFields);
+      } catch (error: any) {
+        return res.status(400).json({ error: error.message });
+      }
+    } catch (error) {
+      console.error('Error updating deceased form fields:', error);
+      return res.status(500).json({ error: 'Internal server error' });
+    }
+  });
+  
+  // GET endpoint to check if deceased form fields are complete
+  app.get('/api/deceased-form-fields/:personId/complete', async (req: Request, res: Response) => {
+    try {
+      if (!req.isAuthenticated()) {
+        return res.status(401).json({ error: 'Unauthorized' });
+      }
+      
+      const personId = parseInt(req.params.personId);
+      if (isNaN(personId)) {
+        return res.status(400).json({ error: 'Invalid person ID' });
+      }
+      
+      // Check if the executor/person exists and belongs to the current user
+      const person = await storage.getExecutor(personId);
+      if (!person) {
+        return res.status(404).json({ error: 'Person not found' });
+      }
+      
+      // Check if the case belongs to the current user
+      const probateCase = await storage.getProbateCase(person.caseId);
+      if (!probateCase || probateCase.userId !== req.user?.id) {
+        return res.status(403).json({ error: 'Access denied' });
+      }
+      
+      // Check if form fields are complete
+      const isComplete = await storage.isDeceasedFormFieldsComplete(personId);
+      
+      return res.json({ complete: isComplete });
+    } catch (error) {
+      console.error('Error checking deceased form fields completion:', error);
+      return res.status(500).json({ error: 'Internal server error' });
+    }
+  });
+  
   app.get('/api/address-lookup', async (req: Request, res: Response) => {
     if (!req.isAuthenticated()) {
       return res.status(401).json({ error: "Authentication required" });
