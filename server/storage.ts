@@ -7,6 +7,7 @@ import {
   estateLiabilities,
   documents,
   tasks,
+  deceasedFormFields,
   type User, 
   type InsertUser, 
   type AssessmentResult, 
@@ -22,7 +23,9 @@ import {
   type Document,
   type InsertDocument,
   type Task,
-  type InsertTask
+  type InsertTask,
+  type DeceasedFormFields,
+  type InsertDeceasedFormFields
 } from "@shared/schema";
 import * as session from "express-session";
 import createMemoryStore from "memorystore";
@@ -92,6 +95,12 @@ export interface IStorage {
   
   // Session store
   sessionStore: session.Store;
+  
+  // Deceased Form Fields methods
+  getDeceasedFormFields(personId: number): Promise<DeceasedFormFields | undefined>;
+  createDeceasedFormFields(data: InsertDeceasedFormFields): Promise<DeceasedFormFields>;
+  updateDeceasedFormFields(personId: number, data: Partial<InsertDeceasedFormFields>): Promise<DeceasedFormFields | undefined>;
+  isDeceasedFormFieldsComplete(personId: number): Promise<boolean>;
 }
 
 export class MemStorage implements IStorage {
@@ -103,6 +112,7 @@ export class MemStorage implements IStorage {
   private estateLiabilities: Map<number, EstateLiability>;
   private documents: Map<number, Document>;
   private tasks: Map<number, Task>;
+  private deceasedFormFields: Map<number, DeceasedFormFields>;
   private userIdCounter: number;
   private assessmentIdCounter: number;
   private probateCaseIdCounter: number;
@@ -122,6 +132,7 @@ export class MemStorage implements IStorage {
     this.estateLiabilities = new Map();
     this.documents = new Map();
     this.tasks = new Map();
+    this.deceasedFormFields = new Map();
     this.userIdCounter = 2; // Start at 2 since we'll create a test user with ID 1
     this.assessmentIdCounter = 1;
     this.probateCaseIdCounter = 1;
@@ -609,6 +620,145 @@ export class MemStorage implements IStorage {
     
     this.tasks.set(id, updatedTask);
     return updatedTask;
+  }
+
+  // Deceased Form Fields methods implementation
+  async getDeceasedFormFields(personId: number): Promise<DeceasedFormFields | undefined> {
+    return this.deceasedFormFields.get(personId);
+  }
+
+  async createDeceasedFormFields(data: InsertDeceasedFormFields): Promise<DeceasedFormFields> {
+    const now = new Date();
+    
+    // Validate the person exists and has role = deceased
+    const person = this.executors.get(data.personId);
+    if (!person) {
+      throw new Error(`Person with ID ${data.personId} not found`);
+    }
+    if (person.relationshipToDeceased !== 'Deceased') {
+      throw new Error(`Person with ID ${data.personId} is not marked as deceased`);
+    }
+    
+    const newDeceasedFormFields: DeceasedFormFields = {
+      personId: data.personId,
+      dateOfBirth: data.dateOfBirth || null,
+      dateOfDeath: data.dateOfDeath || null,
+      wasKnownByOtherNames: data.wasKnownByOtherNames || false,
+      otherNamesHeldAssets: data.otherNamesHeldAssets || [],
+      domicileInEnglandOrWales: data.domicileInEnglandOrWales || false,
+      maritalStatus: data.maritalStatus || null,
+      marriedDate: data.marriedDate || null,
+      divorcedDate: data.divorcedDate || null,
+      divorceCourt: data.divorceCourt || null,
+      separatedDate: data.separatedDate || null,
+      separationCourt: data.separationCourt || null,
+      hadForeignAssets: data.hadForeignAssets || false,
+      foreignAssetValueGbp: data.foreignAssetValueGbp || null,
+      landWasSettled: data.landWasSettled || false,
+      executorsApplying: data.executorsApplying || false,
+      hasAdoptionHistory: data.hasAdoptionHistory || false,
+      adoptedRelatives: data.adoptedRelatives || [],
+      createdAt: now,
+      updatedAt: now
+    };
+    
+    this.deceasedFormFields.set(data.personId, newDeceasedFormFields);
+    return newDeceasedFormFields;
+  }
+
+  async updateDeceasedFormFields(personId: number, data: Partial<InsertDeceasedFormFields>): Promise<DeceasedFormFields | undefined> {
+    const existingFields = this.deceasedFormFields.get(personId);
+    if (!existingFields) {
+      return undefined;
+    }
+    
+    const updatedFields: DeceasedFormFields = {
+      ...existingFields,
+      ...data,
+      updatedAt: new Date()
+    };
+    
+    // Validate conditional fields
+    if (updatedFields.wasKnownByOtherNames && 
+        (!updatedFields.otherNamesHeldAssets || updatedFields.otherNamesHeldAssets.length === 0)) {
+      throw new Error('Other names are required when wasKnownByOtherNames is true');
+    }
+    
+    if (updatedFields.maritalStatus === 'married' && !updatedFields.marriedDate) {
+      throw new Error('Marriage date is required when marital status is married');
+    }
+    
+    if (updatedFields.maritalStatus === 'divorced' && 
+        (!updatedFields.divorcedDate || !updatedFields.divorceCourt)) {
+      throw new Error('Divorce date and court are required when marital status is divorced');
+    }
+    
+    if (updatedFields.maritalStatus === 'separated' && 
+        (!updatedFields.separatedDate || !updatedFields.separationCourt)) {
+      throw new Error('Separation date and court are required when marital status is separated');
+    }
+    
+    if (updatedFields.hadForeignAssets && !updatedFields.foreignAssetValueGbp) {
+      throw new Error('Foreign asset value is required when hadForeignAssets is true');
+    }
+    
+    if (updatedFields.hasAdoptionHistory && 
+        (!updatedFields.adoptedRelatives || updatedFields.adoptedRelatives.length === 0)) {
+      throw new Error('Adopted relatives details are required when hasAdoptionHistory is true');
+    }
+    
+    this.deceasedFormFields.set(personId, updatedFields);
+    return updatedFields;
+  }
+
+  async isDeceasedFormFieldsComplete(personId: number): Promise<boolean> {
+    const fields = this.deceasedFormFields.get(personId);
+    if (!fields) {
+      return false;
+    }
+    
+    // Check required fields
+    if (!fields.dateOfBirth || !fields.dateOfDeath || fields.domicileInEnglandOrWales === undefined || 
+        !fields.maritalStatus || fields.landWasSettled === undefined || 
+        fields.executorsApplying === undefined || fields.hasAdoptionHistory === undefined) {
+      return false;
+    }
+    
+    // Check conditional required fields
+    if (fields.wasKnownByOtherNames && 
+        (!fields.otherNamesHeldAssets || fields.otherNamesHeldAssets.length === 0)) {
+      return false;
+    }
+    
+    if (fields.maritalStatus === 'married' && !fields.marriedDate) {
+      return false;
+    }
+    
+    if (fields.maritalStatus === 'divorced' && 
+        (!fields.divorcedDate || !fields.divorceCourt)) {
+      return false;
+    }
+    
+    if (fields.maritalStatus === 'separated' && 
+        (!fields.separatedDate || !fields.separationCourt)) {
+      return false;
+    }
+    
+    if (fields.hadForeignAssets && !fields.foreignAssetValueGbp) {
+      return false;
+    }
+    
+    if (fields.hasAdoptionHistory && 
+        (!fields.adoptedRelatives || fields.adoptedRelatives.length === 0)) {
+      return false;
+    }
+    
+    return true;
+  }
+  
+  // Required by interface but not implemented yet
+  async getPeopleByCaseId(caseId: number): Promise<Executor[]> {
+    return this.getExecutorsByCaseId(caseId); // For now, redirect to existing method
   }
 }
 

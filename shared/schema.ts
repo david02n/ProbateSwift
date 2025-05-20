@@ -312,3 +312,53 @@ export type Document = typeof documents.$inferSelect;
 
 export type InsertTask = z.infer<typeof insertTaskSchema>;
 export type Task = typeof tasks.$inferSelect;
+
+// Deceased Form Fields - stores detailed information about the deceased person
+export const deceasedFormFields = pgTable("deceased_form_fields", {
+  personId: integer("person_id").primaryKey().references(() => executors.id), // Foreign key to people table with role = deceased
+  dateOfBirth: date("date_of_birth"), // Required
+  dateOfDeath: date("date_of_death"), // Required
+  wasKnownByOtherNames: boolean("was_known_by_other_names"), // Required
+  otherNamesHeldAssets: jsonb("other_names_held_assets").$type<{ fullName: string }[]>(), // Array of names, required if wasKnownByOtherNames is true
+  domicileInEnglandOrWales: boolean("domicile_in_england_or_wales"), // Required
+  maritalStatus: text("marital_status"), // ENUM: never_married, widowed, married, divorced, separated
+  marriedDate: date("married_date"), // Required if maritalStatus = married
+  divorcedDate: date("divorced_date"), // Required if maritalStatus = divorced
+  divorceCourt: text("divorce_court"), // Required if maritalStatus = divorced
+  separatedDate: date("separated_date"), // Required if maritalStatus = separated
+  separationCourt: text("separation_court"), // Required if maritalStatus = separated
+  hadForeignAssets: boolean("had_foreign_assets"), // Required
+  foreignAssetValueGbp: numeric("foreign_asset_value_gbp"), // Required if hadForeignAssets = true
+  landWasSettled: boolean("land_was_settled"), // Required
+  executorsApplying: boolean("executors_applying"), // Required, can be prepopulated from people[]
+  hasAdoptionHistory: boolean("has_adoption_history"), // Required
+  adoptedRelatives: jsonb("adopted_relatives").$type<{ name: string, relationship: string, adoptedInOrOut: string }[]>(), // Required if hasAdoptionHistory = true
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow()
+});
+
+// Deceased Form Fields types
+export const insertDeceasedFormFieldsSchema = createInsertSchema(deceasedFormFields)
+  .pick({
+    personId: true,
+    dateOfBirth: true,
+    dateOfDeath: true,
+    wasKnownByOtherNames: true,
+    otherNamesHeldAssets: true,
+    domicileInEnglandOrWales: true,
+    maritalStatus: true,
+    marriedDate: true,
+    divorcedDate: true,
+    divorceCourt: true,
+    separatedDate: true,
+    separationCourt: true,
+    hadForeignAssets: true,
+    foreignAssetValueGbp: true,
+    landWasSettled: true,
+    executorsApplying: true,
+    hasAdoptionHistory: true,
+    adoptedRelatives: true
+  });
+
+export type InsertDeceasedFormFields = z.infer<typeof insertDeceasedFormFieldsSchema>;
+export type DeceasedFormFields = typeof deceasedFormFields.$inferSelect;
