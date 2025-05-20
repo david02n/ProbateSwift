@@ -18,7 +18,107 @@ import {
 } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { getQueryFn } from "@/lib/queryClient";
-import { AssessmentResult } from "@shared/schema";
+import { AssessmentResult, Executor } from "@shared/schema";
+
+// Component for the deceased form milestone with dynamic completion status
+const DeceasedFormMilestone: React.FC = () => {
+  // Fetch the list of executors to find the deceased person
+  const { data: executors = [] } = useQuery<Executor[]>({
+    queryKey: ["/api/executors"],
+    queryFn: getQueryFn({ on401: "throw" }),
+  });
+  
+  // Find the deceased person in the executors list
+  const deceasedPerson = executors.find(exec => 
+    exec.relationshipToDeceased === 'Deceased'
+  );
+  
+  // If no deceased person is found, show a default state
+  if (!deceasedPerson) {
+    return (
+      <div className="mb-8 relative">
+        <div className="absolute -left-12 top-0 h-6 w-6 rounded-full bg-mid-grey flex items-center justify-center border-4 border-white">
+          <FileText className="h-3 w-3 text-white" />
+        </div>
+        <div className="bg-muted p-4 rounded-lg border border-mid-grey/10">
+          <div className="flex items-center justify-between">
+            <h3 className="font-medium flex items-center">
+              <span>Complete Deceased Person's Legal Questionnaire</span>
+              <span className="ml-2 text-xs py-0.5 px-2 bg-mid-grey/10 text-mid-grey rounded-full">Not Started</span>
+            </h3>
+            <div>
+              <Button 
+                variant="outline" 
+                size="sm" 
+                className="h-7 text-xs"
+                onClick={() => {
+                  window.location.href = '/people';
+                }}
+              >
+                Add Deceased
+              </Button>
+            </div>
+          </div>
+          <p className="text-sm text-charcoal/70 mt-2">
+            Provide all required deceased-specific information including marital status, foreign assets, and legal history.
+          </p>
+        </div>
+      </div>
+    );
+  }
+  
+  // Query the deceased form completion status
+  const { data: completionData, isLoading } = useQuery({
+    queryKey: [`/api/deceased-form-fields/${deceasedPerson.id}/complete`],
+    queryFn: getQueryFn({ on401: "throw" }),
+    refetchInterval: 30000, // Refresh every 30 seconds
+  });
+  
+  const isComplete = completionData?.complete || false;
+  
+  return (
+    <div className="mb-8 relative">
+      <div className="absolute -left-12 top-0 h-6 w-6 rounded-full bg-amber flex items-center justify-center border-4 border-white">
+        {isComplete ? (
+          <Check className="h-3 w-3 text-white" />
+        ) : (
+          <FileText className="h-3 w-3 text-white" />
+        )}
+      </div>
+      <div className={`p-4 rounded-lg border ${
+        isComplete ? 'bg-success/5 border-success/20' : 'bg-amber/5 border-amber/20'
+      }`}>
+        <div className="flex items-center justify-between">
+          <h3 className="font-medium flex items-center">
+            <span>Complete Deceased Person's Legal Questionnaire</span>
+            <span className={`ml-2 text-xs py-0.5 px-2 rounded-full ${
+              isComplete ? 'bg-success/10 text-success' : 'bg-amber/10 text-amber'
+            }`}>
+              {isComplete ? 'Complete' : 'Pending'}
+            </span>
+          </h3>
+          <div>
+            <Button 
+              variant="outline" 
+              size="sm" 
+              className="h-7 text-xs bg-white"
+              onClick={() => {
+                window.location.href = `/people/${deceasedPerson.id}/deceased-details`;
+              }}
+            >
+              {isComplete ? 'Review' : 'Complete Now'}
+            </Button>
+          </div>
+        </div>
+        <p className="text-sm text-charcoal/70 mt-2">
+          {isComplete 
+            ? `All deceased-specific information has been completed for ${deceasedPerson.firstName} ${deceasedPerson.lastName}.`
+            : 'Provide all required deceased-specific information including marital status, foreign assets, and legal history.'}
+        </p>
+      </div>
+    </div>
+  );
+};
 
 const DashboardPage: React.FC = () => {
   const { user, logoutMutation } = useAuth();
@@ -445,6 +545,10 @@ const DashboardPage: React.FC = () => {
                           </p>
                         </div>
                       </div>
+                      
+                      {/* Deceased Questionnaire Milestone */}
+                      <DeceasedFormMilestone />
+                      
                       
                       {/* Will Upload Milestone - Conditional */}
                       {assessmentResult.hasWill && (
