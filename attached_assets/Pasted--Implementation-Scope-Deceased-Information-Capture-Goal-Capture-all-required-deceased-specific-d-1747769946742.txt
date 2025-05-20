@@ -1,0 +1,158 @@
+🔧 Implementation Scope: Deceased Information Capture
+Goal: Capture all required deceased-specific data for the PA1P form using structured input, conditional logic, and document-assisted pre-fills.
+
+🧱 Data Architecture Overview
+✅ people[] (already exists)
+Stores general person-level info, shared across roles like applicants, executors, deceased, etc.
+
+json
+Copy
+Edit
+{
+  "id": "person_1",
+  "role": "deceased",
+  "firstName": "Robert",
+  "lastName": "Ramsdale",
+  "addressLine1": "...",
+  "postcode": "...",
+  ...
+}
+✅ deceasedFormFields
+Stores deceased-only data for the person with role deceased, linked by personId:
+
+json
+Copy
+Edit
+{
+  "personId": "person_1",
+  "dateOfBirth": "1928-12-03",
+  "dateOfDeath": "2011-01-25",
+  "wasKnownByOtherNames": true,
+  "otherNamesHeldAssets": [{ "fullName": "Robert W. Ramsdale" }],
+  ...
+}
+👉 Full field spec is maintained in the Canvas doc
+
+📋 User Experience Flow
+User uploads death certificate
+
+Creates a person (role: deceased)
+
+Triggers extraction of core fields (name, DOB, DOD, address)
+
+User navigates to People tab
+
+Sees the deceased person record
+
+Prompt: “Complete deceased details”
+
+User answers additional deceased-only questions
+
+Conditional form logic driven by deceasedFormFields
+
+Milestone tracker reflects progress:
+
+✅ “Deceased added”
+
+✅ “Deceased info confirmed” once form complete
+
+✅ Action Plan for Engineering (In Priority Order)
+1. Extend Backend Data Models
+Owner: Backend
+
+ Create deceasedFormFields table or collection:
+
+Must include personId (foreign key)
+
+All fields from the current Canvas JSON, including:
+
+dateOfBirth
+
+dateOfDeath
+
+wasKnownByOtherNames, maritalStatus, etc.
+
+ Enforce logic:
+
+maritalStatus is enum
+
+Conditional fields (e.g., court name required if divorced)
+
+ Include createdAt, updatedAt timestamps
+
+2. Backend API Endpoints
+Owner: Backend
+
+Endpoint	Method	Description
+/deceased-form-fields/:personId	GET	Fetch the form data for a given deceased person
+/deceased-form-fields/:personId	PATCH	Save/update values incrementally
+/deceased-form-fields/:personId/complete	GET	Returns true if required fields are filled
+/deceased-form-fields/:personId/summary	GET (optional)	Returns human-readable form state for review UI
+
+3. Update People Tab
+Owner: Frontend
+
+ When person role === deceased, show:
+
+Status badge: “⚠️ Incomplete” or “✅ Complete”
+
+Button: “Complete deceased details”
+
+ Clicking the button routes to /people/:id/deceased-details
+
+4. Deceased Questionnaire UI
+Owner: Frontend
+
+ Build standalone page or modal: Deceased Details Form
+
+Uses react-hook-form or Formik
+
+Auto-loads existing values from backend
+
+Saves with debounce or step-by-step
+
+ Conditional rendering rules:
+
+If wasKnownByOtherNames, show name entry
+
+If maritalStatus === divorced, show divorce date + court
+
+Etc.
+
+ Fields prefilled from document extraction should be editable but flagged as “suggested”
+
+ Basic inline validation and field-level help
+
+5. Integrate with Milestone Tracker
+Owner: Frontend
+
+ Add milestone: "Deceased details complete"
+
+Use GET /deceased-form-fields/:personId/complete to determine status
+
+ Link milestone CTA to /people/:id/deceased-details
+
+ Mark ✅ when all required fields exist
+
+6. Testing & Validation
+Owner: Full stack
+
+ Backend unit tests for field validation + completion logic
+
+ Frontend tests for conditional rendering and form submission
+
+ Integration tests: death certificate → person → form fill → milestone ✅
+
+🔐 Permissions & Access Control
+All deceasedFormFields endpoints require auth
+
+Ensure users can only access fields tied to their case_id
+
+If a person’s role is changed from deceased to another role, optionally soft-delete or nullify their deceasedFormFields
+
+🧠 Implementation Notes
+dateOfBirth and dateOfDeath are not in people[]; they belong in deceasedFormFields
+
+Only one person per case should be marked as role: deceased; validate this on the backend
+
+Field-level audit history is desirable (optional v1.1)

@@ -1,0 +1,104 @@
+🔧 Phase 1: Backend – Deceased Form Fields Data Model & API
+🎯 Objective
+Implement the backend infrastructure to:
+
+Store deceased-specific data not held in the main people table
+
+Support CRUD operations for these fields
+
+Provide a completion check for milestone tracking
+
+Lay the foundation for frontend form integration
+
+🧱 1. Data Model: deceasedFormFields
+➕ Create new table or collection (depending on stack)
+Table name: deceased_form_fields
+Primary key: person_id (one-to-one with people.id where role = deceased)
+
+✅ Fields
+Field Name	Type	Notes
+person_id	UUID	Foreign key to people.id — only valid for role = 'deceased'
+date_of_birth	DATE	Required
+date_of_death	DATE	Required
+was_known_by_other_names	BOOLEAN	Required
+other_names_held_assets	JSON[]	Array of { full_name: string } — required if above is true
+domicile_in_england_or_wales	BOOLEAN	Required
+marital_status	ENUM	One of: never_married, widowed, married, divorced, separated
+married_date	DATE	Required if marital_status = married
+divorced_date	DATE	Required if marital_status = divorced
+divorce_court	TEXT	Required if marital_status = divorced
+separated_date	DATE	Required if marital_status = separated
+separation_court	TEXT	Required if marital_status = separated
+had_foreign_assets	BOOLEAN	Required
+foreign_asset_value_gbp	NUMERIC	Required if had_foreign_assets = true
+land_was_settled	BOOLEAN	Required
+executors_applying	BOOLEAN	Required; can be prepopulated from people[]
+has_adoption_history	BOOLEAN	Required
+adopted_relatives	JSON[]	Array of { name, relationship, adopted_in_or_out } if above is true
+created_at	TIMESTAMP	Auto-generated
+updated_at	TIMESTAMP	Auto-generated
+
+🔌 2. API Endpoints
+1. GET /deceased-form-fields/:personId
+Returns the full form field object for a given person
+
+404 if personId not found or role ≠ deceased
+
+2. PATCH /deceased-form-fields/:personId
+Accepts partial or full updates to the form fields
+
+Validates logic:
+
+e.g., if marital_status = divorced, then divorced_date and divorce_court must be present
+
+Upserts record if it doesn't exist
+
+Validation Examples:
+
+was_known_by_other_names = true → must include at least one other_names_held_assets
+
+had_foreign_assets = true → must include foreign_asset_value_gbp
+
+has_adoption_history = true → must include at least one adopted_relative
+
+3. GET /deceased-form-fields/:personId/complete
+Returns:
+
+json
+Copy
+Edit
+{ "complete": true }
+True only if:
+
+All required fields are filled
+
+Conditional fields are valid
+
+Record exists
+
+🔐 3. Permissions & Constraints
+All endpoints must be protected by authentication middleware
+
+Must confirm the current user has access to the case_id associated with person_id
+
+Cannot create a deceasedFormFields for a person whose role ≠ deceased
+
+✅ Acceptance Criteria
+Task	Success Criteria
+✅ Data model created	DB table/schema exists with correct constraints
+✅ Endpoints implemented	All three endpoints available and validated
+✅ Validation logic complete	Conditional fields enforced
+✅ Unit tests written	Cover valid, invalid, and edge cases
+✅ Auth & access checks	Only valid users can read/write form data
+✅ Ready for frontend use	Returns structured JSON and completion status
+
+📦 Deliverables
+deceased_form_fields schema + migration
+
+3 RESTful API endpoints (GET, PATCH, COMPLETE)
+
+Schema validation (enum values, field dependencies)
+
+Unit + integration tests
+
+Swagger/OpenAPI or internal documentation
