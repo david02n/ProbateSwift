@@ -624,21 +624,14 @@ export class MemStorage implements IStorage {
 
   // Deceased Form Fields methods implementation
   async getDeceasedFormFields(personId: number): Promise<DeceasedFormFields | undefined> {
-    return this.deceasedFormFields.get(personId);
+    if (this.deceasedFormFields) {
+      return this.deceasedFormFields.get(personId);
+    }
+    return undefined;
   }
 
   async createDeceasedFormFields(data: InsertDeceasedFormFields): Promise<DeceasedFormFields> {
     const now = new Date();
-    
-    // Validate the person exists and has role = deceased
-    const person = this.executors.get(data.personId);
-    if (!person) {
-      throw new Error(`Person with ID ${data.personId} not found`);
-    }
-    if (person.relationshipToDeceased !== 'Deceased') {
-      throw new Error(`Person with ID ${data.personId} is not marked as deceased`);
-    }
-    
     const newDeceasedFormFields: DeceasedFormFields = {
       personId: data.personId,
       dateOfBirth: data.dateOfBirth || null,
@@ -661,6 +654,10 @@ export class MemStorage implements IStorage {
       createdAt: now,
       updatedAt: now
     };
+    
+    if (!this.deceasedFormFields) {
+      this.deceasedFormFields = new Map<number, DeceasedFormFields>();
+    }
     
     this.deceasedFormFields.set(data.personId, newDeceasedFormFields);
     return newDeceasedFormFields;
