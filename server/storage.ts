@@ -93,14 +93,14 @@ export interface IStorage {
   createTask(taskData: InsertTask): Promise<Task>;
   updateTask(id: number, taskData: Partial<InsertTask>): Promise<Task | undefined>;
   
-  // Session store
-  sessionStore: session.Store;
-  
   // Deceased Form Fields methods
   getDeceasedFormFields(personId: number): Promise<DeceasedFormFields | undefined>;
   createDeceasedFormFields(data: InsertDeceasedFormFields): Promise<DeceasedFormFields>;
   updateDeceasedFormFields(personId: number, data: Partial<InsertDeceasedFormFields>): Promise<DeceasedFormFields | undefined>;
   isDeceasedFormFieldsComplete(personId: number): Promise<boolean>;
+  
+  // Session store
+  sessionStore: session.Store;
 }
 
 export class MemStorage implements IStorage {
@@ -760,6 +760,78 @@ export class MemStorage implements IStorage {
   async getPeopleByCaseId(caseId: number): Promise<Executor[]> {
     return this.getExecutorsByCaseId(caseId); // For now, redirect to existing method
   }
+  
+  // Deceased Form Fields methods
+  async getDeceasedFormFields(personId: number): Promise<DeceasedFormFields | undefined> {
+    const [fields] = await db
+      .select()
+      .from(deceasedFormFields)
+      .where(eq(deceasedFormFields.personId, personId));
+    return fields;
+  }
+  
+  async createDeceasedFormFields(data: InsertDeceasedFormFields): Promise<DeceasedFormFields> {
+    // Set defaults for JSON fields if they're not provided
+    const fieldsWithDefaults = {
+      ...data,
+      otherNames: data.otherNames || [],
+      adoptedRelatives: data.adoptedRelatives || [],
+    };
+    
+    const [fields] = await db
+      .insert(deceasedFormFields)
+      .values(fieldsWithDefaults)
+      .returning();
+    return fields;
+  }
+  
+  async updateDeceasedFormFields(personId: number, data: Partial<InsertDeceasedFormFields>): Promise<DeceasedFormFields | undefined> {
+    const [fields] = await db
+      .update(deceasedFormFields)
+      .set({
+        ...data,
+        updatedAt: new Date()
+      })
+      .where(eq(deceasedFormFields.personId, personId))
+      .returning();
+    return fields;
+  }
+  
+  async isDeceasedFormFieldsComplete(personId: number): Promise<boolean> {
+    const fields = await this.getDeceasedFormFields(personId);
+    if (!fields) {
+      return false;
+    }
+    
+    // Check required fields
+    if (!fields.firstName || !fields.lastName || !fields.dateOfBirth || !fields.dateOfDeath || !fields.maritalStatus) {
+      return false;
+    }
+    
+    // Check conditional fields
+    if (fields.maritalStatus === 'married' && !fields.marriedDate) {
+      return false;
+    }
+    
+    if (fields.maritalStatus === 'divorced' && (!fields.divorcedDate || !fields.divorceCourt)) {
+      return false;
+    }
+    
+    if (fields.maritalStatus === 'separated' && (!fields.separatedDate || !fields.separationCourt)) {
+      return false;
+    }
+    
+    if (fields.hadForeignAssets && !fields.foreignAssetValueGbp) {
+      return false;
+    }
+    
+    if (fields.hasAdoptionHistory && (!fields.adoptedRelatives || fields.adoptedRelatives.length === 0)) {
+      return false;
+    }
+    
+    // All required fields are present
+    return true;
+  }
 }
 
 export class DatabaseStorage implements IStorage {
@@ -770,6 +842,78 @@ export class DatabaseStorage implements IStorage {
       pool,
       createTableIfMissing: true
     });
+  }
+  
+  // Deceased Form Fields methods
+  async getDeceasedFormFields(personId: number): Promise<DeceasedFormFields | undefined> {
+    const [fields] = await db
+      .select()
+      .from(deceasedFormFields)
+      .where(eq(deceasedFormFields.personId, personId));
+    return fields;
+  }
+  
+  async createDeceasedFormFields(data: InsertDeceasedFormFields): Promise<DeceasedFormFields> {
+    // Set defaults for JSON fields if they're not provided
+    const fieldsWithDefaults = {
+      ...data,
+      otherNames: data.otherNames || [],
+      adoptedRelatives: data.adoptedRelatives || [],
+    };
+    
+    const [fields] = await db
+      .insert(deceasedFormFields)
+      .values(fieldsWithDefaults)
+      .returning();
+    return fields;
+  }
+  
+  async updateDeceasedFormFields(personId: number, data: Partial<InsertDeceasedFormFields>): Promise<DeceasedFormFields | undefined> {
+    const [fields] = await db
+      .update(deceasedFormFields)
+      .set({
+        ...data,
+        updatedAt: new Date()
+      })
+      .where(eq(deceasedFormFields.personId, personId))
+      .returning();
+    return fields;
+  }
+  
+  async isDeceasedFormFieldsComplete(personId: number): Promise<boolean> {
+    const fields = await this.getDeceasedFormFields(personId);
+    if (!fields) {
+      return false;
+    }
+    
+    // Check required fields
+    if (!fields.firstName || !fields.lastName || !fields.dateOfBirth || !fields.dateOfDeath || !fields.maritalStatus) {
+      return false;
+    }
+    
+    // Check conditional fields
+    if (fields.maritalStatus === 'married' && !fields.marriedDate) {
+      return false;
+    }
+    
+    if (fields.maritalStatus === 'divorced' && (!fields.divorcedDate || !fields.divorceCourt)) {
+      return false;
+    }
+    
+    if (fields.maritalStatus === 'separated' && (!fields.separatedDate || !fields.separationCourt)) {
+      return false;
+    }
+    
+    if (fields.hadForeignAssets && !fields.foreignAssetValueGbp) {
+      return false;
+    }
+    
+    if (fields.hasAdoptionHistory && (!fields.adoptedRelatives || fields.adoptedRelatives.length === 0)) {
+      return false;
+    }
+    
+    // All required fields are present
+    return true;
   }
 
   // User methods
