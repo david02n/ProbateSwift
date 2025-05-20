@@ -2201,11 +2201,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Get deceased form fields
       const deceasedFormFields = await storage.getDeceasedFormFields(personId);
       
-      // If form fields don't exist, create a new record with default values
+      // If form fields don't exist, create a new record with data from probate case if available
       if (!deceasedFormFields) {
         try {
           console.log(`Creating new deceased form fields record for person ID: ${personId}`);
-          const newFormFields = await storage.createDeceasedFormFields({
+          
+          // Prepare initial data with defaults
+          const initialData: any = {
             personId,
             wasKnownByOtherNames: false,
             otherNamesHeldAssets: [],
@@ -2215,7 +2217,40 @@ export async function registerRoutes(app: Express): Promise<Server> {
             executorsApplying: false,
             hasAdoptionHistory: false,
             adoptedRelatives: []
-          });
+          };
+          
+          // If we have data from probate case, use it to populate the deceased form fields
+          if (probateCase) {
+            console.log('Using data from probate case to pre-populate deceased form fields');
+            
+            // Convert date strings to Date objects if they exist
+            if (probateCase.deceasedDateOfBirth) {
+              initialData.dateOfBirth = new Date(probateCase.deceasedDateOfBirth);
+            }
+            
+            if (probateCase.deceasedDateOfDeath) {
+              initialData.dateOfDeath = new Date(probateCase.deceasedDateOfDeath);
+            }
+            
+            // Use the person's data where appropriate
+            if (person) {
+              console.log('Using person data to further populate deceased form fields');
+              
+              // If the person has address fields, set them in the form data
+              if (person.addressLine1) {
+                initialData.address = {
+                  line1: person.addressLine1,
+                  line2: person.addressLine2,
+                  city: person.city,
+                  county: person.county,
+                  postCode: person.postCode
+                };
+              }
+            }
+          }
+          
+          console.log('Initial data for deceased form fields:', initialData);
+          const newFormFields = await storage.createDeceasedFormFields(initialData);
           return res.json(newFormFields);
         } catch (error) {
           console.error('Error creating new deceased form fields:', error);
