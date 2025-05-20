@@ -1,0 +1,82 @@
+🔧 You're Successfully Triggering the Google Popup, BUT the Firebase Auth Session Is Not Being Registered
+Key clue:
+
+http
+Copy
+Edit
+GET /api/user → 401 Unauthorized
+Despite:
+
+Popup starting correctly (/__/auth/handler?authType=signInViaPopup)
+
+Firebase cookies (ps_auth_marker, ps_auth_root) being set
+
+No redirect errors or network failures
+
+🧠 What’s Going Wrong
+You're in the classic signInWithPopup() race condition trap:
+
+❌ You're calling getAuth().currentUser (or making an API request like /api/user) too early, before the async Firebase auth state has resolved.
+Firebase sets the user token asynchronously — just because the popup completes doesn’t mean the auth state is ready.
+
+✅ How to Fix It (Reliable Firebase Auth State Handling)
+In your app (likely in auth-page.tsx or App.tsx), wrap your auth state logic like this:
+
+tsx
+Copy
+Edit
+import { onAuthStateChanged, getAuth } from "firebase/auth";
+
+useEffect(() => {
+  const auth = getAuth();
+  const unsubscribe = onAuthStateChanged(auth, (user) => {
+    if (user) {
+      console.log("User signed in:", user);
+      // ✅ Safe to call your /api/user or redirect here
+    } else {
+      console.log("No user signed in");
+    }
+  });
+
+  return () => unsubscribe();
+}, []);
+This ensures you’re waiting for Firebase to finish resolving the user's session before hitting your backend.
+
+✅ Bonus: Don’t Call /api/user Until Firebase Is Ready
+If your /api/user endpoint requires a bearer token or cookie based on Firebase session, wait until onAuthStateChanged fires with a non-null user.
+
+If you're calling this:
+
+ts
+Copy
+Edit
+const res = await fetch("/api/user");
+Make sure the user’s token is refreshed:
+
+ts
+Copy
+Edit
+const token = await user.getIdToken();
+await fetch("/api/user", {
+  headers: {
+    Authorization: `Bearer ${token}`,
+  },
+});
+🔁 Summary
+✅ Google Popup is working ✅
+
+❌ You're hitting /api/user before Firebase auth is ready
+
+✅ Fix this with onAuthStateChanged() before fetching anything private
+
+🧠 This bug happens often in frameworks like Next.js or React where auth.currentUser is null initially
+
+Let me know if you want me to help rework that logic in your React app or check your middleware setup for token validation.
+
+
+
+
+
+
+
+

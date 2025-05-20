@@ -2,17 +2,17 @@ import { initializeApp } from "firebase/app";
 import { getAuth, GoogleAuthProvider } from "firebase/auth";
 import { getAnalytics } from "firebase/analytics";
 
-// SIMPLE TWO-ENVIRONMENT SETUP
+// FIREBASE CONFIGURATION
+// Critical for proper authentication in all environments
 
 // Get current hostname for environment detection
 const hostname = window.location.hostname;
 const isProd = hostname.includes('probateswift.com');
 
-// Pick the right Firebase config based on environment
+// Configuration for production and development
 const firebaseConfig = {
   apiKey: "AIzaSyCWeCvuiXsoQCdn_E4yRDh2QT4j4-fQBo0",
-  // Set auth domain based on environment
-  authDomain: isProd ? "probateswift.com" : "probate-458709.firebaseapp.com",
+  authDomain: "probate-458709.firebaseapp.com", // Always use Firebase default domain
   projectId: "probate-458709",
   storageBucket: "probate-458709.firebasestorage.app",
   messagingSenderId: "321971954611",
