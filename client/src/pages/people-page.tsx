@@ -3,6 +3,7 @@ import { useAuth } from "@/hooks/use-auth";
 import AuthenticatedLayout from "@/components/layout/AuthenticatedLayout";
 import NewHeader from "@/components/layout/NewHeader";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import DeceasedFormStatus from "@/components/deceased/DeceasedFormStatus";
 import { Button } from "@/components/ui/button";
 import { 
   User, 
@@ -857,6 +858,11 @@ const PeoplePage: React.FC = () => {
                                 <span className="text-xs bg-gray-100 text-gray-800 px-2 py-0.5 rounded-full">
                                   Deceased
                                 </span>
+                              )}
+                              
+                              {/* Deceased details completion status */}
+                              {executor.relationshipToDeceased === 'Deceased' && (
+                                <DeceasedFormStatus executorId={executor.id} />
                               )}
                               {executor.documentId && (
                                 <span className="text-xs bg-purple-100 text-purple-800 px-2 py-0.5 rounded-full">

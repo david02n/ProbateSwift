@@ -14,6 +14,7 @@ import PeoplePage from "@/pages/people-page";
 import EstatePage from "@/pages/estate-page";
 import DocumentsPage from "@/pages/documents-page";
 import DocumentUploadPage from "@/pages/document-upload-page";
+import DeceasedDetailsPage from "@/pages/deceased-details-page";
 
 import { useAuth } from "@/hooks/use-auth";
 import { useEffect } from "react";
@@ -140,6 +141,7 @@ function Router() {
       </Route>
       <Route path="/" component={NewDashboardPage} />
       <Route path="/people" component={PeoplePage} />
+      <Route path="/people/:personId/deceased-details" component={DeceasedDetailsPage} />
       <Route path="/estate" component={EstatePage} />
       <Route path="/documents" component={DocumentsPage} />
       <Route path="/documents/upload" component={DocumentUploadPage} />
