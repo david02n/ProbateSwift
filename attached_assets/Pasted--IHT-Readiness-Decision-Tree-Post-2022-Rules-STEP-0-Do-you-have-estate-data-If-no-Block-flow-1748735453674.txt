@@ -1,0 +1,80 @@
+🌳 IHT Readiness Decision Tree (Post-2022 Rules)
+STEP 0: Do you have estate data?
+If no → Block flow. Prompt to complete estate tab.
+
+If yes → Use:
+
+Gross value of estate (before liabilities)
+
+Net value of estate (after liabilities)
+
+STEP 1: Was the deceased domiciled in the UK?
+❌ No → Not excepted → Must submit IHT400 + IHT421
+
+✅ Yes → Continue
+
+STEP 2: Does gross estate value exceed £325,000?
+❌ No → Continue
+
+✅ Yes → Proceed to Step 3 (check for threshold extensions)
+
+STEP 3: Are threshold extensions available?
+3.1 Was the deceased married or in a civil partnership at death?
+✅ Yes → Spouse exemption may apply → Likely no tax on spousal inheritance
+
+❌ No → Check TNRB (next)
+
+3.2 Had their spouse/partner already died?
+✅ Yes → Continue
+
+❌ No → Cannot use TNRB → May exceed threshold → IHT400 likely
+
+3.3 Did the spouse use all their NRB?
+✅ Yes → No transfer → Proceed to Step 4
+
+❌ No → Add remaining allowance to threshold (max total: £650,000)
+
+3.4 Did deceased leave home to children or grandchildren?
+✅ Yes → Add Residence Nil Rate Band (RNRB) (up to £175,000)
+
+❌ No → No RNRB added
+
+➡️ Calculate total threshold = £325,000 + any TNRB + RNRB
+➡️ If gross estate > total threshold → Not excepted → IHT400 required
+
+STEP 4: Are there any disqualifying features?
+If any of these are true, the estate is not excepted and IHT400 is required:
+
+Question	Trigger
+Gifts made in last 7 years over £3,000/year?	✅
+Assets held overseas?	✅
+Beneficiary of a trust?	✅
+
+STEP 5: Final Decision
+Outcome	Condition
+✅ Excepted Estate	Deceased domiciled in UK, under threshold (incl. TNRB/RNRB), no disqualifying factors
+❌ Not Excepted	Any of: Non-UK domicile, over threshold with no extensions, gifts/trusts/foreign assets
+
+👇 What To Do Next
+Outcome	Action
+✅ Excepted	Skip IHT form submission; advise to retain records; allow PA1P to proceed
+❌ Not Excepted	Block PA1P until user confirms:
+
+IHT400 submitted to HMRC
+
+IHT421 sent to HMCTS
+
+Would you like this converted into:
+
+A JSON logic config for frontend devs?
+
+A flowchart diagram?
+
+Or stored as a reusable helper function spec?
+
+
+
+
+
+
+
