@@ -1328,6 +1328,36 @@ export class DatabaseStorage implements IStorage {
       .returning();
     return updatedTask;
   }
+
+  // Evaluation Response methods
+  async getEvaluationResponse(caseId: number): Promise<EvaluationResponse | undefined> {
+    const [response] = await db
+      .select()
+      .from(evaluationResponses)
+      .where(eq(evaluationResponses.caseId, caseId));
+    return response;
+  }
+
+  async createEvaluationResponse(data: InsertEvaluationResponse): Promise<EvaluationResponse> {
+    const [response] = await db
+      .insert(evaluationResponses)
+      .values({
+        ...data,
+        createdAt: new Date(),
+        updatedAt: new Date()
+      })
+      .returning();
+    return response;
+  }
+
+  async updateEvaluationResponse(caseId: number, data: Partial<InsertEvaluationResponse>): Promise<EvaluationResponse | undefined> {
+    const [updatedResponse] = await db
+      .update(evaluationResponses)
+      .set({ ...data, updatedAt: new Date() })
+      .where(eq(evaluationResponses.caseId, caseId))
+      .returning();
+    return updatedResponse;
+  }
 }
 
 // Choose which storage implementation to use

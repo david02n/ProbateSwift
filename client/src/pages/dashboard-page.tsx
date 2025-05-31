@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState } from "react";
 import { useAuth } from "@/hooks/use-auth";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -14,12 +14,15 @@ import {
   PoundSterling,
   Send,
   MessageSquare,
-  Upload
+  Upload,
+  Trophy
 } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { getQueryFn } from "@/lib/queryClient";
-import { AssessmentResult, Executor } from "@shared/schema";
+import { AssessmentResult, Executor, EvaluationResponse } from "@shared/schema";
 import { EvaluationFlow } from "@/components/evaluation/EvaluationFlow";
+import { MilestoneProgress } from "@/components/milestones/MilestoneProgress";
+import { getUnlockedTabs } from "@shared/milestone-config";
 
 // Component for the deceased form milestone with dynamic completion status
 const DeceasedFormMilestone: React.FC = () => {
