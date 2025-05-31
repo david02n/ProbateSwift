@@ -20,38 +20,38 @@ export interface TaskCategory {
 export const MILESTONES: Milestone[] = [
   {
     id: "basic_assessment",
-    name: "Basic Assessment Complete",
-    description: "Complete initial probate assessment to understand your requirements",
+    name: "Initial Assessment Complete",
+    description: "You've completed the basic probate assessment - great start!",
     requiredSections: ["applicant_details"],
     unlockedTasks: ["people_management"],
-    unlockedTabs: ["people"],
+    unlockedTabs: ["people", "assets", "liabilities", "documents", "tasks", "evaluation"],
     priority: 1
   },
   {
     id: "people_identified",
-    name: "People & Roles Identified", 
-    description: "Complete deceased and executor information",
+    name: "People & Roles Defined", 
+    description: "You've identified key people and their roles in the probate process",
     requiredSections: ["applicant_details", "deceased_details"],
     unlockedTasks: ["people_management", "deceased_forms"],
-    unlockedTabs: ["people"],
+    unlockedTabs: ["people", "assets", "liabilities", "documents", "tasks", "evaluation"],
     priority: 2
   },
   {
     id: "estate_scope_defined",
-    name: "Estate Scope Defined",
-    description: "Understand estate value and complexity",
+    name: "Estate Scope Understood",
+    description: "You understand the estate value and complexity - well done!",
     requiredSections: ["applicant_details", "deceased_details", "estate_overview"],
     unlockedTasks: ["people_management", "deceased_forms", "asset_gathering"],
-    unlockedTabs: ["people", "assets"],
+    unlockedTabs: ["people", "assets", "liabilities", "documents", "tasks", "evaluation"],
     priority: 3
   },
   {
     id: "full_evaluation_complete",
-    name: "Full Evaluation Complete",
-    description: "All evaluation sections completed - full probate workflow unlocked",
+    name: "Comprehensive Assessment Complete",
+    description: "Outstanding! You've completed the full evaluation and have all the insights needed",
     requiredSections: ["applicant_details", "deceased_details", "estate_overview", "legal_requirements"],
     unlockedTasks: ["people_management", "deceased_forms", "asset_gathering", "liability_tracking", "document_collection", "legal_forms"],
-    unlockedTabs: ["people", "assets", "liabilities", "documents", "tasks"],
+    unlockedTabs: ["people", "assets", "liabilities", "documents", "tasks", "evaluation"],
     priority: 4
   }
 ];
@@ -152,9 +152,8 @@ export function getUnlockedTasks(completedSections: string[]): TaskCategory[] {
 }
 
 export function getUnlockedTabs(completedSections: string[]): string[] {
-  const unlockedMilestones = getMilestoneProgress(completedSections);
-  const allUnlockedTabs = unlockedMilestones.flatMap(m => m.unlockedTabs);
-  return [...new Set(allUnlockedTabs)]; // Remove duplicates
+  // Always return all tabs - don't restrict access, just use for progress tracking
+  return ["people", "assets", "liabilities", "documents", "tasks", "evaluation"];
 }
 
 export function getNextMilestone(completedSections: string[]): Milestone | null {

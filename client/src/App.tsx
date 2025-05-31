@@ -134,12 +134,13 @@ function Router() {
   return (
     <Switch>
       <Route path="/auth">
-        <Redirect to="/" />
+        <Redirect to="/dashboard" />
       </Route>
       <Route path="/auth/:tab">
-        <Redirect to="/" />
+        <Redirect to="/dashboard" />
       </Route>
       <Route path="/" component={NewDashboardPage} />
+      <Route path="/dashboard" component={NewDashboardPage} />
       <Route path="/people" component={PeoplePage} />
       <Route path="/people/:personId/deceased-details" component={DeceasedDetailsPage} />
       <Route path="/estate" component={EstatePage} />
