@@ -734,6 +734,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
       
       const evaluation = await storage.getEvaluationResponse(caseId);
+      // Return empty structure if no evaluation exists yet
+      if (!evaluation) {
+        return res.json({
+          answers: {},
+          derivedFlags: {},
+          completedAt: null
+        });
+      }
       res.json(evaluation);
     } catch (error) {
       console.error("Error fetching evaluation response:", error);

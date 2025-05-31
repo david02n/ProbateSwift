@@ -33,10 +33,7 @@ export const EvaluationFlow: React.FC<EvaluationFlowProps> = ({ caseId, onComple
 
   // Save evaluation mutation
   const saveEvaluationMutation = useMutation({
-    mutationFn: (data: any) => apiRequest(`/api/evaluation/${caseId}`, {
-      method: 'POST',
-      body: JSON.stringify(data),
-    }),
+    mutationFn: (data: any) => apiRequest(`/api/evaluation/${caseId}`, 'POST', data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: [`/api/evaluation/${caseId}`] });
     },
@@ -44,8 +41,10 @@ export const EvaluationFlow: React.FC<EvaluationFlowProps> = ({ caseId, onComple
 
   // Initialize answers from existing evaluation
   useEffect(() => {
-    if (existingEvaluation?.answers) {
-      setAnswers(existingEvaluation.answers);
+    if (existingEvaluation && typeof existingEvaluation === 'object') {
+      if (existingEvaluation.answers) {
+        setAnswers(existingEvaluation.answers);
+      }
       if (existingEvaluation.derivedFlags) {
         setDerivedFlags(existingEvaluation.derivedFlags);
       }
