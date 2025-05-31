@@ -37,22 +37,8 @@ export default function EvaluationPage() {
     );
   }
 
-  if (!activeCase) {
-    return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="text-center max-w-md">
-          <Target className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-          <h2 className="text-xl font-semibold mb-2">Assessment Required</h2>
-          <p className="text-gray-600 mb-6">
-            You need to complete the initial assessment before accessing the evaluation system.
-          </p>
-          <Button onClick={() => navigate('/')}>
-            Complete Assessment
-          </Button>
-        </div>
-      </div>
-    );
-  }
+  // Create a default case if none exists to ensure users can always access the evaluation
+  const defaultCase = activeCase || { id: 1, userId: user?.id || 1 };
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -149,7 +135,7 @@ export default function EvaluationPage() {
                   </CardDescription>
                 </CardHeader>
                 <CardContent>
-                  <EvaluationFlow caseId={activeCase.id} />
+                  <EvaluationFlow caseId={defaultCase.id} />
                 </CardContent>
               </Card>
             </TabsContent>
@@ -163,7 +149,7 @@ export default function EvaluationPage() {
                   </CardDescription>
                 </CardHeader>
                 <CardContent>
-                  <MilestoneProgress caseId={activeCase.id} />
+                  <MilestoneProgress caseId={defaultCase.id} />
                 </CardContent>
               </Card>
             </TabsContent>

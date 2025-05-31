@@ -91,8 +91,87 @@ export const landingPageQuestions: EvaluationQuestion[] = [
   }
 ];
 
-// Detailed in-app evaluation flow - Updated 17-question spec
+// Detailed in-app evaluation flow - Two-phase approach with IHT calculations first
 export const detailedEvaluationSections: EvaluationSection[] = [
+  {
+    id: 'phase_1_iht_eligibility',
+    title: 'Phase 1: Estate & IHT Eligibility',
+    description: 'Essential estate information needed to determine IHT requirements and thresholds before proceeding',
+    questions: [
+      {
+        key: 'deceased_domiciled_uk',
+        type: 'boolean',
+        title: 'Was the deceased domiciled in the UK at death?',
+        description: 'Required for "excepted estate" status determination',
+        required: true
+      },
+      {
+        key: 'gifts_last_7_years',
+        type: 'boolean',
+        title: 'Did the deceased make any gifts in the 7 years before death?',
+        description: 'Gifts could reduce the nil rate band and may trigger IHT400 requirements',
+        required: true
+      },
+      {
+        key: 'married_civil_partnership',
+        type: 'boolean',
+        title: 'Was the deceased married or in a civil partnership at death?',
+        description: 'Needed for spousal exemption and transferable nil rate band calculations',
+        required: true
+      },
+      {
+        key: 'spouse_partner_deceased',
+        type: 'boolean',
+        title: 'Had their spouse/partner already died?',
+        description: 'Required to determine if transferable nil rate band (TNRB) is available',
+        required: true,
+        conditionalLogic: {
+          showIf: { married_civil_partnership: true }
+        }
+      },
+      {
+        key: 'spouse_nrb_fully_used',
+        type: 'boolean',
+        title: 'Was the spouse\'s nil rate band fully used?',
+        description: 'Needed to calculate available transferable nil rate band',
+        required: true,
+        conditionalLogic: {
+          showIf: { spouse_partner_deceased: true }
+        }
+      },
+      {
+        key: 'home_to_children_grandchildren',
+        type: 'boolean',
+        title: 'Did the deceased leave their home to children or grandchildren?',
+        description: 'This triggers the Residence Nil Rate Band (RNRB) which increases the IHT threshold',
+        required: true
+      },
+      {
+        key: 'deceased_lived_uk_property',
+        type: 'boolean',
+        title: 'Did the deceased live in a UK property they owned?',
+        description: 'Required for Residence Nil Rate Band eligibility check',
+        required: true,
+        conditionalLogic: {
+          showIf: { home_to_children_grandchildren: true }
+        }
+      },
+      {
+        key: 'trust_involvement',
+        type: 'boolean',
+        title: 'Did the deceased benefit from a trust or create any trusts?',
+        description: 'Trust involvement triggers IHT400 Schedule 418 requirements',
+        required: true
+      },
+      {
+        key: 'overseas_assets',
+        type: 'boolean',
+        title: 'Were any assets held overseas by the deceased?',
+        description: 'Foreign assets trigger IHT400 Schedule 417 and additional reporting requirements',
+        required: true
+      }
+    ]
+  },
   {
     id: 'applicant',
     title: 'Applicant Details',

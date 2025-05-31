@@ -1,0 +1,55 @@
+🔁 Adjusted Evaluation Flow: Two Phases
+🧩 Phase 1: IHT Eligibility & Calculation (must come first)
+Move this to just after estate entry, before probate or executor questions.
+
+📥 New/Refined Questions to Add:
+Question	Purpose	Required For
+Was the deceased domiciled in the UK at death?	Required for “excepted estate” status	Excepted estate check
+Did the deceased leave their home to children or grandchildren?	Triggers Residence Nil Rate Band (RNRB)	Threshold ↑
+Did the deceased make any gifts in the 7 years before death?	Could reduce NRB	IHT400 trigger
+Was the deceased married or in a civil partnership at death?	Needed for spousal exemption and TNRB	Threshold ↑
+Had their spouse/partner already died?	TNRB transfer possible	Threshold ↑
+Was the spouse’s NRB fully used?	Needed to calculate transferable NRB	Threshold ↑
+Did the deceased benefit from a trust?	Triggers IHT400 Schedule 418	IHT400 trigger
+Were any assets held overseas?	Triggers IHT400 Schedule 417	IHT400 trigger
+
+✅ Existing Questions Already Covering These (in part)
+Some are already captured but should be reframed more explicitly:
+
+Q5 (domicile) → Already present (keep)
+
+Q7 (foreign assets) → Already present (reword to specify estate ownership, not joint)
+
+Q9 (adoptions) → Less relevant to IHT, could be moved later
+
+Gift info → Missing (needs to be added)
+
+Spouse status & RNRB → Missing (needs to be added)
+
+🧭 New Recommended Evaluation Sequence
+Step	Category	Status
+1	Deceased domicile (UK or not)	✅ Already covered
+2	Gift history (last 7 years)	🔁 Add
+3	Marital status at death	🔁 Add
+4	Spouse deceased? NRB used?	🔁 Add
+5	Children/grandchildren inheritance?	🔁 Add
+6	Did deceased live in UK property?	🔁 (for RNRB check)
+7	Trust involvement?	🔁 Add
+8	Foreign assets?	✅ Already covered, but reword
+
+🧠 Why These Go First
+You must know if IHT400 is required before progressing to PA1P
+
+These directly affect estate thresholds and tax
+
+Most don’t require estate tab input — they’re yes/no or date answers
+
+✅ What This Enables
+Confirm excepted estate status
+
+Auto-calculate NRB, TNRB, RNRB
+
+Show correct checklist (e.g. “No IHT form needed” or “You must complete IHT400”)
+
+Prevent premature PA1P generation
+
