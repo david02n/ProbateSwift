@@ -953,7 +953,7 @@ export class MemStorage implements IStorage {
     const [response] = await db
       .select()
       .from(evaluationResponses)
-      .where(eq(evaluationResponses.probateCaseId, caseId))
+      .where(eq(evaluationResponses.caseId, caseId))
       .limit(1);
     return response;
   }
@@ -973,7 +973,7 @@ export class MemStorage implements IStorage {
         ...data,
         updatedAt: new Date()
       })
-      .where(eq(evaluationResponses.probateCaseId, caseId))
+      .where(eq(evaluationResponses.caseId, caseId))
       .returning();
     return response;
   }

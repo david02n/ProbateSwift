@@ -770,6 +770,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       } else {
         // Create new evaluation
         const evaluationData = {
+          userId,
           caseId,
           answers: req.body.answers || {},
           derivedFlags: req.body.derivedFlags || {},
