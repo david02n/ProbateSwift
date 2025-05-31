@@ -19,6 +19,7 @@ import {
 import { useQuery } from "@tanstack/react-query";
 import { getQueryFn } from "@/lib/queryClient";
 import { AssessmentResult, Executor } from "@shared/schema";
+import { EvaluationFlow } from "@/components/evaluation/EvaluationFlow";
 
 // Component for the deceased form milestone with dynamic completion status
 const DeceasedFormMilestone: React.FC = () => {
@@ -157,6 +158,7 @@ const DashboardPage: React.FC = () => {
         <Tabs defaultValue="overview" className="w-full">
           <TabsList className="mb-6">
             <TabsTrigger value="overview">Overview</TabsTrigger>
+            <TabsTrigger value="evaluation">Evaluation</TabsTrigger>
             <TabsTrigger value="documents">Documents</TabsTrigger>
             <TabsTrigger value="tasks">Tasks</TabsTrigger>
             <TabsTrigger value="chat">Help & Chat</TabsTrigger>
@@ -832,6 +834,40 @@ const DashboardPage: React.FC = () => {
                   </div>
                 </CardContent>
               </Card>
+            </div>
+          </TabsContent>
+
+          <TabsContent value="evaluation">
+            <div className="space-y-6">
+              {probateCases && probateCases.length > 0 ? (
+                <EvaluationFlow 
+                  caseId={probateCases[0].id} 
+                  onComplete={(flags) => {
+                    console.log('Evaluation completed with flags:', flags);
+                  }}
+                />
+              ) : (
+                <Card>
+                  <CardHeader>
+                    <CardTitle>Detailed Probate Evaluation</CardTitle>
+                    <CardDescription>
+                      Complete your detailed probate assessment to determine requirements
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="text-center py-8">
+                      <FileText className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+                      <h3 className="text-lg font-medium mb-2">Create a Probate Case First</h3>
+                      <p className="text-muted-foreground mb-4">
+                        You need to create a probate case before starting the detailed evaluation.
+                      </p>
+                      <Button onClick={() => window.location.href = "/dashboard"}>
+                        Go to Overview
+                      </Button>
+                    </div>
+                  </CardContent>
+                </Card>
+              )}
             </div>
           </TabsContent>
           
