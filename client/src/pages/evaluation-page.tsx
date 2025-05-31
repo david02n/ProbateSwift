@@ -24,7 +24,7 @@ export default function EvaluationPage() {
     queryFn: getQueryFn,
   });
 
-  const activeCase = probateCases.find((c: ProbateCase) => c.userId === user?.id);
+  const activeCase = Array.isArray(probateCases) ? probateCases.find((c: ProbateCase) => c.userId === user?.id) : null;
 
   if (isLoadingCases) {
     return (

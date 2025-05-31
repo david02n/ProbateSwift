@@ -165,7 +165,11 @@ export const EvaluationFlow: React.FC<EvaluationFlowProps> = ({ caseId, onComple
             className="space-y-3"
           >
             {question.options?.map((option) => (
-              <div key={option} className="flex items-center space-x-2 p-4 rounded-lg border hover:bg-muted/50 cursor-pointer">
+              <div 
+                key={option} 
+                className="flex items-center space-x-2 p-4 rounded-lg border hover:bg-muted/50 cursor-pointer transition-colors"
+                onClick={() => handleAnswer(option)}
+              >
                 <RadioGroupItem value={option} id={`${question.key}-${option}`} />
                 <Label htmlFor={`${question.key}-${option}`} className="flex-1 cursor-pointer">{option}</Label>
               </div>
@@ -186,11 +190,15 @@ export const EvaluationFlow: React.FC<EvaluationFlowProps> = ({ caseId, onComple
         );
 
       case 'date':
+        const today = new Date().toISOString().split('T')[0];
+        const isWillOrCodicilDate = question.key.includes('will') || question.key.includes('codicil');
+        
         return (
           <Input
             type="date"
             value={value || ''}
             onChange={(e) => handleAnswer(e.target.value)}
+            max={isWillOrCodicilDate ? today : undefined}
           />
         );
 
