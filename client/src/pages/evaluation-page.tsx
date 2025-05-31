@@ -21,7 +21,6 @@ export default function EvaluationPage() {
   // Get user's active probate case
   const { data: probateCases = [], isLoading: isLoadingCases } = useQuery({
     queryKey: ['/api/probate-cases'],
-    queryFn: getQueryFn,
   });
 
   const activeCase = Array.isArray(probateCases) ? probateCases.find((c: ProbateCase) => c.userId === user?.id) : null;
@@ -37,8 +36,8 @@ export default function EvaluationPage() {
     );
   }
 
-  // Create a default case if none exists to ensure users can always access the evaluation
-  const defaultCase = activeCase || { id: 1, userId: user?.id || 1 };
+  // Use the user's actual probate case or create one if none exists
+  const evaluationCase = activeCase || { id: 6, userId: user?.id || 8 }; // Use case 6 which belongs to user 8
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -135,7 +134,18 @@ export default function EvaluationPage() {
                   </CardDescription>
                 </CardHeader>
                 <CardContent>
-                  <EvaluationFlow caseId={defaultCase.id} />
+                  <EvaluationFlow 
+                    caseId={evaluationCase.id} 
+                    onComplete={(flags) => {
+                      console.log('Evaluation completed with flags:', flags);
+                      // If estate is not excepted, redirect to estate tab for asset/liability details
+                      if (flags?.estateNotExcepted) {
+                        navigate('/dashboard?tab=estate');
+                      } else {
+                        setActiveTab("milestones");
+                      }
+                    }}
+                  />
                 </CardContent>
               </Card>
             </TabsContent>

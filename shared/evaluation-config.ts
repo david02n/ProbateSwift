@@ -379,11 +379,14 @@ export function deriveEvaluationFlags(answers: Record<string, any>): Record<stri
   flags.iht_form_required = 'IHT205';
   
   const grossValue = answers.q17_gross_value || 0;
-  const hasForeignAssets = answers.q8_foreign_assets === true;
+  const hasForeignAssets = answers.q7_foreign_assets === true;
   
   if (grossValue > 325000 || hasForeignAssets) {
     flags.iht_form_required = 'IHT400';
   }
+  
+  // Estate status - if IHT400 required or gross value > £5000, estate needs detailed asset/liability tracking
+  flags.estateNotExcepted = flags.iht_form_required === 'IHT400' || grossValue > 5000;
   
   // PA1P sections required
   flags.pa1p_sections = {
