@@ -140,11 +140,17 @@ export const EvaluationFlow: React.FC<EvaluationFlowProps> = ({ caseId, onComple
             onValueChange={(v) => handleAnswer(v === 'true')}
             className="space-y-3"
           >
-            <div className="flex items-center space-x-2 p-4 rounded-lg border hover:bg-muted/50 cursor-pointer">
+            <div 
+              className="flex items-center space-x-2 p-4 rounded-lg border hover:bg-muted/50 cursor-pointer transition-colors"
+              onClick={() => handleAnswer(true)}
+            >
               <RadioGroupItem value="true" id={`${question.key}-yes`} />
               <Label htmlFor={`${question.key}-yes`} className="flex-1 cursor-pointer">Yes</Label>
             </div>
-            <div className="flex items-center space-x-2 p-4 rounded-lg border hover:bg-muted/50 cursor-pointer">
+            <div 
+              className="flex items-center space-x-2 p-4 rounded-lg border hover:bg-muted/50 cursor-pointer transition-colors"
+              onClick={() => handleAnswer(false)}
+            >
               <RadioGroupItem value="false" id={`${question.key}-no`} />
               <Label htmlFor={`${question.key}-no`} className="flex-1 cursor-pointer">No</Label>
             </div>

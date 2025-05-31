@@ -91,10 +91,10 @@ export const landingPageQuestions: EvaluationQuestion[] = [
   }
 ];
 
-// Detailed in-app evaluation flow
+// Detailed in-app evaluation flow - Updated 17-question spec
 export const detailedEvaluationSections: EvaluationSection[] = [
   {
-    id: 'applicant_details',
+    id: 'applicant',
     title: 'Applicant Details',
     description: 'Information about who is applying for probate',
     questions: [
@@ -105,10 +105,11 @@ export const detailedEvaluationSections: EvaluationSection[] = [
         required: true
       },
       {
-        key: 'q2_power_of_attorney',
+        key: 'q2_poas',
         type: 'boolean',
         title: 'Are you acting under a power of attorney on behalf of an executor?',
-        required: true,
+        description: 'If No, user is ineligible',
+        required: false,
         conditionalLogic: {
           showIf: { q1_executor_named: false }
         }
@@ -116,8 +117,8 @@ export const detailedEvaluationSections: EvaluationSection[] = [
       {
         key: 'q3_applicant_count',
         type: 'number',
-        title: 'How many people are applying for probate?',
-        description: 'Maximum 4 applicants allowed',
+        title: 'How many people are applying?',
+        description: 'Maximum 4 applicants allowed. Flag if 2+ required based on Q4',
         required: true,
         validation: {
           min: 1,
@@ -128,179 +129,127 @@ export const detailedEvaluationSections: EvaluationSection[] = [
         key: 'q4_under18_gift',
         type: 'boolean',
         title: 'Is anyone under 18 receiving a gift in the will or codicil?',
-        description: 'If yes, at least 2 applicants are mandatory',
+        description: 'If Yes, at least 2 applicants are mandatory',
         required: true
       }
     ]
   },
   {
-    id: 'deceased_information',
-    title: "Deceased Person's Information",
+    id: 'deceased',
+    title: "Deceased's Information",
     description: 'Details about the person who has died',
     questions: [
       {
-        key: 'q5_name_dob_dod',
-        type: 'object',
-        title: "Deceased person's full details",
-        description: 'Full name, date of birth, and date of death',
-        required: true
-      },
-      {
-        key: 'q6_domicile_uk',
+        key: 'q5_domicile_uk',
         type: 'boolean',
         title: 'Did the deceased live permanently in England or Wales?',
-        description: 'This affects domicile status for probate',
+        description: 'If No, flag potential IHT401 need',
         required: true
       },
       {
-        key: 'q7_alt_names',
+        key: 'q6_alt_names',
         type: 'boolean',
         title: 'Did the deceased hold any assets under another name?',
+        description: 'If Yes, list must appear on the grant',
         required: true
       },
       {
-        key: 'q7_alt_names_list',
-        type: 'text',
-        title: 'List the alternative names',
-        description: 'Enter each name on a new line',
-        required: true,
-        conditionalLogic: {
-          showIf: { q7_alt_names: true }
-        }
-      },
-      {
-        key: 'q8_foreign_assets',
+        key: 'q7_foreign_assets',
         type: 'boolean',
         title: 'Did the deceased own foreign (non-UK) assets?',
-        description: 'This may trigger IHT400 requirement',
+        description: 'If Yes, may trigger IHT400 requirement',
         required: true
       },
       {
-        key: 'q8_foreign_asset_value',
-        type: 'number',
-        title: 'Estimated value of foreign assets (£)',
-        required: true,
-        conditionalLogic: {
-          showIf: { q8_foreign_assets: true }
-        }
-      },
-      {
-        key: 'q9_settled_land',
+        key: 'q8_settled_land',
         type: 'boolean',
         title: 'Was any land still held as settled land?',
-        description: 'This requires legal review',
+        description: 'If Yes, flag for legal review',
         required: true
       },
       {
-        key: 'q10_adoptions',
+        key: 'q9_adoptions',
         type: 'boolean',
         title: 'Were any relatives adopted in/out of the family?',
-        description: 'This affects inheritance rights',
+        description: 'If Yes, may affect inheritance relationships',
         required: true
       }
     ]
   },
   {
-    id: 'will_executors',
+    id: 'will',
     title: 'Will and Executors',
     description: 'Information about the will and other executors',
     questions: [
       {
-        key: 'q11_will_date',
+        key: 'q10_will_date',
         type: 'date',
         title: 'What is the date of the will?',
+        description: 'Mandatory for PA1P',
         required: true
       },
       {
-        key: 'q12_codicils',
+        key: 'q11_codicils',
         type: 'boolean',
         title: 'Are there codicils to the will?',
+        description: 'If Yes, originals must be submitted',
         required: true
       },
       {
-        key: 'q12_codicil_dates',
-        type: 'text',
-        title: 'List the dates of all codicils',
-        description: 'Enter each date on a new line (DD/MM/YYYY)',
-        required: true,
-        conditionalLogic: {
-          showIf: { q12_codicils: true }
-        }
-      },
-      {
-        key: 'q13_will_revoked',
+        key: 'q12_will_revoked',
         type: 'boolean',
         title: 'Did the deceased marry after making the will?',
-        description: 'This may revoke the will and require PA13',
+        description: 'If Yes, will may be invalid – show warning',
         required: true
       },
       {
-        key: 'q14_foreign_wills',
+        key: 'q13_foreign_wills',
         type: 'boolean',
-        title: 'Were any wills made outside England and Wales?',
-        description: 'Translations may be needed',
+        title: 'Any wills made outside England and Wales?',
+        description: 'If Yes, translations may be required',
         required: true
       },
       {
-        key: 'q15_all_executors_applying',
+        key: 'q14_all_executors_applying',
         type: 'boolean',
         title: 'Are all named executors applying?',
+        description: 'If No, ask Q15',
         required: true
       },
       {
-        key: 'q16_non_applying_reasons',
+        key: 'q15_non_applying_reasons',
         type: 'select',
-        title: 'Why are some executors not applying?',
-        description: 'Select all that apply',
-        required: true,
-        options: [
-          'Deceased',
-          'Renouncing',
-          'Has power reserved',
-          'Mental incapacity',
-          'Under 18',
-          'Missing/cannot be found'
-        ],
+        title: 'Why is each non-applying executor not applying?',
+        description: 'Required to determine Section 5, PA11, renunciation, etc.',
+        required: false,
+        options: ['renunciation', 'deceased', 'cannot_locate', 'lacks_capacity', 'power_reserved'],
         conditionalLogic: {
-          showIf: { q15_all_executors_applying: false }
+          showIf: { q14_all_executors_applying: false }
         }
       }
     ]
   },
   {
-    id: 'estate_tax',
-    title: 'Estate & Tax Assessment',
-    description: 'Financial information about the estate',
+    id: 'iht',
+    title: 'Inheritance Tax Readiness',
+    description: 'IHT form completion status',
     questions: [
       {
-        key: 'q17_gross_value',
-        type: 'number',
-        title: 'Estimated gross value of estate (£)',
-        description: 'Total value before debts',
-        required: true
-      },
-      {
-        key: 'q18_net_value',
-        type: 'number',
-        title: 'Estimated net value of estate (£)',
-        description: 'Value after debts and liabilities',
-        required: true
-      },
-      {
-        key: 'q19_iht_done',
+        key: 'q16_iht_done',
         type: 'boolean',
-        title: 'Has an Inheritance Tax form already been completed?',
-        description: 'Required before PA1P submission',
+        title: 'Has an Inheritance Tax (IHT) form been completed?',
+        description: 'If No, block PA1P until completed',
         required: true
       },
       {
-        key: 'q20_iht_form_type',
+        key: 'q17_iht_form_type',
         type: 'select',
-        title: 'Which IHT form was used?',
-        required: true,
+        title: 'Which form was completed?',
+        description: 'Pre-condition for submitting PA1P',
+        required: false,
         options: ['IHT205', 'IHT400'],
         conditionalLogic: {
-          showIf: { q19_iht_done: true }
+          showIf: { q16_iht_done: true }
         }
       }
     ]
