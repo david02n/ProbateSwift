@@ -33,7 +33,7 @@ export const EvaluationFlow: React.FC<EvaluationFlowProps> = ({ caseId, onComple
 
   // Save evaluation mutation
   const saveEvaluationMutation = useMutation({
-    mutationFn: (data: any) => apiRequest(`/api/evaluation/${caseId}`, 'POST', data),
+    mutationFn: (data: any) => apiRequest('POST', `/api/evaluation/${caseId}`, data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: [`/api/evaluation/${caseId}`] });
     },
