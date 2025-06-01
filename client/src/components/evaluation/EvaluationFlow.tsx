@@ -9,6 +9,7 @@ import { ArrowRight, ArrowLeft, Save, CheckCircle, AlertTriangle } from 'lucide-
 import { Badge } from '@/components/ui/badge';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { apiRequest } from '@/lib/queryClient';
+import { useToast } from '@/hooks/use-toast';
 import { detailedEvaluationSections, deriveEvaluationFlags } from '@shared/evaluation-config';
 import type { EvaluationQuestion } from '@shared/evaluation-config';
 import { deriveRoutingState, isEvaluationComplete } from '@shared/evaluation-routing';
@@ -27,6 +28,7 @@ export const EvaluationFlow: React.FC<EvaluationFlowProps> = ({ caseId, onComple
   const [derivedFlags, setDerivedFlags] = useState<any>(null);
   const [showResults, setShowResults] = useState(false);
   const queryClient = useQueryClient();
+  const { toast } = useToast();
 
   // Load existing evaluation
   const { data: existingEvaluation, isLoading } = useQuery({
@@ -216,15 +218,36 @@ export const EvaluationFlow: React.FC<EvaluationFlowProps> = ({ caseId, onComple
 
   const showSectionCompletionPrompt = (sectionId: string) => {
     const prompts = {
-      'deceased_details': 'Section 1 complete! Next, add the deceased person\'s details in the People tab.',
-      'tax_estate_threshold': 'Section 2 complete! Please add assets and liabilities in the Estate tab.',
-      'will_executors': 'Section 3 complete! Upload the will and any codicils in the Documents tab.',
-      'about_applicant': 'Section 4 complete! Add all applicants in the People tab.',
-      'iht_readiness': 'Evaluation complete! Proceed to your milestone dashboard to continue.'
+      'deceased_details': {
+        title: 'Section 1 Complete!',
+        description: 'Next, add the deceased person\'s details in the People tab.'
+      },
+      'tax_estate_threshold': {
+        title: 'Section 2 Complete!', 
+        description: 'Please add assets and liabilities in the Estate tab.'
+      },
+      'will_executors': {
+        title: 'Section 3 Complete!',
+        description: 'Upload the will and any codicils in the Documents tab.'
+      },
+      'about_applicant': {
+        title: 'Section 4 Complete!',
+        description: 'Add all applicants in the People tab.'
+      },
+      'iht_readiness': {
+        title: 'Evaluation Complete!',
+        description: 'Proceed to your milestone dashboard to continue.'
+      }
     };
     
-    // You could show a toast notification or modal here
-    console.log(prompts[sectionId as keyof typeof prompts]);
+    const prompt = prompts[sectionId as keyof typeof prompts];
+    if (prompt) {
+      toast({
+        title: prompt.title,
+        description: prompt.description,
+        duration: 5000,
+      });
+    }
   };
 
   const goToNext = () => {
@@ -422,6 +445,39 @@ export const EvaluationFlow: React.FC<EvaluationFlowProps> = ({ caseId, onComple
             setCurrentQuestionIndex(0);
           }}
         />
+      </div>
+    );
+  }
+
+  // Show blocker message if user is ineligible
+  if (blockerMessage) {
+    return (
+      <div className="w-full max-w-4xl mx-auto">
+        <Card className="border-red-200 bg-red-50">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2 text-red-800">
+              <AlertTriangle className="h-5 w-5" />
+              Unable to Proceed
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <p className="text-red-700 mb-4">{blockerMessage}</p>
+            <div className="flex gap-3">
+              <Button 
+                variant="outline" 
+                onClick={() => {
+                  setBlockerMessage(null);
+                  setCurrentQuestionIndex(Math.max(0, currentQuestionIndex - 1));
+                }}
+              >
+                Go Back
+              </Button>
+              <Button variant="outline" onClick={() => window.location.href = '/'}>
+                Return to Home
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
       </div>
     );
   }
