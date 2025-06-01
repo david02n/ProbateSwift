@@ -1,0 +1,42 @@
+ProbateSwift Evaluation Flow – Developer Scope
+🔹 Section 1: About the Deceased
+Question	Type	Logic	Description (user-facing)
+Was the deceased domiciled in the UK at death?	Boolean	If “No” → Exit; ProbateSwift cannot assist	“Domicile” means the country the person considered their permanent home, even if they died elsewhere.
+Did the deceased live permanently in England or Wales?	Boolean	If “No” → Flag for review	Did they live most of their life and plan to stay in England or Wales?
+Did the deceased own non-UK (foreign) assets?	Boolean	If “Yes” → Flag; may require extra forms (IHT400)	Did they own property, money, or investments outside the UK?
+Did the deceased own land held as settled land?	Boolean	If “Yes” → Flag for specialist review	Settled land is a legal term for certain types of land trusts (rare—leave blank if unsure).
+Did the deceased hold assets under another name?	Boolean	If “Yes” → Collect aliases for grant	Did the person have any bank accounts, property, or investments in any other names (including maiden names, aliases, or nicknames)?
+Were any relatives adopted in/out of the family?	Boolean	If “Yes” → Flag for review	Was anyone adopted into or out of the deceased’s family (could affect inheritance rules)?
+
+🔹 Section 2: Tax & Estate Threshold
+Question	Type	Logic	Description (user-facing)
+Did the deceased make gifts in the 7 years before death?	Boolean	If “Yes” → Estate is not excepted, IHT400 needed	Did they give away money, property, or valuable items in the last 7 years of life?
+Was the deceased married or in a civil partnership at death?	Boolean	If “Yes” → Enable spousal exemption logic	Were they married or in a civil partnership when they died?
+Had their spouse/civil partner already died?	Boolean	If “Yes” → Enable transferable nil rate band logic	Had their spouse or partner died before them?
+Was the spouse’s nil rate band fully used?	Boolean	If “No” → Add unused portion to current threshold	Did the spouse/partner use all their inheritance tax allowance, or is some available to transfer? (If unsure, select “Not sure.”)
+Did the deceased leave their home to children or grandchildren?	Boolean	If “Yes” → Enable residence nil rate band logic	Was the family home left to children or grandchildren?
+Did the deceased live in a UK property they owned?	Boolean	If “Yes” → RNRB logic applies	Did they live in a house or flat in the UK that they owned?
+Did the deceased create or benefit from a trust?	Boolean	If “Yes” → Estate is not excepted, IHT400 needed	Did they put assets into a trust or benefit from a trust at any point? (If unsure, select “No.”)
+
+🔹 Section 3: Will & Executors
+(Show only if “there is a will” / PA1P flow)
+
+Question	Type	Logic	Description (user-facing)
+What is the date of the will?	Date	Always required for PA1P	Enter the date shown on the will.
+Did the deceased marry after making the will?	Boolean	If “Yes” → Will may be revoked; flag for review	Did the deceased get married or register a civil partnership after their last will was made? (This may affect validity.)
+Are there codicils to the will?	Boolean	If “Yes” → Originals must be provided	Are there any official changes or addendums (codicils) attached to the will?
+Were any wills made outside England and Wales?	Boolean	If “Yes” → Flag for translation/legal review	Did the deceased make any wills in another country? (Copies may be needed.)
+Are all named executors applying?	Boolean	If “No” → Must explain why for each non-applying executor	Are all the executors listed in the will actually applying for probate?
+Why is each non-applying executor not applying?	Select (renunciation, deceased, cannot locate, lacks capacity, power reserved)	Show for each non-applying executor	Please state the reason for each executor not applying (choose from the list).
+
+🔹 Section 4: About You (Applicant)
+Question	Type	Logic	Description (user-facing)
+Are you named as an executor in the will?	Boolean	If “No” → Check if applying under power of attorney	Are you personally named as an executor in the will?
+Are you acting under a power of attorney on behalf of an executor?	Boolean	If “Yes” → Proceed; else, ineligible	Are you applying as a legally appointed representative for a named executor?
+How many people are applying?	Number (1–4)	Must be at least 1, max 4	How many people will be named as applicants on this probate application?
+Is anyone under 18 receiving a gift in the will?	Boolean	If “Yes” → Require at least 2 applicants	Will any beneficiaries under 18 receive money or property from the estate? (If yes, at least two applicants must apply.)
+
+🔹 Section 5: Inheritance Tax Readiness
+Question	Type	Logic	Description (user-facing)
+Is the estate excepted from Inheritance Tax?	Boolean	If “Yes” → No IHT400 needed; proceed with PA1P or PA1A	Is the total estate below the inheritance tax threshold or otherwise exempt? (Most simple estates are excepted.)
+If not excepted, has an IHT400 been completed and submitted?	Boolean	If “No” → Block PA1P/PA1A; must submit IHT400 first	If the estate isn’t excepted, has the Inheritance Tax form (IHT400) already been completed and sent to HMRC?

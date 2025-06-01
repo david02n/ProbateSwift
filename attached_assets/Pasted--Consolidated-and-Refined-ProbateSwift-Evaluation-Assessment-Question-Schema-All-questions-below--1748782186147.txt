@@ -1,0 +1,75 @@
+✅ Consolidated and Refined ProbateSwift Evaluation & Assessment Question Schema
+All questions below are grouped into structured flows. Redundant or obsolete items (e.g. IHT205 post-2022) have been removed, conditional logic is streamlined, and questions are aligned to current HMRC and HMCTS requirements.
+
+🔹 1. Landing Page Assessment (Pre-signup, Optional)
+Objective: Determine if user is eligible and whether probate is likely required.
+
+Question	Type	Logic
+Has someone passed away?	Boolean	No → Exit (we only support probate for deceased persons)
+Did the person die in England or Wales?	Boolean	No → Exit (jurisdiction issue)
+Did the person leave a will?	Boolean	Determines probate type (Grant vs. Letters of Administration)
+What is the estimated value of the estate?	Select ("<£5k", "£5k–£325k", ">£325k")	<£5k → probate may not be required
+Are you named as an executor in the will?	Boolean, conditional on will = Yes	No → Ineligible
+Are you the spouse, child, civil partner or parent of the deceased?	Boolean, if no will	No → Ineligible (priority rules)
+
+🔹 2. Evaluation Flow (Phase 1: Estate and IHT Eligibility)
+Objective: Determine if estate is “excepted” or requires IHT400. Supports automatic threshold logic.
+
+Question	Type	Logic
+Was the deceased domiciled in the UK at death?	Boolean	No → Blocker for specialist advice / IHT401
+Did the deceased make gifts in the 7 years before death?	Boolean	Yes → IHT400 required
+Was the deceased married or in a civil partnership at death?	Boolean	Enables spousal exemption logic
+Had their spouse/partner already died?	Boolean, conditional	Required to assess transferable nil rate band (TNRB)
+Was the spouse’s nil rate band fully used?	Boolean, conditional	Used to compute available unused TNRB
+Did the deceased leave their home to children or grandchildren?	Boolean	Yes → Residence Nil Rate Band (RNRB) may apply
+Did the deceased live in a UK property they owned?	Boolean, conditional	Needed to validate RNRB
+Did the deceased benefit from or create a trust?	Boolean	Yes → IHT400 Schedule 418 required
+Did the deceased own foreign (non-UK) assets?	Boolean	Yes → IHT400 Schedule 417 required
+
+🧠 Note: Total nil rate band = Base NRB + any transferable NRB + RNRB + transferred RNRB.
+
+🔹 3. Evaluation Flow (Phase 2: Probate Eligibility & Form Completion)
+Objective: Ensure user is eligible to apply and understand data needed to complete PA1P.
+
+A. Applicant Details
+Question	Type	Logic
+Are you named as an executor in the will?	Boolean	If No → check attorney route
+Are you acting under power of attorney for an executor?	Boolean, conditional	If No → Ineligible
+How many people are applying?	Number (1–4)	2+ required if minor beneficiary exists
+Is anyone under 18 receiving a gift in the will or codicil?	Boolean	Yes → triggers 2 applicant requirement
+
+B. Deceased Details
+Question	Type	Logic
+Did the deceased live permanently in England or Wales?	Boolean	No → May trigger IHT401
+Did the deceased use any alternative names?	Boolean	Yes → Must be included on grant
+Did the deceased own foreign assets?	Boolean	Yes → IHT400 required
+Was any land held as settled land?	Boolean	Yes → Legal flag
+Were any relatives adopted in or out of the family?	Boolean	May affect relationships on PA1P
+
+C. Will & Executors
+Question	Type	Logic
+What is the date of the will?	Date	Required for PA1P
+Are there any codicils?	Boolean	Yes → Originals required
+Did the deceased marry after making the will?	Boolean	May revoke will – legal risk
+Are there any wills made outside of England and Wales?	Boolean	Yes → Translations needed
+Are all named executors applying?	Boolean	If No → ask why
+Why is each non-applying executor not applying?	Select ('Renunciation', 'Deceased', 'Cannot locate', 'Lacks capacity', 'Power reserved')	Required to explain executor omission
+
+🔹 4. IHT Readiness Check
+Note: IHT205 is no longer valid for deaths on or after 1 Jan 2022
+
+Question	Type	Logic
+Has an Inheritance Tax (IHT) declaration been submitted?	Boolean	If No → Block PA1P
+Which IHT form was completed?	Select: 'Online Excepted Estate Declaration', 'IHT400'	Used to confirm readiness for PA1P
+
+✅ Summary of Fixes Applied:
+❌ Removed all references to IHT205 for post-2022 deaths.
+
+🔁 Consolidated duplicate questions on executor eligibility, foreign assets, and residence.
+
+🔄 Renamed and grouped questions consistently for logic and readability.
+
+⚠️ Added blockers and warnings where legal review or specialist action may be needed.
+
+💡 Ensured all questions support routing logic (probate eligibility, form type, complexity level).
+

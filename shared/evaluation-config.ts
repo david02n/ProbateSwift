@@ -91,39 +91,81 @@ export const landingPageQuestions: EvaluationQuestion[] = [
   }
 ];
 
-// Detailed in-app evaluation flow - Two-phase approach with IHT calculations first
+// Detailed in-app evaluation flow - Five sections following the revised scope
 export const detailedEvaluationSections: EvaluationSection[] = [
   {
-    id: 'phase_1_iht_eligibility',
-    title: 'Phase 1: Estate & IHT Eligibility',
-    description: 'Essential estate information needed to determine IHT requirements and thresholds before proceeding',
+    id: 'deceased_details',
+    title: 'Section 1: About the Deceased',
+    description: 'Basic information about the person who has passed away',
     questions: [
       {
         key: 'deceased_domiciled_uk',
         type: 'boolean',
         title: 'Was the deceased domiciled in the UK at death?',
-        description: 'Required for "excepted estate" status determination',
+        description: '"Domicile" means the country the person considered their permanent home, even if they died elsewhere.',
         required: true
       },
       {
+        key: 'deceased_lived_england_wales',
+        type: 'boolean',
+        title: 'Did the deceased live permanently in England or Wales?',
+        description: 'Did they live most of their life and plan to stay in England or Wales?',
+        required: true
+      },
+      {
+        key: 'deceased_foreign_assets',
+        type: 'boolean',
+        title: 'Did the deceased own non-UK (foreign) assets?',
+        description: 'Did they own property, money, or investments outside the UK?',
+        required: true
+      },
+      {
+        key: 'deceased_settled_land',
+        type: 'boolean',
+        title: 'Did the deceased own land held as settled land?',
+        description: 'Settled land is a legal term for certain types of land trusts (rare—leave blank if unsure).',
+        required: true
+      },
+      {
+        key: 'deceased_other_names',
+        type: 'boolean',
+        title: 'Did the deceased hold assets under another name?',
+        description: 'Did the person have any bank accounts, property, or investments in any other names (including maiden names, aliases, or nicknames)?',
+        required: true
+      },
+      {
+        key: 'family_adoptions',
+        type: 'boolean',
+        title: 'Were any relatives adopted in/out of the family?',
+        description: 'Was anyone adopted into or out of the deceased\'s family (could affect inheritance rules)?',
+        required: true
+      }
+    ]
+  },
+  {
+    id: 'tax_estate_threshold',
+    title: 'Section 2: Tax & Estate Threshold',
+    description: 'Information needed to determine inheritance tax requirements',
+    questions: [
+      {
         key: 'gifts_last_7_years',
         type: 'boolean',
-        title: 'Did the deceased make any gifts in the 7 years before death?',
-        description: 'Gifts could reduce the nil rate band and may trigger IHT400 requirements',
+        title: 'Did the deceased make gifts in the 7 years before death?',
+        description: 'Did they give away money, property, or valuable items in the last 7 years of life?',
         required: true
       },
       {
         key: 'married_civil_partnership',
         type: 'boolean',
         title: 'Was the deceased married or in a civil partnership at death?',
-        description: 'Needed for spousal exemption and transferable nil rate band calculations',
+        description: 'Were they married or in a civil partnership when they died?',
         required: true
       },
       {
         key: 'spouse_partner_deceased',
         type: 'boolean',
-        title: 'Had their spouse/partner already died?',
-        description: 'Required to determine if transferable nil rate band (TNRB) is available',
+        title: 'Had their spouse/civil partner already died?',
+        description: 'Had their spouse or partner died before them?',
         required: true,
         conditionalLogic: {
           showIf: { married_civil_partnership: true }
@@ -133,7 +175,7 @@ export const detailedEvaluationSections: EvaluationSection[] = [
         key: 'spouse_nrb_fully_used',
         type: 'boolean',
         title: 'Was the spouse\'s nil rate band fully used?',
-        description: 'Needed to calculate available transferable nil rate band',
+        description: 'Did the spouse/partner use all their inheritance tax allowance, or is some available to transfer? (If unsure, select "Not sure.")',
         required: true,
         conditionalLogic: {
           showIf: { spouse_partner_deceased: true }
@@ -143,61 +185,105 @@ export const detailedEvaluationSections: EvaluationSection[] = [
         key: 'home_to_children_grandchildren',
         type: 'boolean',
         title: 'Did the deceased leave their home to children or grandchildren?',
-        description: 'This triggers the Residence Nil Rate Band (RNRB) which increases the IHT threshold',
+        description: 'Was the family home left to children or grandchildren?',
         required: true
       },
       {
         key: 'deceased_lived_uk_property',
         type: 'boolean',
         title: 'Did the deceased live in a UK property they owned?',
-        description: 'Required for Residence Nil Rate Band eligibility check',
-        required: true,
-        conditionalLogic: {
-          showIf: { home_to_children_grandchildren: true }
-        }
+        description: 'Did they live in a house or flat in the UK that they owned?',
+        required: true
       },
       {
         key: 'trust_involvement',
         type: 'boolean',
-        title: 'Did the deceased benefit from a trust or create any trusts?',
-        description: 'Trust involvement triggers IHT400 Schedule 418 requirements',
-        required: true
-      },
-      {
-        key: 'overseas_assets',
-        type: 'boolean',
-        title: 'Were any assets held overseas by the deceased?',
-        description: 'Foreign assets trigger IHT400 Schedule 417 and additional reporting requirements',
+        title: 'Did the deceased create or benefit from a trust?',
+        description: 'Did they put assets into a trust or benefit from a trust at any point? (If unsure, select "No.")',
         required: true
       }
     ]
   },
   {
-    id: 'applicant',
-    title: 'Applicant Details',
-    description: 'Information about who is applying for probate',
+    id: 'will_executors',
+    title: 'Section 3: Will & Executors',
+    description: 'Information about the will and executors (shown only if there is a will)',
     questions: [
       {
-        key: 'q1_executor_named',
-        type: 'boolean',
-        title: 'Are you named as an executor in the will?',
+        key: 'will_date',
+        type: 'date',
+        title: 'What is the date of the will?',
+        description: 'Enter the date shown on the will.',
         required: true
       },
       {
-        key: 'q2_poas',
+        key: 'married_after_will',
+        type: 'boolean',
+        title: 'Did the deceased marry after making the will?',
+        description: 'Did the deceased get married or register a civil partnership after their last will was made? (This may affect validity.)',
+        required: true
+      },
+      {
+        key: 'will_codicils',
+        type: 'boolean',
+        title: 'Are there codicils to the will?',
+        description: 'Are there any official changes or addendums (codicils) attached to the will?',
+        required: true
+      },
+      {
+        key: 'foreign_wills',
+        type: 'boolean',
+        title: 'Were any wills made outside England and Wales?',
+        description: 'Did the deceased make any wills in another country? (Copies may be needed.)',
+        required: true
+      },
+      {
+        key: 'all_executors_applying',
+        type: 'boolean',
+        title: 'Are all named executors applying?',
+        description: 'Are all the executors listed in the will actually applying for probate?',
+        required: true
+      },
+      {
+        key: 'non_applying_executor_reasons',
+        type: 'select',
+        title: 'Why is each non-applying executor not applying?',
+        description: 'Please state the reason for each executor not applying (choose from the list).',
+        required: false,
+        options: ['renunciation', 'deceased', 'cannot locate', 'lacks capacity', 'power reserved'],
+        conditionalLogic: {
+          showIf: { all_executors_applying: false }
+        }
+      }
+    ]
+  },
+  {
+    id: 'about_applicant',
+    title: 'Section 4: About You (Applicant)',
+    description: 'Information about the person applying for probate',
+    questions: [
+      {
+        key: 'named_executor_in_will',
+        type: 'boolean',
+        title: 'Are you named as an executor in the will?',
+        description: 'Are you personally named as an executor in the will?',
+        required: true
+      },
+      {
+        key: 'acting_under_poa',
         type: 'boolean',
         title: 'Are you acting under a power of attorney on behalf of an executor?',
-        description: 'If No, user is ineligible',
-        required: false,
+        description: 'Are you applying as a legally appointed representative for a named executor?',
+        required: true,
         conditionalLogic: {
-          showIf: { q1_executor_named: false }
+          showIf: { named_executor_in_will: false }
         }
       },
       {
-        key: 'q3_applicant_count',
+        key: 'number_of_applicants',
         type: 'number',
         title: 'How many people are applying?',
-        description: 'Maximum 4 applicants allowed. Flag if 2+ required based on Q4',
+        description: 'How many people will be named as applicants on this probate application?',
         required: true,
         validation: {
           min: 1,
@@ -205,130 +291,34 @@ export const detailedEvaluationSections: EvaluationSection[] = [
         }
       },
       {
-        key: 'q4_under18_gift',
+        key: 'under18_beneficiaries',
         type: 'boolean',
-        title: 'Is anyone under 18 receiving a gift in the will or codicil?',
-        description: 'If Yes, at least 2 applicants are mandatory',
+        title: 'Is anyone under 18 receiving a gift in the will?',
+        description: 'Will any beneficiaries under 18 receive money or property from the estate? (If yes, at least two applicants must apply.)',
         required: true
       }
     ]
   },
   {
-    id: 'deceased',
-    title: "Deceased's Information",
-    description: 'Details about the person who has died',
+    id: 'iht_readiness',
+    title: 'Section 5: Inheritance Tax Readiness',
+    description: 'Inheritance tax form completion status',
     questions: [
       {
-        key: 'q5_domicile_uk',
+        key: 'estate_excepted_from_iht',
         type: 'boolean',
-        title: 'Did the deceased live permanently in England or Wales?',
-        description: 'If No, flag potential IHT401 need',
+        title: 'Is the estate excepted from Inheritance Tax?',
+        description: 'Is the total estate below the inheritance tax threshold or otherwise exempt? (Most simple estates are excepted.)',
         required: true
       },
       {
-        key: 'q6_alt_names',
+        key: 'iht400_completed',
         type: 'boolean',
-        title: 'Did the deceased hold any assets under another name?',
-        description: 'If Yes, list must appear on the grant',
-        required: true
-      },
-      {
-        key: 'q7_foreign_assets',
-        type: 'boolean',
-        title: 'Did the deceased own foreign (non-UK) assets?',
-        description: 'If Yes, may trigger IHT400 requirement',
-        required: true
-      },
-      {
-        key: 'q8_settled_land',
-        type: 'boolean',
-        title: 'Was any land still held as settled land?',
-        description: 'If Yes, flag for legal review',
-        required: true
-      },
-      {
-        key: 'q9_adoptions',
-        type: 'boolean',
-        title: 'Were any relatives adopted in/out of the family?',
-        description: 'If Yes, may affect inheritance relationships',
-        required: true
-      }
-    ]
-  },
-  {
-    id: 'will',
-    title: 'Will and Executors',
-    description: 'Information about the will and other executors',
-    questions: [
-      {
-        key: 'q10_will_date',
-        type: 'date',
-        title: 'What is the date of the will?',
-        description: 'Mandatory for PA1P',
-        required: true
-      },
-      {
-        key: 'q11_codicils',
-        type: 'boolean',
-        title: 'Are there codicils to the will?',
-        description: 'If Yes, originals must be submitted',
-        required: true
-      },
-      {
-        key: 'q12_will_revoked',
-        type: 'boolean',
-        title: 'Did the deceased marry after making the will?',
-        description: 'If Yes, will may be invalid – show warning',
-        required: true
-      },
-      {
-        key: 'q13_foreign_wills',
-        type: 'boolean',
-        title: 'Any wills made outside England and Wales?',
-        description: 'If Yes, translations may be required',
-        required: true
-      },
-      {
-        key: 'q14_all_executors_applying',
-        type: 'boolean',
-        title: 'Are all named executors applying?',
-        description: 'If No, ask Q15',
-        required: true
-      },
-      {
-        key: 'q15_non_applying_reasons',
-        type: 'select',
-        title: 'Why is each non-applying executor not applying?',
-        description: 'Required to determine Section 5, PA11, renunciation, etc.',
-        required: false,
-        options: ['renunciation', 'deceased', 'cannot_locate', 'lacks_capacity', 'power_reserved'],
+        title: 'If not excepted, has an IHT400 been completed and submitted?',
+        description: 'If the estate isn\'t excepted, has the Inheritance Tax form (IHT400) already been completed and sent to HMRC?',
+        required: true,
         conditionalLogic: {
-          showIf: { q14_all_executors_applying: false }
-        }
-      }
-    ]
-  },
-  {
-    id: 'iht',
-    title: 'Inheritance Tax Readiness',
-    description: 'IHT form completion status',
-    questions: [
-      {
-        key: 'q16_iht_done',
-        type: 'boolean',
-        title: 'Has an Inheritance Tax (IHT) form been completed?',
-        description: 'If No, block PA1P until completed',
-        required: true
-      },
-      {
-        key: 'q17_iht_form_type',
-        type: 'select',
-        title: 'Which form was completed?',
-        description: 'Pre-condition for submitting PA1P',
-        required: false,
-        options: ['IHT205', 'IHT400'],
-        conditionalLogic: {
-          showIf: { q16_iht_done: true }
+          showIf: { estate_excepted_from_iht: false }
         }
       }
     ]
