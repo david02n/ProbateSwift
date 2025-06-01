@@ -153,6 +153,16 @@ export const EvaluationFlow: React.FC<EvaluationFlowProps> = ({ caseId, onComple
   const handleAnswer = (value: any) => {
     const newAnswers = { ...answers, [currentQuestion.key]: value };
     setAnswers(newAnswers);
+    
+    // Auto-advance to next question after a brief delay for visual feedback
+    setTimeout(() => {
+      if (currentQuestionIndex < visibleQuestions.length - 1) {
+        setCurrentQuestionIndex(currentQuestionIndex + 1);
+      } else {
+        setIsComplete(true);
+        onComplete?.(derivedFlags);
+      }
+    }, 300);
   };
 
   const goToNext = () => {
@@ -233,7 +243,34 @@ export const EvaluationFlow: React.FC<EvaluationFlowProps> = ({ caseId, onComple
           <Input
             type="number"
             value={value || ''}
-            onChange={(e) => handleAnswer(Number(e.target.value))}
+            onChange={(e) => {
+              const newAnswers = { ...answers, [currentQuestion.key]: Number(e.target.value) };
+              setAnswers(newAnswers);
+            }}
+            onBlur={() => {
+              // Auto-advance on blur for number inputs
+              setTimeout(() => {
+                if (currentQuestionIndex < visibleQuestions.length - 1) {
+                  setCurrentQuestionIndex(currentQuestionIndex + 1);
+                } else {
+                  setIsComplete(true);
+                  onComplete?.(derivedFlags);
+                }
+              }, 300);
+            }}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter') {
+                // Auto-advance on Enter key
+                setTimeout(() => {
+                  if (currentQuestionIndex < visibleQuestions.length - 1) {
+                    setCurrentQuestionIndex(currentQuestionIndex + 1);
+                  } else {
+                    setIsComplete(true);
+                    onComplete?.(derivedFlags);
+                  }
+                }, 300);
+              }
+            }}
             placeholder="Enter amount"
             min={question.validation?.min}
             max={question.validation?.max}
@@ -248,7 +285,20 @@ export const EvaluationFlow: React.FC<EvaluationFlowProps> = ({ caseId, onComple
           <Input
             type="date"
             value={value || ''}
-            onChange={(e) => handleAnswer(e.target.value)}
+            onChange={(e) => {
+              const newAnswers = { ...answers, [currentQuestion.key]: e.target.value };
+              setAnswers(newAnswers);
+              
+              // Auto-advance after date selection
+              setTimeout(() => {
+                if (currentQuestionIndex < visibleQuestions.length - 1) {
+                  setCurrentQuestionIndex(currentQuestionIndex + 1);
+                } else {
+                  setIsComplete(true);
+                  onComplete?.(derivedFlags);
+                }
+              }, 300);
+            }}
             max={isWillOrCodicilDate ? today : undefined}
           />
         );
