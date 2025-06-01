@@ -1,0 +1,80 @@
+Block 4: Evaluation Flow & Eligibility Routing
+Goal: Guide users through the required evaluation questions, determine eligibility, and trigger the right probate and IHT path.
+
+Scope
+1. Evaluation Flow Structure
+Present five sequential sections:
+
+About the Deceased
+
+Tax & Estate Threshold
+
+Will & Executors (only if “there is a will” / PA1P)
+
+About You (Applicant)
+
+Inheritance Tax Readiness
+
+Only one section visible at a time; user must complete before moving on.
+
+2. Questions & Guidance
+Use the agreed questions, types, and user-facing descriptions as defined in the latest scope.
+(See table format in previous messages. If needed, provide developer with the CSV/JSON.)
+
+Provide tooltips/help text for all questions using the user-friendly descriptions.
+
+3. Conditional Logic & Routing
+If “There is a will” is No:
+
+Skip Section 3 (“Will & Executors”).
+
+Store all answers in a structured table (evaluation_answers: userId, section, questionKey, value, timestamp).
+
+On each section’s completion, trigger the appropriate next step:
+
+After Section 1: Prompt to add deceased in People tab.
+
+After Section 2: Prompt to add assets/liabilities in Estate tab.
+
+After Section 3: Prompt to upload will/codicils in Documents tab (if shown).
+
+After Section 4: Prompt to add applicants in People tab.
+
+After Section 5: Prompt to proceed to milestone/dashboard or show blockers if incomplete.
+
+4. Evaluation Outcomes
+Use the logic from evaluation answers to determine:
+
+Eligibility to apply (must be executor or attorney, correct jurisdiction, etc.)
+
+Whether probate is required.
+
+Estate complexity (excepted or non-excepted).
+
+Required form: PA1P/PA1A and IHT400 (if needed).
+
+Set and persist flags (e.g., eligible_to_apply, probate_type, iht_required, etc.) in evaluation_flags.
+
+5. User Experience
+Show “complete” status on each section when all required questions are answered.
+
+Make it clear when a section is “not relevant” or “skipped” (e.g., Will & Executors for no-will/PA1A).
+
+User can revisit and edit previous answers at any time.
+
+6. Error Handling & Edge Cases
+If any “blocker” answer is given (e.g., not domiciled in UK, ineligible applicant),
+
+Show clear message: “ProbateSwift cannot assist at this time” or offer link to guidance.
+
+If user is unsure about a question, allow “Not sure” (where appropriate), and guide them to find more info.
+
+7. Developer Deliverables
+Components and database logic for multi-section evaluation form.
+
+All routing logic, conditional display, and section-complete triggers.
+
+Tooltips/descriptions shown to users as help or info icons.
+
+Flags and eligibility results to be integrated with milestone logic in the dashboard.
+

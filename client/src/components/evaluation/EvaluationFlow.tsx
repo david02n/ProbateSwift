@@ -44,6 +44,7 @@ export const EvaluationFlow: React.FC<EvaluationFlowProps> = ({ caseId, onComple
 
   // Initialize answers from existing evaluation and skip to first unanswered question (only on initial load)
   const [hasInitialized, setHasInitialized] = useState(false);
+  const [blockerMessage, setBlockerMessage] = useState<string | null>(null);
   
   useEffect(() => {
     if (existingEvaluation && typeof existingEvaluation === 'object' && 'answers' in existingEvaluation && !hasInitialized) {
@@ -127,8 +128,21 @@ export const EvaluationFlow: React.FC<EvaluationFlowProps> = ({ caseId, onComple
     section.questions.map(q => ({ ...q, sectionId: section.id }))
   );
 
+  // Filter sections based on conditional logic (e.g., skip Will & Executors if no will)
+  const visibleSections = detailedEvaluationSections.filter(section => {
+    if (section.id === 'will_executors') {
+      // Only show Will & Executors section if there is a will
+      return answers.has_will === true;
+    }
+    return true;
+  });
+
   // Filter visible questions based on conditional logic
   const visibleQuestions = allQuestions.filter(question => {
+    // First check if the section should be visible
+    const sectionVisible = visibleSections.some(section => section.id === question.sectionId);
+    if (!sectionVisible) return false;
+
     if (!question.conditionalLogic?.showIf) return true;
     
     return Object.entries(question.conditionalLogic.showIf).every(([key, expectedValue]) => {
@@ -154,15 +168,63 @@ export const EvaluationFlow: React.FC<EvaluationFlowProps> = ({ caseId, onComple
     const newAnswers = { ...answers, [currentQuestion.key]: value };
     setAnswers(newAnswers);
     
+    // Check for blocker answers that make user ineligible
+    const blockerChecks = {
+      'deceased_domiciled_uk': {
+        value: false,
+        message: 'ProbateSwift cannot assist with estates where the deceased was not domiciled in the UK. You may need to seek specialist legal advice for international probate matters.'
+      },
+      'deceased_lived_england_wales': {
+        value: false,
+        message: 'ProbateSwift is designed for probate applications in England and Wales only. For other jurisdictions, please contact the relevant probate registry.'
+      },
+      'named_executor_in_will': {
+        value: false,
+        condition: () => !newAnswers.acting_under_poa,
+        message: 'Only named executors or their legally appointed representatives can apply for probate when there is a will. You may need to contact the named executors or seek legal advice.'
+      }
+    };
+
+    const blocker = blockerChecks[currentQuestion.key as keyof typeof blockerChecks];
+    if (blocker && value === blocker.value) {
+      const hasCondition = 'condition' in blocker && typeof blocker.condition === 'function';
+      if (!hasCondition || (hasCondition && blocker.condition())) {
+        setAnswers(newAnswers);
+        setBlockerMessage(blocker.message);
+        return;
+      }
+    }
+    
     // Auto-advance to next question after a brief delay for visual feedback
     setTimeout(() => {
       if (currentQuestionIndex < visibleQuestions.length - 1) {
         setCurrentQuestionIndex(currentQuestionIndex + 1);
       } else {
+        // Check if we've completed a section
+        const currentSectionQuestions = visibleQuestions.filter(q => q.sectionId === currentQuestion.sectionId);
+        const isLastInSection = currentSectionQuestions[currentSectionQuestions.length - 1].key === currentQuestion.key;
+        
+        if (isLastInSection) {
+          showSectionCompletionPrompt(currentQuestion.sectionId);
+        }
+        
         setIsComplete(true);
         onComplete?.(derivedFlags);
       }
     }, 300);
+  };
+
+  const showSectionCompletionPrompt = (sectionId: string) => {
+    const prompts = {
+      'deceased_details': 'Section 1 complete! Next, add the deceased person\'s details in the People tab.',
+      'tax_estate_threshold': 'Section 2 complete! Please add assets and liabilities in the Estate tab.',
+      'will_executors': 'Section 3 complete! Upload the will and any codicils in the Documents tab.',
+      'about_applicant': 'Section 4 complete! Add all applicants in the People tab.',
+      'iht_readiness': 'Evaluation complete! Proceed to your milestone dashboard to continue.'
+    };
+    
+    // You could show a toast notification or modal here
+    console.log(prompts[sectionId as keyof typeof prompts]);
   };
 
   const goToNext = () => {
@@ -375,10 +437,12 @@ export const EvaluationFlow: React.FC<EvaluationFlowProps> = ({ caseId, onComple
     <div className="w-full max-w-6xl mx-auto space-y-6">
       {/* Section Navigation */}
       <div className="flex flex-wrap gap-2">
-        {detailedEvaluationSections.map((section, index) => {
+        {visibleSections.map((section, index) => {
           const sectionQuestions = visibleQuestions.filter(q => q.sectionId === section.id);
           const answeredInSection = sectionQuestions.filter(q => answers[q.key] !== undefined).length;
           const isCurrentSection = section.id === currentQuestion.sectionId;
+          const isComplete = answeredInSection === sectionQuestions.length;
+          const isSkipped = section.id === 'will_executors' && answers.has_will === false;
           
           return (
             <Button
@@ -389,11 +453,19 @@ export const EvaluationFlow: React.FC<EvaluationFlowProps> = ({ caseId, onComple
               className="relative"
             >
               {section.title}
-              {answeredInSection > 0 && (
-                <Badge className="ml-2 px-1 py-0 text-xs">
+              {isSkipped ? (
+                <Badge className="ml-2 px-1 py-0 text-xs bg-gray-100 text-gray-600">
+                  Skipped
+                </Badge>
+              ) : isComplete ? (
+                <Badge className="ml-2 px-1 py-0 text-xs bg-green-100 text-green-800">
+                  Complete
+                </Badge>
+              ) : answeredInSection > 0 ? (
+                <Badge className="ml-2 px-1 py-0 text-xs bg-blue-100 text-blue-800">
                   {answeredInSection}/{sectionQuestions.length}
                 </Badge>
-              )}
+              ) : null}
             </Button>
           );
         })}
