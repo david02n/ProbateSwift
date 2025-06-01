@@ -56,21 +56,22 @@ export const EvaluationFlow: React.FC<EvaluationFlowProps> = ({ caseId, onComple
           section.questions.map(q => ({ ...q, sectionId: section.id, sectionIndex }))
         );
         
-        const firstUnansweredQuestion = allQuestions.find(question => {
-          // Check if question should be visible based on conditional logic
-          if (question.conditionalLogic?.showIf) {
-            const shouldShow = Object.entries(question.conditionalLogic.showIf).every(([key, expectedValue]) => {
-              const actualValue = evaluation.answers[key];
-              if (Array.isArray(expectedValue)) {
-                return expectedValue.includes(actualValue);
-              }
-              return actualValue === expectedValue;
-            });
-            if (!shouldShow) return false;
-          }
+        // Filter to only visible questions first
+        const visibleQuestions = allQuestions.filter(question => {
+          if (!question.conditionalLogic?.showIf) return true;
           
-          // Check if question is answered
-          return !evaluation.answers[question.key];
+          return Object.entries(question.conditionalLogic.showIf).every(([key, expectedValue]) => {
+            const actualValue = evaluation.answers[key];
+            if (Array.isArray(expectedValue)) {
+              return expectedValue.includes(actualValue);
+            }
+            return actualValue === expectedValue;
+          });
+        });
+        
+        // Find first unanswered question among visible ones
+        const firstUnansweredQuestion = visibleQuestions.find(question => {
+          return evaluation.answers[question.key] === undefined;
         });
         
         if (firstUnansweredQuestion) {
