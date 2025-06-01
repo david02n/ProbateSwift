@@ -42,14 +42,16 @@ export const EvaluationFlow: React.FC<EvaluationFlowProps> = ({ caseId, onComple
     },
   });
 
-  // Initialize answers from existing evaluation and skip to first unanswered question
+  // Initialize answers from existing evaluation and skip to first unanswered question (only on initial load)
+  const [hasInitialized, setHasInitialized] = useState(false);
+  
   useEffect(() => {
-    if (existingEvaluation && typeof existingEvaluation === 'object' && 'answers' in existingEvaluation) {
+    if (existingEvaluation && typeof existingEvaluation === 'object' && 'answers' in existingEvaluation && !hasInitialized) {
       const evaluation = existingEvaluation as any;
       if (evaluation.answers) {
         setAnswers(evaluation.answers);
         
-        // Find first unanswered question and navigate to its section
+        // Find first unanswered question and navigate to its section (only on initial load)
         const allQuestions = detailedEvaluationSections.flatMap((section, sectionIndex) => 
           section.questions.map(q => ({ ...q, sectionId: section.id, sectionIndex }))
         );
@@ -86,8 +88,10 @@ export const EvaluationFlow: React.FC<EvaluationFlowProps> = ({ caseId, onComple
       if ('completedAt' in evaluation && evaluation.completedAt) {
         setIsComplete(true);
       }
+      
+      setHasInitialized(true);
     }
-  }, [existingEvaluation]);
+  }, [existingEvaluation, hasInitialized]);
 
   // Auto-save on answer changes
   useEffect(() => {
