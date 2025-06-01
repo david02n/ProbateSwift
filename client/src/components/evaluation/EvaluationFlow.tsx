@@ -279,97 +279,21 @@ export const EvaluationFlow: React.FC<EvaluationFlowProps> = ({ caseId, onComple
     );
   }
 
-  if (isComplete && derivedFlags) {
+  // Show comprehensive results when evaluation is complete
+  if ((isComplete && derivedFlags) || showResults) {
     return (
-      <Card className="w-full max-w-4xl mx-auto">
-        <CardHeader className="text-center">
-          <div className="flex justify-center mb-4">
-            <CheckCircle className="h-16 w-16 text-green-500" />
-          </div>
-          <CardTitle className="text-2xl">Evaluation Complete</CardTitle>
-          <p className="text-muted-foreground">
-            Your detailed probate assessment has been completed and saved.
-          </p>
-        </CardHeader>
-        <CardContent className="space-y-6">
-          <div className="grid md:grid-cols-2 gap-6">
-            <div className="space-y-4">
-              <h3 className="font-semibold text-lg">Application Summary</h3>
-              <div className="space-y-2">
-                <div className="flex justify-between">
-                  <span>Probate Type:</span>
-                  <Badge variant="outline">{derivedFlags.probate_type?.replace('_', ' ')}</Badge>
-                </div>
-                <div className="flex justify-between">
-                  <span>IHT Form Required:</span>
-                  <Badge variant="outline">{derivedFlags.iht_form_required}</Badge>
-                </div>
-                <div className="flex justify-between">
-                  <span>Application Ready:</span>
-                  <Badge variant={derivedFlags.application_ready ? "default" : "destructive"}>
-                    {derivedFlags.application_ready ? 'Yes' : 'No'}
-                  </Badge>
-                </div>
-              </div>
-            </div>
-
-            <div className="space-y-4">
-              <h3 className="font-semibold text-lg">Required Documents</h3>
-              <div className="space-y-2">
-                {derivedFlags.needs_renunciation_form && (
-                  <div className="flex items-center space-x-2">
-                    <AlertTriangle className="h-4 w-4 text-amber-500" />
-                    <span className="text-sm">Renunciation form required</span>
-                  </div>
-                )}
-                {derivedFlags.needs_pa13 && (
-                  <div className="flex items-center space-x-2">
-                    <AlertTriangle className="h-4 w-4 text-amber-500" />
-                    <span className="text-sm">PA13 form required</span>
-                  </div>
-                )}
-                {derivedFlags.needs_translation && (
-                  <div className="flex items-center space-x-2">
-                    <AlertTriangle className="h-4 w-4 text-amber-500" />
-                    <span className="text-sm">Translation required</span>
-                  </div>
-                )}
-              </div>
-            </div>
-          </div>
-
-          {!derivedFlags.application_ready && derivedFlags.missing_requirements?.length > 0 && (
-            <div className="p-4 bg-amber-50 rounded-lg border border-amber-200">
-              <h4 className="font-semibold text-amber-800 mb-2">Outstanding Requirements:</h4>
-              <ul className="space-y-1">
-                {derivedFlags.missing_requirements.map((req: string, index: number) => (
-                  <li key={index} className="text-sm text-amber-700">• {req}</li>
-                ))}
-              </ul>
-            </div>
-          )}
-
-          <div className="flex gap-4 pt-4">
-            <Button 
-              onClick={() => window.location.href = `/dashboard`}
-              className="flex-1"
-            >
-              Return to Dashboard
-              <ArrowRight className="ml-2 h-4 w-4" />
-            </Button>
-            <Button 
-              variant="outline" 
-              onClick={() => {
-                setIsComplete(false);
-                setCurrentQuestionIndex(0);
-              }}
-              className="flex-1"
-            >
-              Review Answers
-            </Button>
-          </div>
-        </CardContent>
-      </Card>
+      <div className="w-full max-w-4xl mx-auto">
+        <EvaluationResults 
+          answers={answers}
+          onContinue={() => window.location.href = `/dashboard`}
+          onRetakeEvaluation={() => {
+            setIsComplete(false);
+            setShowResults(false);
+            setCurrentSectionIndex(0);
+            setCurrentQuestionIndex(0);
+          }}
+        />
+      </div>
     );
   }
 
@@ -466,6 +390,15 @@ export const EvaluationFlow: React.FC<EvaluationFlowProps> = ({ caseId, onComple
                   <span className="text-sm text-muted-foreground">
                     This question is required
                   </span>
+                )}
+                
+                {Object.keys(answers).length > 3 && (
+                  <Button
+                    variant="outline"
+                    onClick={() => setShowResults(true)}
+                  >
+                    View Results
+                  </Button>
                 )}
                 
                 <Button
