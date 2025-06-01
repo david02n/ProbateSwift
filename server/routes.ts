@@ -2570,5 +2570,81 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Milestone status endpoint - tracks completion of fast-track milestones
+  app.get('/api/milestone-status', async (req: Request, res: Response) => {
+    try {
+      const caseId = req.query.caseId ? parseInt(req.query.caseId as string) : undefined;
+      const userId = req.user?.id;
+
+      if (!userId) {
+        return res.status(401).json({ error: 'Authentication required' });
+      }
+
+      if (!caseId) {
+        return res.status(400).json({ error: 'caseId parameter required' });
+      }
+
+      // Check milestone completion status based on evaluation responses
+      const milestoneStatus = {
+        applicantAdded: false,
+        deathCertificateUploaded: false,
+        deceasedAdded: false,
+        willUploaded: false,
+        estateValued: false,
+        ihtComplete: false
+      };
+
+      // Get evaluation data to check completion status
+      try {
+        const evaluation = await storage.getEvaluationResponse(caseId);
+        if (evaluation?.answers) {
+          const answers = evaluation.answers;
+          
+          // Check if applicant information is complete
+          if (answers.applicant_is_executor === true) {
+            milestoneStatus.applicantAdded = true;
+          }
+
+          // Check if death certificate mentioned/uploaded
+          if (answers.death_certificate_available === true) {
+            milestoneStatus.deathCertificateUploaded = true;
+          }
+
+          // Check if deceased details are provided
+          if (answers.deceased_name || answers.deceased_date_of_death) {
+            milestoneStatus.deceasedAdded = true;
+          }
+
+          // Check if will information is complete
+          if (answers.will_exists === true) {
+            milestoneStatus.willUploaded = true;
+          }
+
+          // Check if estate is valued
+          if (answers.gross_estate_value && answers.gross_estate_value > 0) {
+            milestoneStatus.estateValued = true;
+            
+            // Check IHT completion for excepted estates
+            const grossValue = answers.gross_estate_value;
+            const isExcepted = grossValue < 325000 && 
+                             !answers.gifts_last_7_years &&
+                             !answers.trust_involvement;
+            
+            if (isExcepted) {
+              milestoneStatus.ihtComplete = true;
+            }
+          }
+        }
+      } catch (error) {
+        console.log('No evaluation data found for milestone status');
+      }
+
+      res.json(milestoneStatus);
+    } catch (error) {
+      console.error('Error computing milestone status:', error);
+      res.status(500).json({ error: 'Failed to compute milestone status' });
+    }
+  });
+
   return httpServer;
 }

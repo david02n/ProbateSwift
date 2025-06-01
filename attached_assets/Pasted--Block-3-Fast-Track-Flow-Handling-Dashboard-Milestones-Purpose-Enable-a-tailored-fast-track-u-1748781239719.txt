@@ -1,0 +1,105 @@
+🔷 Block 3: Fast-Track Flow Handling & Dashboard Milestones
+✅ Purpose
+Enable a tailored fast-track user experience for the most straightforward cases (e.g. standard probate with a will and an excepted estate). The goal is to surface clear next steps, allow the user to complete the application in minimal time, and mark key sections as “done” once all required data is gathered.
+
+🧩 Trigger Conditions (from RoutingState)
+Enable the fast-track flow if:
+
+routingState.eligibleToApply === true
+
+routingState.probateRequired === true
+
+routingState.estateIsExcepted === true
+
+routingState.fastTrackEligible === true
+
+🗺️ Dashboard Behaviour
+🧱 Milestone Tiles (Core UI Feature)
+Show structured tiles in the dashboard for:
+
+Add Yourself as an Applicant
+
+✅ Mark done if: current user has been added to People tab with role executor or applicant
+
+ℹ️ Show prompt: "You told us you’re the only applicant – add yourself to the People section to continue"
+
+Upload Death Certificate
+
+✅ Done if: document type = death_certificate has been uploaded and validated
+
+Add Deceased Details
+
+✅ Done if: deceased person record exists in People tab with DOB, DOD
+
+Upload the Will
+
+✅ Done if: document type = will uploaded
+
+ℹ️ Show prompt: “You told us there’s a will – please upload it here”
+
+Declare the Estate
+
+✅ Done if: gross and net values filled in Estate tab
+
+ℹ️ Show prompt: “We’ll use this to determine your Inheritance Tax form”
+
+Confirm Inheritance Tax Status
+
+✅ Done if: either user declares online IHT form submitted, or estate routed to IHT400 (and form uploaded)
+
+ℹ️ Show prompt: “You must submit or complete your IHT declaration before applying for probate”
+
+Generate PA1P Form
+
+✅ Unlocked only when all prior steps are complete
+
+🔒 Disabled if estate is not excepted or routingState incomplete
+
+🧠 Dynamic Section Completion
+Each major section of the dashboard (People, Estate, Documents, IHT) will display "Done" status if all required fields/documents have been captured, based on the current RoutingState.
+
+For example:
+
+If the estate is excepted and IHT400 is not required → only minimal estate data is needed.
+
+If multiple applicants are declared → People section expects 2+ applicants.
+
+Section Checklist Logic:
+Section	“Done” if...
+People	Required number of applicants (based on declared count) + deceased added
+Documents	Will + death certificate uploaded
+Estate	Gross + net value filled, and values match declared answers or documents
+IHT	Status declared or document uploaded
+
+🔃 Real-Time Progress Tracking
+Use WebSockets or polling (if easier) to keep milestone status up-to-date
+
+Auto-refresh milestone states when data is saved or documents uploaded
+
+Allow user to manually “refresh status” if needed
+
+🧪 Edge Handling
+✅ If user declared “single executor” but later adds more applicants → auto-adjust People milestone expectations
+
+⚠️ If uploaded document is incomplete or flagged → show warning and do not mark milestone as complete
+
+🔄 If routingState changes (e.g. estate declared no longer excepted) → re-calculate milestone unlocks
+
+💬 User Messaging
+Use helper banners or tooltips to clarify:
+
+Why a milestone is locked
+
+What data is missing
+
+Where to complete it (deep link to relevant tab/section)
+
+Optional CTA: “I can’t provide this yet” → mark section as “pending” and allow movement
+
+📦 Backend Support
+If not already available, expose:
+
+/api/milestone-status (GET): Returns checklist status based on routingState + DB
+
+/api/refresh-routing (POST): Forces a recompute of RoutingState and milestones
+
