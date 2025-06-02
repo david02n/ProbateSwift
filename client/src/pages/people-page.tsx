@@ -4,6 +4,7 @@ import AuthenticatedLayout from "@/components/layout/AuthenticatedLayout";
 import NewHeader from "@/components/layout/NewHeader";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import DeceasedFormStatus from "@/components/deceased/DeceasedFormStatus";
+import PersonCompletionStatus, { usePersonCompletionStatus } from "@/components/people/PersonCompletionStatus";
 import { Button } from "@/components/ui/button";
 import { 
   User, 
