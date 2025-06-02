@@ -101,6 +101,7 @@ export interface IStorage {
   createDeceasedFormFields(data: InsertDeceasedFormFields): Promise<DeceasedFormFields>;
   updateDeceasedFormFields(personId: number, data: Partial<InsertDeceasedFormFields>): Promise<DeceasedFormFields | undefined>;
   isDeceasedFormFieldsComplete(personId: number): Promise<boolean>;
+  getDeceasedFormFieldsCompletionStatus(personId: number): Promise<{ complete: boolean; missingFields: string[] }>;
   
   // Evaluation Response methods
   getEvaluationResponse(caseId: number): Promise<EvaluationResponse | undefined>;
@@ -1072,6 +1073,59 @@ export class DatabaseStorage implements IStorage {
     
     // All required fields are present
     return true;
+  }
+
+  async getDeceasedFormFieldsCompletionStatus(personId: number): Promise<{ complete: boolean; missingFields: string[] }> {
+    const fields = await this.getDeceasedFormFields(personId);
+    if (!fields) {
+      return { 
+        complete: false, 
+        missingFields: ['Date of Birth', 'Date of Death', 'Domicile Status', 'Marital Status', 'Land Settlement Status', 'Executors Applying Status', 'Adoption History Status'] 
+      };
+    }
+    
+    const missingFields: string[] = [];
+    
+    // Check required fields
+    if (!fields.dateOfBirth) missingFields.push('Date of Birth');
+    if (!fields.dateOfDeath) missingFields.push('Date of Death');
+    if (fields.domicileInEnglandOrWales === null) missingFields.push('Domicile in England or Wales');
+    if (!fields.maritalStatus) missingFields.push('Marital Status');
+    if (fields.landWasSettled === null) missingFields.push('Land Settlement Status');
+    if (fields.executorsApplying === null) missingFields.push('Executors Applying Status');
+    if (fields.hasAdoptionHistory === null) missingFields.push('Adoption History Status');
+    
+    // Check conditional fields
+    if (fields.maritalStatus === 'married' && !fields.marriedDate) {
+      missingFields.push('Marriage Date');
+    }
+    
+    if (fields.maritalStatus === 'divorced') {
+      if (!fields.divorcedDate) missingFields.push('Divorce Date');
+      if (!fields.divorceCourt) missingFields.push('Divorce Court');
+    }
+    
+    if (fields.maritalStatus === 'separated') {
+      if (!fields.separatedDate) missingFields.push('Separation Date');
+      if (!fields.separationCourt) missingFields.push('Separation Court');
+    }
+    
+    if (fields.hadForeignAssets && !fields.foreignAssetValueGbp) {
+      missingFields.push('Foreign Asset Value');
+    }
+    
+    if (fields.wasKnownByOtherNames && (!fields.otherNamesHeldAssets || fields.otherNamesHeldAssets.length === 0)) {
+      missingFields.push('Other Names Details');
+    }
+    
+    if (fields.hasAdoptionHistory && (!fields.adoptedRelatives || fields.adoptedRelatives.length === 0)) {
+      missingFields.push('Adopted Relatives Details');
+    }
+    
+    return {
+      complete: missingFields.length === 0,
+      missingFields
+    };
   }
 
   // User methods

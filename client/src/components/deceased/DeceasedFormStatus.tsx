@@ -39,6 +39,7 @@ const DeceasedFormStatus: React.FC<DeceasedFormStatusProps> = ({ executorId }) =
 
   const isComplete = completionData?.complete || false;
   const formExists = completionData?.exists || false;
+  const missingFields = completionData?.missingFields || [];
 
   const handleNavigateToForm = () => {
     navigate(`/people/${executorId}/deceased-details`);
@@ -66,22 +67,42 @@ const DeceasedFormStatus: React.FC<DeceasedFormStatusProps> = ({ executorId }) =
           </Button>
         </div>
       ) : (
-        <div className="flex items-center">
-          {formExists ? (
-            <span className="text-xs bg-amber-100 text-amber-800 px-2 py-0.5 rounded-full flex items-center mr-2">
-              <AlertTriangle className="h-3 w-3 mr-1" />
-              Incomplete
-            </span>
-          ) : null}
-          <Button 
-            variant="outline" 
-            size="sm" 
-            onClick={handleNavigateToForm}
-            className="h-6 text-xs"
-          >
-            {formExists ? 'Continue' : 'Complete Deceased Details'}
-            <ArrowRight className="h-3 w-3 ml-1" />
-          </Button>
+        <div className="space-y-2">
+          <div className="flex items-center">
+            {formExists ? (
+              <span className="text-xs bg-amber-100 text-amber-800 px-2 py-0.5 rounded-full flex items-center mr-2">
+                <AlertTriangle className="h-3 w-3 mr-1" />
+                Incomplete
+              </span>
+            ) : null}
+            <Button 
+              variant="outline" 
+              size="sm" 
+              onClick={handleNavigateToForm}
+              className="h-6 text-xs"
+            >
+              {formExists ? 'Continue' : 'Complete Deceased Details'}
+              <ArrowRight className="h-3 w-3 ml-1" />
+            </Button>
+          </div>
+          {missingFields.length > 0 && (
+            <div className="text-xs text-amber-700 bg-amber-50 p-2 rounded border border-amber-200">
+              <div className="font-medium mb-1">Missing:</div>
+              <div className="space-y-0.5">
+                {missingFields.slice(0, 3).map((field, index) => (
+                  <div key={index} className="flex items-center">
+                    <span className="w-1 h-1 bg-amber-500 rounded-full mr-2"></span>
+                    {field}
+                  </div>
+                ))}
+                {missingFields.length > 3 && (
+                  <div className="text-amber-600 italic">
+                    +{missingFields.length - 3} more fields
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
         </div>
       )}
     </div>
