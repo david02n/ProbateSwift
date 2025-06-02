@@ -947,6 +947,32 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.status(500).json({ error: "Failed to create executor" });
     }
   });
+
+  app.get("/api/executors/:id", async (req, res) => {
+    if (!req.isAuthenticated()) {
+      return res.status(401).json({ error: "Authentication required" });
+    }
+    
+    try {
+      const executorId = parseInt(req.params.id, 10);
+      const executor = await storage.getExecutor(executorId);
+      
+      if (!executor) {
+        return res.status(404).json({ error: "Person not found" });
+      }
+      
+      // Verify the executor belongs to a case owned by the user
+      const probateCase = await storage.getProbateCase(executor.caseId);
+      if (!probateCase || probateCase.userId !== req.user!.id) {
+        return res.status(404).json({ error: "Probate case not found" });
+      }
+      
+      res.json(executor);
+    } catch (error) {
+      console.error("Error fetching executor:", error);
+      res.status(500).json({ error: "Failed to fetch executor" });
+    }
+  });
   
   app.put("/api/executors/:id", async (req, res) => {
     if (!req.isAuthenticated()) {
