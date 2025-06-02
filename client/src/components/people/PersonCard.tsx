@@ -1,6 +1,6 @@
 import React from "react";
 import { Button } from "@/components/ui/button";
-import { User, Edit, Trash2, AlertTriangle } from "lucide-react";
+import { User, Edit, Trash2, AlertTriangle, Check } from "lucide-react";
 import { Executor } from "@shared/schema";
 import DeceasedFormStatus from "@/components/deceased/DeceasedFormStatus";
 import PersonCompletionStatus, { usePersonCompletionStatus } from "./PersonCompletionStatus";
@@ -24,11 +24,14 @@ export default function PersonCard({ executor, onEdit, onDelete }: PersonCardPro
         <div className="flex items-start">
           <div className={`rounded-full w-10 h-10 flex items-center justify-center mr-4 ${
             needsMoreInfo ? 'bg-amber-100 text-amber-600' :
+            isComplete ? 'bg-green-100 text-green-600' :
             executor.isPrimary ? 'bg-primary text-white' : 
             'bg-gray-200'
           }`}>
             {needsMoreInfo ? 
               <AlertTriangle className="h-5 w-5" /> : 
+              isComplete ? 
+              <Check className="h-5 w-5" /> :
               <User className="h-5 w-5" />
             }
           </div>

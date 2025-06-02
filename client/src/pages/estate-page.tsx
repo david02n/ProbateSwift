@@ -21,7 +21,7 @@ import {
 import { Progress } from "@/components/ui/progress";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { getQueryFn, apiRequest, queryClient } from "@/lib/queryClient";
-import { EstateAsset, EstateLiability, ProbateCase } from "@shared/schema";
+import { EstateAsset, EstateLiability, ProbateCase, EvaluationResponse } from "@shared/schema";
 import { useToast } from "@/hooks/use-toast";
 import {
   Dialog,
@@ -80,6 +80,19 @@ const EstatePage: React.FC = () => {
     queryKey: ["/api/liabilities", activeCaseId],
     queryFn: activeCaseId ? (() => fetch(`/api/liabilities/${activeCaseId}`).then(res => {
       if (!res.ok) throw new Error('Failed to fetch liabilities');
+      return res.json();
+    })) : () => Promise.resolve([]),
+    enabled: !!activeCaseId,
+  });
+
+  // Get evaluation responses for the active case
+  const { 
+    data: evaluationResponses = [],
+    isLoading: isLoadingEvaluation 
+  } = useQuery<EvaluationResponse[]>({
+    queryKey: ["/api/evaluation-responses", activeCaseId],
+    queryFn: activeCaseId ? (() => fetch(`/api/evaluation-responses/${activeCaseId}`).then(res => {
+      if (!res.ok) throw new Error('Failed to fetch evaluation responses');
       return res.json();
     })) : () => Promise.resolve([]),
     enabled: !!activeCaseId,
@@ -250,8 +263,40 @@ const EstatePage: React.FC = () => {
   
   const netEstate = totalAssets - totalLiabilities;
   
-  // IHT calculations (simplified)
-  const ihtThreshold = 325000;
+  // Calculate IHT threshold based on evaluation responses
+  const calculateIHTThreshold = () => {
+    if (!evaluationResponses.length) {
+      return 325000; // Default nil rate band if no evaluation data
+    }
+
+    const answers = evaluationResponses[0]?.answers || {};
+    
+    // Base nil rate band
+    let nilRateBand = 325000;
+    
+    // Check for transferred nil rate band (spouse/civil partner)
+    if (answers.married_civil_partnership === true && 
+        answers.spouse_partner_deceased === true && 
+        answers.spouse_nrb_fully_used === false) {
+      nilRateBand = 650000; // Double nil rate band
+    }
+    
+    // Calculate residence nil rate band
+    let residenceNilRateBand = 0;
+    if (answers.home_to_children_grandchildren === true && 
+        answers.deceased_lived_uk_property === true) {
+      residenceNilRateBand = 175000;
+      
+      // Add transferred RNRB if applicable
+      if (nilRateBand === 650000) {
+        residenceNilRateBand += 175000;
+      }
+    }
+    
+    return nilRateBand + residenceNilRateBand;
+  };
+
+  const ihtThreshold = calculateIHTThreshold();
   const taxableAmount = Math.max(0, netEstate - ihtThreshold);
   const taxRate = 0.4;
   const taxDue = taxableAmount * taxRate;
