@@ -91,7 +91,7 @@ export const executors = pgTable("people", {
   isApplicant: boolean("is_applicant").default(false), // Whether this person is the applicant
   isNotifying: boolean("is_notifying").default(false), // Whether this person is notifying only
   personPosition: integer("person_position"), // Internal position (1-4)
-  status: text("status").default("pending"), // pending, accepted, declined
+  status: text("status").default("profile_incomplete"), // completed, profile_incomplete, questionnaire_not_started
   needsMoreInfo: boolean("needs_more_info").default(false), // Flag for incomplete records
   documentId: integer("document_id"), // Reference to the document that created this person (e.g., death certificate)
   // Legacy fields maintained for compatibility

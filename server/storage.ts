@@ -1147,9 +1147,20 @@ export class DatabaseStorage implements IStorage {
     const missingFields: string[] = [];
 
     // Check if this is a deceased person
-    if (person.relationship === 'Deceased') {
+    if (person.relationshipToDeceased === 'Deceased') {
       // For deceased persons, check deceased form fields completion
       const deceasedStatus = await this.getDeceasedFormFieldsCompletionStatus(personId);
+      
+      // Update person status based on completion
+      const newStatus = deceasedStatus.complete ? 'completed' : 
+                       deceasedStatus.missingFields.length > 0 ? 'questionnaire_not_started' : 'profile_incomplete';
+      
+      if (person.status !== newStatus) {
+        await db.update(executors)
+          .set({ status: newStatus, updatedAt: new Date() })
+          .where(eq(executors.id, personId));
+      }
+      
       return deceasedStatus;
     }
 
@@ -1161,7 +1172,7 @@ export class DatabaseStorage implements IStorage {
     // Address validation - require at least address line 1, city, and postcode
     if (!person.addressLine1 && !person.address) missingFields.push('Address Line 1');
     if (!person.city) missingFields.push('City');
-    if (!person.postCode && !person.postcode) missingFields.push('Postcode');
+    if (!person.postCode) missingFields.push('Postcode');
     
     // Phone validation - require at least one phone number
     if (!person.phoneMobile && !person.phoneHome && !person.phone) {
@@ -1169,12 +1180,23 @@ export class DatabaseStorage implements IStorage {
     }
     
     // For applicants, require relationship to deceased
-    if (person.isApplicant && !person.relationship) {
+    if (person.isApplicant && !person.relationshipToDeceased) {
       missingFields.push('Relationship to Deceased');
     }
 
+    const isComplete = missingFields.length === 0;
+    
+    // Update person status based on completion
+    const newStatus = isComplete ? 'completed' : 'profile_incomplete';
+    
+    if (person.status !== newStatus) {
+      await db.update(executors)
+        .set({ status: newStatus, updatedAt: new Date() })
+        .where(eq(executors.id, personId));
+    }
+
     return {
-      complete: missingFields.length === 0,
+      complete: isComplete,
       missingFields
     };
   }

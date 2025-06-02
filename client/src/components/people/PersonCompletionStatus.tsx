@@ -27,7 +27,7 @@ export default function PersonCompletionStatus({ personId, personName }: PersonC
     return (
       <span className="text-xs bg-green-100 text-green-800 px-2 py-0.5 rounded-full flex items-center">
         <Check className="h-3 w-3 mr-1" />
-        Complete
+        ✓ Complete
       </span>
     );
   }
