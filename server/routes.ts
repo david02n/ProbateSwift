@@ -2487,6 +2487,40 @@ export async function registerRoutes(app: Express): Promise<Server> {
       return res.status(500).json({ error: 'Internal server error' });
     }
   });
+
+  // New endpoint: Check if person is complete based on all required fields (document upload or user input)
+  app.get('/api/people/:personId/complete', async (req: Request, res: Response) => {
+    try {
+      if (!req.isAuthenticated()) {
+        return res.status(401).json({ error: 'Unauthorized' });
+      }
+      
+      const personId = parseInt(req.params.personId);
+      if (isNaN(personId)) {
+        return res.status(400).json({ error: 'Invalid person ID' });
+      }
+      
+      // Check if the person exists and belongs to the current user
+      const person = await storage.getExecutor(personId);
+      if (!person) {
+        return res.status(404).json({ error: 'Person not found' });
+      }
+      
+      // Check if the case belongs to the current user
+      const probateCase = await storage.getProbateCase(person.caseId);
+      if (!probateCase || probateCase.userId !== req.user?.id) {
+        return res.status(403).json({ error: 'Access denied' });
+      }
+      
+      // Use new completion validation that checks all required fields
+      const completionStatus = await storage.getPersonCompletionStatus(personId);
+      
+      return res.json(completionStatus);
+    } catch (error) {
+      console.error('Error checking person completion:', error);
+      return res.status(500).json({ error: 'Internal server error' });
+    }
+  });
   
   app.get('/api/address-lookup', async (req: Request, res: Response) => {
     if (!req.isAuthenticated()) {

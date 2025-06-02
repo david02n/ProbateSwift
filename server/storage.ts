@@ -1128,6 +1128,57 @@ export class DatabaseStorage implements IStorage {
     };
   }
 
+  // People completion validation - considers all required fields from documents or user input
+  async isPersonComplete(personId: number): Promise<boolean> {
+    const completionStatus = await this.getPersonCompletionStatus(personId);
+    return completionStatus.complete;
+  }
+
+  async getPersonCompletionStatus(personId: number): Promise<{ complete: boolean; missingFields: string[] }> {
+    // Get person record from people table
+    const [person] = await db.select().from(executors).where(eq(executors.id, personId));
+    if (!person) {
+      return { 
+        complete: false, 
+        missingFields: ['Person record not found'] 
+      };
+    }
+
+    const missingFields: string[] = [];
+
+    // Check if this is a deceased person
+    if (person.relationship === 'Deceased') {
+      // For deceased persons, check deceased form fields completion
+      const deceasedStatus = await this.getDeceasedFormFieldsCompletionStatus(personId);
+      return deceasedStatus;
+    }
+
+    // For executors/applicants, check required people fields
+    if (!person.firstName) missingFields.push('First Name');
+    if (!person.lastName) missingFields.push('Last Name');
+    if (!person.email) missingFields.push('Email');
+    
+    // Address validation - require at least address line 1, city, and postcode
+    if (!person.addressLine1 && !person.address) missingFields.push('Address Line 1');
+    if (!person.city) missingFields.push('City');
+    if (!person.postCode && !person.postcode) missingFields.push('Postcode');
+    
+    // Phone validation - require at least one phone number
+    if (!person.phoneMobile && !person.phoneHome && !person.phone) {
+      missingFields.push('Phone Number');
+    }
+    
+    // For applicants, require relationship to deceased
+    if (person.isApplicant && !person.relationship) {
+      missingFields.push('Relationship to Deceased');
+    }
+
+    return {
+      complete: missingFields.length === 0,
+      missingFields
+    };
+  }
+
   // User methods
   async getUser(id: number): Promise<User | undefined> {
     const [user] = await db.select().from(users).where(eq(users.id, id));
