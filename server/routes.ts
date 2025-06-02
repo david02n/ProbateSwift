@@ -1851,6 +1851,40 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (newPerson) {
         console.log("Successfully created person from death certificate:", newPerson.id);
         
+        // Automatically populate deceased form fields with extracted data
+        console.log("Auto-populating deceased form fields from death certificate data");
+        try {
+          const deceasedFormData = {
+            personId: newPerson.id,
+            dateOfBirth: extractedData.dateOfBirth,
+            dateOfDeath: extractedData.dateOfDeath,
+            // Set basic defaults for required fields
+            wasKnownByOtherNames: false,
+            domicileInEnglandOrWales: true,
+            hadForeignAssets: false,
+            landWasSettled: false,
+            executorsApplying: true,
+            hasAdoptionHistory: false,
+            createdAt: new Date(),
+            updatedAt: new Date()
+          };
+          
+          // Create or update the deceased form fields record
+          const existingRecord = await storage.getDeceasedFormFields(newPerson.id);
+          if (existingRecord) {
+            // Update existing record with certificate data
+            await storage.updateDeceasedFormFields(newPerson.id, deceasedFormData);
+            console.log("Updated existing deceased form fields with certificate data");
+          } else {
+            // Create new deceased form fields record
+            await storage.createDeceasedFormFields(deceasedFormData);
+            console.log("Created new deceased form fields record with certificate data");
+          }
+        } catch (error) {
+          console.error("Error auto-populating deceased form fields:", error);
+          // Don't fail the person creation if form fields update fails
+        }
+        
         // Update the probate case to link it to the deceased person
         const probateCase = await storage.getProbateCase(document.caseId);
         if (probateCase) {
