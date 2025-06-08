@@ -30,7 +30,7 @@ import AuthCallback from '@/pages/auth-callback';
 function Router() {
   const { user, isLoading } = useAuth();
   const [location, setLocation] = useLocation();
-  
+
   // This effect ensures we clean up any hash fragments that might cause issues
   // and initializes Firebase token refreshing for cross-domain auth
   useEffect(() => {
@@ -44,20 +44,20 @@ function Router() {
           const firebaseModule = await import('./lib/firebase');
           const auth = firebaseModule.auth;
           const user = auth.currentUser;
-          
+
           if (user) {
             console.log(`DIRECT TOKEN FIX: User logged in as ${user.email}`);
             const token = await user.getIdToken(true);
-            
+
             // Initialize headers if they don't exist
             options.headers = options.headers || {};
-            
+
             // Add token to headers
             options.headers = {
               ...options.headers,
               'Authorization': `Bearer ${token}`
             };
-            
+
             console.log('DIRECT TOKEN FIX: Added Authorization header with Bearer token');
           } else {
             console.log('DIRECT TOKEN FIX: No user logged in, skipping token');
@@ -66,18 +66,18 @@ function Router() {
           console.error('DIRECT TOKEN FIX: Error adding token', e);
         }
       }
-      
+
       return originalFetch.call(this, resource, options);
     };
     console.log('DIRECT TOKEN FIX: Installed fetch interceptor v1.0.13-2355');
-    
+
     // Still initialize Firebase normally
     import('./lib/firebase').then(async module => {
       try {
         // Wait for auth initialization before refreshing tokens
         await module.waitForAuthInit();
         console.log('Firebase Auth initialization complete');
-        
+
         // Then set up token refresh mechanism
         if (typeof module.initTokenRefresh === 'function') {
           module.initTokenRefresh();
@@ -89,7 +89,7 @@ function Router() {
     }).catch(err => {
       console.error('Failed to load Firebase module:', err);
     });
-    
+
     // Remove hash from URL if present (can cause issues on some mobile browsers)
     if (window.location.hash && window.location.hash !== '#/') {
       console.log('Removing hash fragment:', window.location.hash);
@@ -99,17 +99,41 @@ function Router() {
         window.location.pathname + window.location.search
       );
     }
-    
+
     // Log navigation for debugging
     console.log('Current path:', location);
     console.log('User authenticated:', !!user);
-    
+
     // Handle special case for root path on mobile
-    if (location === '/' && window.innerWidth < 768) {
-      console.log('Mobile device detected at root path');
+    if (location.pathname === '/' && /Mobi|Android/i.test(navigator.userAgent)) {
+      console.log('Mobile device detected, ensuring proper routing');
     }
+
+    // Handle Firebase auth handler routes
+    if (location.pathname.startsWith('/__/auth/')) {
+      console.log('Firebase auth handler route detected, allowing passthrough');
+      return <div>Loading Firebase auth...</div>;
+    }
+
+    return (
+      <Switch>
+        <Route path="/auth/callback" component={AuthCallback} />
+        <Route path="/auth">
+          <AuthPage />
+        </Route>
+        <Route path="/auth/:tab">
+          <AuthPage />
+        </Route>
+        <Route path="/signup">
+          <SignupPage />
+        </Route>
+        <Route path="/" component={Home} />
+        <Route path="/home" component={Home} />
+        <Route path="*" component={NotFound} />
+      </Switch>
+    );
   }, [location, user]);
-  
+
   // Show loading spinner while auth check is in progress, but add timeout fallback
   if (isLoading) {
     return (
@@ -121,7 +145,7 @@ function Router() {
       </div>
     );
   }
-  
+
   // If not authenticated, only show public routes
   if (!user) {
     // Redirect protected routes to home when not authenticated
@@ -130,9 +154,9 @@ function Router() {
       console.log('[App] Redirecting protected route to home:', location);
       return <Redirect to="/" />;
     }
-    
+
     console.log('[App] Rendering public route:', location);
-    
+
     // Render public routes with more specific route definitions
     return (
       <>
@@ -153,7 +177,7 @@ function Router() {
       </>
     );
   }
-  
+
   // If authenticated, show protected routes with more specific route definitions
   return (
     <Switch>

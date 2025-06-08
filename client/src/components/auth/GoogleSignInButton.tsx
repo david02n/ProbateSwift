@@ -74,16 +74,22 @@ export function GoogleSignInButton({
 
       console.log('[GoogleSignIn] Provider configured:', provider);
 
-      // Check if we're on Replit and use redirect instead of popup
+      // Check if we're on Replit and force popup method with fallback
       const isReplitDomain = window.location.hostname.includes('replit.dev') || 
                             window.location.hostname.includes('kirk.replit.dev');
 
       if (isReplitDomain) {
-        console.log('[GoogleSignIn] Replit domain detected, using redirect method');
-        setIsRedirecting(true);
-        await signInWithRedirect(auth, provider);
-        // The page will redirect, so we don't need to handle the result here
-        return;
+        console.log('[GoogleSignIn] Replit domain detected, attempting popup with enhanced error handling');
+        try {
+          const result = await signInWithPopup(auth, provider);
+          console.log('[GoogleSignIn] Popup sign-in successful on Replit:', result);
+          await handleSignInSuccess(result);
+          return;
+        } catch (popupError: any) {
+          console.error('[GoogleSignIn] Popup failed on Replit:', popupError);
+          // For Replit domains, if popup fails, show error instead of redirect
+          throw new Error('Google sign-in popup was blocked or failed. Please enable popups for this site and try again.');
+        }
       }
 
       // First try popup for non-Replit domains

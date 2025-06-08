@@ -72,9 +72,10 @@ export function FirebaseProvider({ children }: FirebaseProviderProps) {
           const isReplitDomain = currentDomain.includes('replit.dev') || currentDomain.includes('kirk.replit.dev');
 
           if (isReplitDomain) {
-            // For Replit domains, use the current domain as auth domain
-            firebaseConfig.authDomain = currentDomain;
-            console.log('[Firebase] Running on Replit domain, using current domain as auth domain:', currentDomain);
+            // For Replit domains, use the Firebase project's default auth domain to avoid handler issues
+            firebaseConfig.authDomain = 'probate-458709.firebaseapp.com';
+            console.log('[Firebase] Running on Replit domain, using Firebase project auth domain to avoid handler conflicts');
+            console.log('[Firebase] This will require popup-based auth instead of redirect');
           } else {
             console.log('[Firebase] Running on production domain, using configured auth domain');
           }
