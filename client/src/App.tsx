@@ -122,8 +122,11 @@ function Router() {
     // Redirect protected routes to home when not authenticated
     const protectedPaths = ['/dashboard', '/people', '/estate', '/documents', '/evaluation'];
     if (protectedPaths.some(path => location.startsWith(path))) {
+      console.log('[App] Redirecting protected route to home:', location);
       return <Redirect to="/" />;
     }
+    
+    console.log('[App] Rendering public route:', location);
     
     // Render public routes with more specific route definitions
     return (

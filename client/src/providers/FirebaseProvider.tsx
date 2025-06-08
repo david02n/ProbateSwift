@@ -82,10 +82,8 @@ export function FirebaseProvider({ children }: FirebaseProviderProps) {
 
         // Initialize Auth
         const firebaseAuth = getAuth(firebaseApp);
+        console.log('[Firebase] Auth initialized in production mode');
         
-        // Auth emulator disabled for Replit compatibility
-        // The emulator connection was causing authentication failures in Replit
-
         // Initialize Analytics conditionally
         let firebaseAnalytics: Analytics | null = null;
         try {

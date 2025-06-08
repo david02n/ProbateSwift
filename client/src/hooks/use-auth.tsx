@@ -43,10 +43,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         try {
           // Get the ID token
           const idToken = await user.getIdToken(true);
-          
+
           // Store token
           localStorage.setItem('firebase_id_token', idToken);
-          
+
           // Update user state
           setFirebaseUser(user);
         } catch (error) {
@@ -88,17 +88,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         console.error("Error signing out from Firebase:", e);
         // Continue with logout process even if Firebase logout fails
       }
-      
+
       // Clear all Firebase tokens from storage
       console.log("Clearing all Firebase tokens from storage");
       localStorage.removeItem('firebase_id_token');
       sessionStorage.removeItem('firebase_id_token');
-      
+
       // Clear mobile auth data if present
       localStorage.removeItem('mobile_auth_success');
       localStorage.removeItem('mobile_auth_user');
       localStorage.removeItem('mobile_auth_timestamp');
-      
+
       // Then call the backend logout API
       try {
         await apiRequest("POST", "/api/logout");
@@ -111,10 +111,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     onSuccess: () => {
       // Clear query cache
       queryClient.clear();
-      
+
       // Reset user state
       setFirebaseUser(null);
-      
+
       toast({
         title: "Logged out successfully",
         description: "You have been signed out of your account.",
@@ -137,6 +137,49 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     error: error as Error | null,
     logout: () => logoutMutation.mutateAsync(),
   };
+
+  // Listen to Firebase auth state changes
+  useEffect(() => {
+    if (!auth) {
+      console.log('[DEBUG] Firebase auth not initialized');
+      setIsLoading(false);
+      return;
+    }
+
+    console.log('[DEBUG] Setting up Firebase auth listener');
+    const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
+      console.log('[DEBUG] Firebase auth state changed!');
+      console.log('[DEBUG] Firebase user:', firebaseUser ? firebaseUser.email : 'No user logged in');
+
+      // Ensure we're not in emulator mode
+      if (firebaseUser && window.location.hostname.includes('localhost')) {
+        console.warn('[DEBUG] Detected localhost - this may cause auth issues in production');
+      }
+
+      if (firebaseUser) {
+        try {
+          // Get the ID token
+          const idToken = await firebaseUser.getIdToken(true);
+
+          // Store token
+          localStorage.setItem('firebase_id_token', idToken);
+
+          // Update user state
+          setFirebaseUser(firebaseUser);
+        } catch (error) {
+          console.error('Error getting ID token:', error);
+          setFirebaseUser(null);
+          localStorage.removeItem('firebase_id_token');
+        }
+      } else {
+        setFirebaseUser(null);
+        localStorage.removeItem('firebase_id_token');
+      }
+      setIsLoading(false);
+    });
+
+    return () => unsubscribe();
+  }, []);
 
   return (
     <AuthContext.Provider value={contextValue}>
