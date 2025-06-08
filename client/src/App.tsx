@@ -100,39 +100,26 @@ function Router() {
       );
     }
 
-    // Log navigation for debugging
-    console.log('Current path:', location);
-    console.log('User authenticated:', !!user);
+    // Cleanup function for useEffect
+    return () => {
+      // Restore original fetch if needed
+    };
+  }, []);
 
-    // Handle special case for root path on mobile
-    if (location.pathname === '/' && /Mobi|Android/i.test(navigator.userAgent)) {
-      console.log('Mobile device detected, ensuring proper routing');
-    }
+  // Log navigation for debugging
+  console.log('Current path:', location);
+  console.log('User authenticated:', !!user);
 
-    // Handle Firebase auth handler routes
-    if (location.pathname.startsWith('/__/auth/')) {
-      console.log('Firebase auth handler route detected, allowing passthrough');
-      return <div>Loading Firebase auth...</div>;
-    }
+  // Handle special case for root path on mobile
+  if (location === '/' && /Mobi|Android/i.test(navigator.userAgent)) {
+    console.log('Mobile device detected, ensuring proper routing');
+  }
 
-    return (
-      <Switch>
-        <Route path="/auth/callback" component={AuthCallback} />
-        <Route path="/auth">
-          <AuthPage />
-        </Route>
-        <Route path="/auth/:tab">
-          <AuthPage />
-        </Route>
-        <Route path="/signup">
-          <SignupPage />
-        </Route>
-        <Route path="/" component={Home} />
-        <Route path="/home" component={Home} />
-        <Route path="*" component={NotFound} />
-      </Switch>
-    );
-  }, [location, user]);
+  // Handle Firebase auth handler routes
+  if (location && location.startsWith('/__/auth/')) {
+    console.log('Firebase auth handler route detected, allowing passthrough');
+    return <div>Loading Firebase auth...</div>;
+  }
 
   // Show loading spinner while auth check is in progress, but add timeout fallback
   if (isLoading) {

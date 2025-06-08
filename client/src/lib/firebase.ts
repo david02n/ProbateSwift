@@ -20,21 +20,9 @@ const firebaseConfig = {
 // Temporary workaround for Replit domains
 // This allows testing on Replit while keeping production config for probateswift.com
 const getFirebaseConfig = () => {
-  const currentDomain = window.location.hostname;
-  const isReplitDomain = currentDomain.includes('replit.dev') || currentDomain.includes('kirk.replit.dev');
-
-  // Create a copy of the config
+  // Always use the proper Firebase auth domain
   const config = { ...firebaseConfig };
-
-  if (isReplitDomain) {
-    // For Replit domains, use the current domain as auth domain
-    // This ensures the auth domain matches the current domain
-    config.authDomain = currentDomain;
-    console.log('[Firebase] Running on Replit domain, using current domain as auth domain:', currentDomain);
-  } else {
-    console.log('[Firebase] Running on production domain, using configured auth domain');
-  }
-
+  console.log('[Firebase] Using Firebase project auth domain:', config.authDomain);
   return config;
 };
 
@@ -49,26 +37,11 @@ function validateFirebaseConfig() {
     throw new Error(`Missing required Firebase configuration: ${missingFields.join(', ')}`);
   }
 
-  // Check for domain mismatch
-  const currentDomain = window.location.hostname;
-  const configuredAuthDomain = config.authDomain;
-
   console.log('[Firebase] Configuration validation passed');
   console.log('[Firebase] Project ID:', config.projectId);
-  console.log('[Firebase] Auth Domain:', configuredAuthDomain);
-  console.log('[Firebase] Current Domain:', currentDomain);
+  console.log('[Firebase] Auth Domain:', config.authDomain);
   console.log('[Firebase] API Key:', config.apiKey ? 'Set' : 'Missing');
   console.log('[Firebase] App ID:', config.appId ? 'Set' : 'Missing');
-
-  // Warn about domain mismatch
-  if (configuredAuthDomain && currentDomain !== configuredAuthDomain) {
-    console.warn('[Firebase] DOMAIN MISMATCH WARNING:');
-    console.warn(`[Firebase] Current domain: ${currentDomain}`);
-    console.warn(`[Firebase] Configured auth domain: ${configuredAuthDomain}`);
-    console.warn('[Firebase] This will cause auth/internal-error. You need to either:');
-    console.warn('[Firebase] 1. Add the current domain to Firebase Console > Authentication > Settings > Authorized domains');
-    console.warn('[Firebase] 2. Or update your environment variables to match the current domain');
-  }
 }
 
 // Fallback initialization for components that need immediate access

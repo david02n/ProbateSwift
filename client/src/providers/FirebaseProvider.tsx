@@ -67,30 +67,7 @@ export function FirebaseProvider({ children }: FirebaseProviderProps) {
             throw new Error('Missing required Firebase configuration. Please check your environment variables.');
           }
 
-          // Dynamic auth domain configuration for Replit domains
-          const currentDomain = window.location.hostname;
-          const isReplitDomain = currentDomain.includes('replit.dev') || currentDomain.includes('kirk.replit.dev');
-
-          if (isReplitDomain) {
-            // For Replit domains, use the Firebase project's default auth domain to avoid handler issues
-            firebaseConfig.authDomain = 'probate-458709.firebaseapp.com';
-            console.log('[Firebase] Running on Replit domain, using Firebase project auth domain to avoid handler conflicts');
-            console.log('[Firebase] This will require popup-based auth instead of redirect');
-          } else {
-            console.log('[Firebase] Running on production domain, using configured auth domain');
-          }
-
-          // Check for domain mismatch (this should now be resolved)
-          const configuredAuthDomain = firebaseConfig.authDomain;
-
-          if (configuredAuthDomain && currentDomain !== configuredAuthDomain) {
-            console.warn('[Firebase] DOMAIN MISMATCH WARNING:');
-            console.warn(`[Firebase] Current domain: ${currentDomain}`);
-            console.warn(`[Firebase] Configured auth domain: ${configuredAuthDomain}`);
-            console.warn('[Firebase] This will cause auth/internal-error. You need to either:');
-            console.warn('[Firebase] 1. Add the current domain to Firebase Console > Authentication > Settings > Authorized domains');
-            console.warn('[Firebase] 2. Or update your environment variables to match the current domain');
-          }
+          console.log('[Firebase] Using standard Firebase auth domain:', firebaseConfig.authDomain);
 
           app = initializeApp(firebaseConfig);
           console.log('[Firebase] Firebase app initialized successfully');
