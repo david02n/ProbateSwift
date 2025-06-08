@@ -8,6 +8,7 @@ export function FirebaseTest() {
   const { app, auth, isInitialized, error } = useFirebase();
   const [testResult, setTestResult] = useState<string>('');
   const [configInfo, setConfigInfo] = useState<string>('');
+  const [isLoading, setIsLoading] = useState(false);
 
   useEffect(() => {
     if (isInitialized) {
@@ -50,58 +51,21 @@ export function FirebaseTest() {
     }
   };
 
-  const testGoogleSignIn = async () => {
+  const handleGoogleSignIn = async () => {
+    setIsLoading(true);
+    const provider = new GoogleAuthProvider();
+    provider.setCustomParameters({ prompt: 'select_account' });
+
     try {
-      if (!auth) {
-        setTestResult('❌ Auth not available for Google sign-in test');
-        return;
-      }
-
-      setTestResult('🔄 Testing Google sign-in...');
-      
-      // Log the actual auth configuration being used
-      console.log('[FirebaseTest] Auth configuration:', {
-        auth: auth,
-        app: auth.app,
-        config: auth.app.options,
-        currentDomain: window.location.hostname,
-        authDomain: auth.app.options.authDomain
-      });
-      
-      const provider = new GoogleAuthProvider();
-      provider.setCustomParameters({
-        prompt: 'select_account'
-      });
-
-      // Check if we're on Replit and use redirect instead of popup
-      const isReplitDomain = window.location.hostname.includes('replit.dev') || 
-                            window.location.hostname.includes('kirk.replit.dev');
-      
-      if (isReplitDomain) {
-        console.log('[FirebaseTest] Replit domain detected, using redirect method');
-        setTestResult('🔄 Redirecting to Google sign-in...');
-        await signInWithRedirect(auth, provider);
-        return;
-      }
-
-      const result = await signInWithPopup(auth, provider);
-      setTestResult(`✅ Google sign-in successful! User: ${result.user.email}`);
-    } catch (err: any) {
-      console.error('Google sign-in test error:', err);
-      setTestResult(`❌ Google sign-in failed: ${err.code} - ${err.message}`);
-      
-      // Log detailed error information
-      if (err.code === 'auth/internal-error') {
-        console.error('Internal error details:', {
-          error: err,
-          auth: auth,
-          config: app?.options,
-          userAgent: navigator.userAgent,
-          location: window.location.href,
-          authDomain: auth?.app?.options?.authDomain,
-          currentDomain: window.location.hostname
-        });
-      }
+      // Try popup first
+      await signInWithPopup(auth, provider);
+      // If successful, you can handle the result here or in an auth state listener
+    } catch (error: any) {
+      // If popup fails for any reason, fall back to redirect
+      console.warn('Popup failed, falling back to redirect:', error);
+      await signInWithRedirect(auth, provider);
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -152,7 +116,7 @@ export function FirebaseTest() {
           <Button onClick={testAuthMethod} disabled={!isInitialized || !!error} className="w-full">
             Test Auth Method
           </Button>
-          <Button onClick={testGoogleSignIn} disabled={!isInitialized || !!error} className="w-full">
+          <Button onClick={handleGoogleSignIn} disabled={!isInitialized || !!error} className="w-full">
             Test Google Sign-In
           </Button>
         </div>
