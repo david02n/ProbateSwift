@@ -194,10 +194,12 @@ export function GoogleSignInButton({
           description: `Welcome${user.displayName ? ', ' + user.displayName : ''}!`,
         });
         
-        // Redirect to home page
-        window.location.href = '/';
+        // Force a page reload to ensure auth state is properly updated
+        window.location.reload();
       } else {
-        throw new Error('Failed to establish session');
+        const errorText = await response.text();
+        console.error('Session establishment failed:', response.status, errorText);
+        throw new Error(`Failed to establish session: ${response.status} ${errorText}`);
       }
     } catch (error) {
       console.error('Session establishment error:', error);

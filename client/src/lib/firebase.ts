@@ -3,7 +3,7 @@
 // The main Firebase initialization is handled by FirebaseProvider
 
 import { initializeApp, getApps, FirebaseApp } from 'firebase/app';
-import { getAuth, connectAuthEmulator, Auth } from 'firebase/auth';
+import { getAuth, Auth } from 'firebase/auth';
 import { getAnalytics, isSupported, Analytics } from 'firebase/analytics';
 
 // Firebase configuration using environment variables
