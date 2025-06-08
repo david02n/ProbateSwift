@@ -5,7 +5,7 @@ import { setupVite, serveStatic, log } from "./vite";
 import { config } from "./config";
 import { securityMiddleware } from "./middleware/security";
 import { errorHandler, notFoundHandler, asyncHandler } from "./errors";
-import authRoutes from './routes/auth';
+
 
 const app = express();
 
@@ -35,8 +35,7 @@ app.use(express.urlencoded({ extended: false }));
     serveStatic(app);
   }
 
-  // Register routes
-  app.use('/api/auth', authRoutes);
+  // Auth routes are already registered in registerRoutes function
 
   // Handle 404s
   app.use(notFoundHandler);
