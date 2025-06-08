@@ -1,37 +1,29 @@
-import React, { useEffect, useState } from 'react';
-import { useLocation } from 'wouter';
+import { useEffect, useState } from 'react';
+import { getRedirectResult } from 'firebase/auth';
 import { auth } from '@/lib/firebase';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { useToast } from '@/hooks/use-toast';
-import { Card, CardContent } from '@/components/ui/card';
-import { Loader2, AlertCircle, CheckCircle2 } from 'lucide-react';
+import { Loader2, CheckCircle, XCircle } from 'lucide-react';
 
-interface FirebaseError {
-  code: string;
-  message: string;
-}
-
-const AuthCallback: React.FC = () => {
-  const [, setLocation] = useLocation();
-  const { toast } = useToast();
+export default function AuthCallback() {
   const [status, setStatus] = useState<'loading' | 'success' | 'error'>('loading');
   const [errorMessage, setErrorMessage] = useState<string>('');
+  const { toast } = useToast();
 
   useEffect(() => {
     const handleRedirect = async () => {
       try {
-        console.log('[AuthCallback] Starting redirect result handling...');
-        const result = await auth.getRedirectResult();
+        const result = await getRedirectResult(auth);
         
-        if (result) {
-          console.log('[AuthCallback] Redirect result received:', result.user.email);
+        if (result && result.user) {
+          // User successfully signed in
           const { user } = result;
-          const idToken = await user.getIdToken(true);
+          const idToken = await user.getIdToken();
           
           // Store token
           localStorage.setItem('firebase_id_token', idToken);
           
           // Call backend to establish session
-          console.log('[AuthCallback] Establishing backend session...');
           const response = await fetch('/api/auth/session', {
             method: 'POST',
             headers: {
@@ -48,103 +40,108 @@ const AuthCallback: React.FC = () => {
             credentials: 'include'
           });
 
-          if (!response.ok) {
-            const errorData = await response.json().catch(() => ({}));
-            throw new Error(errorData.message || `Backend authentication failed: ${response.status}`);
+          if (response.ok) {
+            setStatus('success');
+            toast({
+              title: "Sign in successful",
+              description: `Welcome${user.displayName ? ', ' + user.displayName : ''}!`,
+            });
+            
+            // Redirect to home page after a short delay
+            setTimeout(() => {
+              window.location.href = '/';
+            }, 2000);
+          } else {
+            throw new Error('Failed to establish session');
           }
-
-          console.log('[AuthCallback] Session established successfully');
-          setStatus('success');
-          toast({
-            title: 'Welcome back!',
-            description: `Signed in as ${user.email}`,
-          });
-
-          // Add a small delay before redirect to show success state
-          setTimeout(() => {
-            setLocation('/');
-          }, 1500);
         } else {
-          console.log('[AuthCallback] No redirect result, returning to auth page');
-          setLocation('/auth');
+          // No redirect result, user probably navigated directly to this page
+          setStatus('error');
+          setErrorMessage('No authentication result found. Please try signing in again.');
         }
-      } catch (error) {
-        console.error('[AuthCallback] Error during authentication:', error);
+      } catch (error: any) {
+        console.error('Auth callback error:', error);
+        setStatus('error');
         
-        // Handle specific Firebase Auth errors
-        let errorMessage = 'Authentication failed. Please try again.';
+        let errorMessage = 'An error occurred during sign in.';
         
-        const firebaseError = error as FirebaseError;
-        if (firebaseError.code) {
-          switch (firebaseError.code) {
-            case 'auth/account-exists-with-different-credential':
-              errorMessage = 'An account already exists with this email using a different sign-in method.';
-              break;
-            case 'auth/popup-closed-by-user':
-              errorMessage = 'Sign-in was cancelled. Please try again.';
-              break;
-            case 'auth/cancelled-popup-request':
-              errorMessage = 'Sign-in was cancelled. Please try again.';
-              break;
-            case 'auth/popup-blocked':
-              errorMessage = 'Pop-up was blocked by your browser. Please allow pop-ups for this site.';
-              break;
-            case 'auth/network-request-failed':
-              errorMessage = 'Network error. Please check your internet connection and try again.';
-              break;
-            default:
-              errorMessage = firebaseError.message || 'Authentication failed. Please try again.';
-          }
+        if (error.code === 'auth/account-exists-with-different-credential') {
+          errorMessage = 'An account already exists with the same email address but different sign-in credentials.';
+        } else if (error.code === 'auth/invalid-credential') {
+          errorMessage = 'Invalid sign-in credentials.';
+        } else if (error.code === 'auth/operation-not-allowed') {
+          errorMessage = 'This sign-in method is not enabled for this app.';
+        } else if (error.code === 'auth/user-disabled') {
+          errorMessage = 'This account has been disabled. Please contact support.';
+        } else if (error.code === 'auth/user-not-found') {
+          errorMessage = 'No account found with this email address.';
+        } else if (error.code === 'auth/network-request-failed') {
+          errorMessage = 'Network error. Please check your connection and try again.';
+        } else if (error.code === 'auth/invalid-email') {
+          errorMessage = 'Please enter a valid email address.';
+        } else if (error.code === 'auth/wrong-password') {
+          errorMessage = 'Invalid password.';
+        } else if (error.code === 'auth/too-many-requests') {
+          errorMessage = 'Too many failed sign-in attempts. Please try again later.';
         }
 
         setErrorMessage(errorMessage);
-        setStatus('error');
+        
         toast({
-          title: 'Sign in failed',
+          title: "Sign in failed",
           description: errorMessage,
-          variant: 'destructive',
+          variant: "destructive",
         });
-
-        // Add a delay before redirecting on error
+        
+        // Redirect back to auth page after a delay
         setTimeout(() => {
-          setLocation('/auth');
+          window.location.href = '/auth';
         }, 3000);
       }
     };
 
     handleRedirect();
-  }, [setLocation, toast]);
+  }, [toast]);
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-gradient-to-br from-soft-grey to-white p-4">
+    <div className="container flex items-center justify-center min-h-screen py-12">
       <Card className="w-full max-w-md">
-        <CardContent className="pt-6">
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            {status === 'loading' && <Loader2 className="h-5 w-5 animate-spin" />}
+            {status === 'success' && <CheckCircle className="h-5 w-5 text-green-500" />}
+            {status === 'error' && <XCircle className="h-5 w-5 text-red-500" />}
+            {status === 'loading' && 'Completing sign in...'}
+            {status === 'success' && 'Sign in successful!'}
+            {status === 'error' && 'Sign in failed'}
+          </CardTitle>
+          <CardDescription>
+            {status === 'loading' && 'Please wait while we complete your sign in.'}
+            {status === 'success' && 'You will be redirected to your dashboard shortly.'}
+            {status === 'error' && errorMessage}
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
           {status === 'loading' && (
-            <div className="flex flex-col items-center justify-center space-y-4 py-8">
+            <div className="flex items-center justify-center py-4">
               <Loader2 className="h-8 w-8 animate-spin text-primary" />
-              <p className="text-center text-sm text-muted-foreground">
-                Completing sign in...
-              </p>
             </div>
           )}
           
           {status === 'success' && (
-            <div className="flex flex-col items-center justify-center space-y-4 py-8">
-              <CheckCircle2 className="h-8 w-8 text-green-500" />
-              <p className="text-center text-sm text-muted-foreground">
-                Sign in successful! Redirecting...
+            <div className="text-center py-4">
+              <CheckCircle className="h-12 w-12 text-green-500 mx-auto mb-4" />
+              <p className="text-sm text-muted-foreground">
+                Redirecting you to the dashboard...
               </p>
             </div>
           )}
           
           {status === 'error' && (
-            <div className="flex flex-col items-center justify-center space-y-4 py-8">
-              <AlertCircle className="h-8 w-8 text-destructive" />
-              <p className="text-center text-sm text-destructive">
-                {errorMessage}
-              </p>
-              <p className="text-center text-xs text-muted-foreground">
-                Redirecting to sign in page...
+            <div className="text-center py-4">
+              <XCircle className="h-12 w-12 text-red-500 mx-auto mb-4" />
+              <p className="text-sm text-muted-foreground">
+                Redirecting you back to the sign-in page...
               </p>
             </div>
           )}
@@ -152,6 +149,4 @@ const AuthCallback: React.FC = () => {
       </Card>
     </div>
   );
-};
-
-export default AuthCallback; 
+} 

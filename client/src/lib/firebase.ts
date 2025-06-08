@@ -1,9 +1,10 @@
 // FIREBASE CONFIGURATION
-// Critical for proper authentication in all environments
+// This file now provides fallback initialization and utility functions
+// The main Firebase initialization is handled by FirebaseProvider
 
-// Get current hostname for environment detection
-const hostname = window.location.hostname;
-const isProd = hostname.includes('probateswift.com');
+import { initializeApp, getApps, FirebaseApp } from 'firebase/app';
+import { getAuth, connectAuthEmulator, Auth } from 'firebase/auth';
+import { getAnalytics, isSupported, Analytics } from 'firebase/analytics';
 
 // Firebase configuration using environment variables
 const firebaseConfig = {
@@ -16,45 +17,84 @@ const firebaseConfig = {
   measurementId: import.meta.env.VITE_FIREBASE_MEASUREMENT_ID
 };
 
-// Initialize Firebase only if it hasn't been initialized already
-let app: any;
-if (!window.firebase.apps.length) {
-  app = window.firebase.initializeApp(firebaseConfig);
+// Fallback initialization for components that need immediate access
+let fallbackApp: FirebaseApp | null = null;
+let fallbackAuth: Auth | null = null;
+let fallbackAnalytics: Analytics | null = null;
+
+// Initialize Firebase if not already initialized
+function ensureFirebaseInitialized(): { app: FirebaseApp; auth: Auth } {
+  if (!fallbackApp) {
+    const existingApps = getApps();
+    
+    if (existingApps.length > 0) {
+      fallbackApp = existingApps[0];
+    } else {
+      // Validate required config
+      if (!firebaseConfig.apiKey || !firebaseConfig.projectId) {
+        throw new Error('Missing required Firebase configuration. Please check your environment variables.');
+      }
+      
+      fallbackApp = initializeApp(firebaseConfig);
+      console.log('[Firebase] Fallback app initialized');
+    }
+    
+    fallbackAuth = getAuth(fallbackApp);
+    
+    // Connect to Auth Emulator in development
+    if (import.meta.env.DEV) {
+      try {
+        connectAuthEmulator(fallbackAuth, 'http://localhost:9099');
+      } catch (error) {
+        console.warn('[Firebase] Auth emulator connection failed:', error);
+      }
+    }
+  }
   
-  // Log initialization for debugging
-  console.log('[Firebase] Initialized with config:', {
-    projectId: firebaseConfig.projectId,
-    authDomain: firebaseConfig.authDomain,
-    environment: import.meta.env.MODE
-  });
-} else {
-  app = window.firebase.apps[0];
+  if (!fallbackApp || !fallbackAuth) {
+    throw new Error('Firebase initialization failed');
+  }
+  
+  return { app: fallbackApp, auth: fallbackAuth };
 }
 
-// Initialize Auth
-export const auth = window.firebase.auth();
-export const googleProvider = new window.firebase.auth.GoogleAuthProvider();
+// Export fallback instances
+export const app = (() => {
+  const { app } = ensureFirebaseInitialized();
+  return app;
+})();
 
-// Initialize Analytics only in browser and if supported
-export const analytics = typeof window !== 'undefined' 
-  ? window.firebase.analytics.isSupported().then(yes => yes ? window.firebase.analytics(app) : null)
-  : null;
+export const auth = (() => {
+  const { auth } = ensureFirebaseInitialized();
+  return auth;
+})();
 
-// Development environment setup - Skip emulator for Replit
-if (import.meta.env.DEV && window.location.hostname === 'localhost') {
-  window.firebase.auth().useEmulator('http://localhost:9099', { disableWarnings: true });
-  console.log('[Firebase] Connected to Auth Emulator');
-}
+// Initialize Analytics conditionally
+export const analytics = (async () => {
+  if (!fallbackAnalytics) {
+    try {
+      const analyticsSupported = await isSupported();
+      if (analyticsSupported) {
+        fallbackAnalytics = getAnalytics(app);
+      }
+    } catch (error) {
+      console.warn('[Firebase] Analytics initialization failed:', error);
+    }
+  }
+  return fallbackAnalytics;
+})();
 
 // Helper function to wait for Firebase Auth to initialize
 export async function waitForAuthInit(): Promise<void> {
   return new Promise((resolve) => {
-    if (auth.currentUser) {
-      console.log("[Firebase] Auth already initialized with user:", auth.currentUser.email);
+    const { auth: currentAuth } = ensureFirebaseInitialized();
+    
+    if (currentAuth.currentUser) {
+      console.log("[Firebase] Auth already initialized with user:", currentAuth.currentUser.email);
       return resolve();
     }
     
-    const unsubscribe = auth.onAuthStateChanged((user: any) => {
+    const unsubscribe = currentAuth.onAuthStateChanged((user: any) => {
       unsubscribe();
       console.log("[Firebase] Auth initialized:", user ? `with user ${user.email}` : "no user");
       resolve();
@@ -77,7 +117,9 @@ export async function getFreshToken(): Promise<string | null> {
   await waitForAuthInit();
   
   try {
-    const user = auth.currentUser;
+    const { auth: currentAuth } = ensureFirebaseInitialized();
+    const user = currentAuth.currentUser;
+    
     if (!user) {
       cachedToken = null;
       tokenTimestamp = 0;
@@ -106,8 +148,10 @@ export async function getFreshToken(): Promise<string | null> {
 
 // Initialize token refresh mechanism
 export function initTokenRefresh() {
+  const { auth: currentAuth } = ensureFirebaseInitialized();
+  
   // Set up token refresh listener
-  auth.onIdTokenChanged(async (user: any) => {
+  currentAuth.onIdTokenChanged(async (user: any) => {
     if (user) {
       try {
         const token = await user.getIdToken(true);

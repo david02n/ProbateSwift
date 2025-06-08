@@ -4,6 +4,7 @@ import { QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { AuthProvider } from "@/hooks/use-auth";
+import { FirebaseProvider } from "@/providers/FirebaseProvider";
 import NotFound from "@/pages/not-found";
 import Home from "@/pages/Home";
 import AuthPage from "@/pages/auth-page";
@@ -132,7 +133,7 @@ function Router() {
             <AuthPage />
           </Route>
           <Route path="/auth/:tab">
-            {(params) => <AuthPage tab={params.tab} />}
+            <AuthPage />
           </Route>
           <Route path="/" component={Home} />
           <Route path="/home" component={Home} />
@@ -168,12 +169,14 @@ function Router() {
 function App() {
   return (
     <QueryClientProvider client={queryClient}>
-      <AuthProvider>
-        <TooltipProvider>
-          <Router />
-          <Toaster />
-        </TooltipProvider>
-      </AuthProvider>
+      <FirebaseProvider>
+        <AuthProvider>
+          <TooltipProvider>
+            <Router />
+            <Toaster />
+          </TooltipProvider>
+        </AuthProvider>
+      </FirebaseProvider>
     </QueryClientProvider>
   );
 }

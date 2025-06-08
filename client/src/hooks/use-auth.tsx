@@ -1,34 +1,10 @@
 import { createContext, ReactNode, useContext, useState, useEffect } from "react";
-import {
-  useQuery,
-  useMutation,
-  UseMutationResult,
-  useQueryClient,
-} from "@tanstack/react-query";
-import { User } from "@shared/schema";
-import { getQueryFn, apiRequest, queryClient } from "../lib/queryClient";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useToast } from "@/hooks/use-toast";
+import { apiRequest, getQueryFn } from "@/lib/queryClient";
 import { auth } from "@/lib/firebase";
+import { onAuthStateChanged, User as FirebaseUser } from "firebase/auth";
 import { useMediaQuery } from "@/hooks/use-media-query";
-
-// Declare the window interface for sharing auth functions
-declare global {
-  interface Window {
-    sharedAuthFunctions?: {
-      setActiveTab: (tab: string) => void;
-      loginFormEmail?: string;
-    };
-  }
-}
-
-// Firebase user type
-interface FirebaseUser {
-  email: string | null;
-  displayName: string | null;
-  photoURL: string | null;
-  uid: string;
-  getIdToken(forceRefresh?: boolean): Promise<string>;
-}
 
 // Backend user type
 interface AuthUser {
@@ -59,10 +35,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const isMobile = useMediaQuery("(max-width: 768px)");
-  
+
   // Initialize auth state
   useEffect(() => {
-    const unsubscribe = auth.onAuthStateChanged(async (user: FirebaseUser | null) => {
+    const unsubscribe = onAuthStateChanged(auth, async (user: FirebaseUser | null) => {
       if (user) {
         try {
           // Get the ID token
@@ -98,13 +74,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   // For mobile browsers, log any authentication issues
   if (isMobile && error) {
     console.error('Mobile auth error:', error);
-    
-    // Check if we have a mobile auth timestamp
-    const mobileAuthTimestamp = localStorage.getItem('mobile_auth_timestamp');
-    if (mobileAuthTimestamp) {
-      const timeSinceAuth = (Date.now() - parseInt(mobileAuthTimestamp)) / 1000;
-      console.log(`Mobile auth error occurred ${timeSinceAuth} seconds after authentication attempt`);
-    }
   }
 
   // Logout mutation
