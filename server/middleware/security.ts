@@ -17,27 +17,56 @@ const helmetConfig = helmet({
   contentSecurityPolicy: {
     directives: {
       defaultSrc: ["'self'"],
-      scriptSrc: ["'self'", "'unsafe-inline'", "'unsafe-eval'", 'https://*.replit.dev'],
-      styleSrc: ["'self'", "'unsafe-inline'"],
+      scriptSrc: [
+        "'self'", 
+        "'unsafe-inline'", 
+        "'unsafe-eval'", 
+        'https://*.replit.dev',
+        'https://*.firebaseapp.com',
+        'https://*.googleapis.com',
+        'https://www.gstatic.com'
+      ],
+      styleSrc: [
+        "'self'", 
+        "'unsafe-inline'", 
+        'https://fonts.googleapis.com'
+      ],
       imgSrc: ["'self'", 'data:', 'https:'],
-      connectSrc: ["'self'", 'https://*.probateswift.com', 'https://*.replit.dev', 'wss://*.replit.dev'],
-      fontSrc: ["'self'", 'https:', 'data:'],
+      connectSrc: [
+        "'self'", 
+        'https://*.probateswift.com', 
+        'https://*.replit.dev', 
+        'wss://*.replit.dev',
+        'https://*.firebaseapp.com',
+        'https://*.googleapis.com',
+        'https://firebase.googleapis.com'
+      ],
+      fontSrc: [
+        "'self'", 
+        'https:', 
+        'data:', 
+        'https://fonts.gstatic.com'
+      ],
       objectSrc: ["'none'"],
       mediaSrc: ["'self'"],
-      frameSrc: ["'none'"],
+      frameSrc: [
+        "'self'",
+        'https://*.firebaseapp.com',
+        'https://accounts.google.com'
+      ],
     },
   },
   crossOriginEmbedderPolicy: false,
   crossOriginOpenerPolicy: false,
   crossOriginResourcePolicy: { policy: 'cross-origin' },
   dnsPrefetchControl: { allow: false },
-  frameguard: { action: 'deny' },
+  frameguard: { action: 'sameorigin' },
   hidePoweredBy: true,
-  hsts: {
+  hsts: config.NODE_ENV === 'production' ? {
     maxAge: 31536000,
     includeSubDomains: true,
     preload: true,
-  },
+  } : false,
   ieNoOpen: true,
   noSniff: true,
   originAgentCluster: true,
