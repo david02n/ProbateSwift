@@ -7,7 +7,8 @@ import { AuthProvider } from "@/hooks/use-auth";
 import { FirebaseProvider } from "@/providers/FirebaseProvider";
 import NotFound from "@/pages/not-found";
 import Home from "@/pages/Home";
-import AuthPage from "@/pages/auth-page";
+import { AuthPage } from "@/pages/auth-page";
+import { SignupPage } from "@/pages/signup-page";
 
 // New redesigned pages
 import NewDashboardPage from "@/pages/new-dashboard";
@@ -138,6 +139,9 @@ function Router() {
           <Route path="/auth/:tab">
             <AuthPage />
           </Route>
+          <Route path="/signup">
+            <SignupPage />
+          </Route>
           <Route path="/" component={Home} />
           <Route path="/home" component={Home} />
           <Route path="*" component={NotFound} />
@@ -153,6 +157,9 @@ function Router() {
         <Redirect to="/dashboard" />
       </Route>
       <Route path="/auth/:tab">
+        <Redirect to="/dashboard" />
+      </Route>
+      <Route path="/signup">
         <Redirect to="/dashboard" />
       </Route>
       <Route path="/" component={NewDashboardPage} />

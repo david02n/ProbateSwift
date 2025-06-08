@@ -11,7 +11,7 @@ import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Loader2, Mail, Shield, AlertCircle, CheckCircle, XCircle } from 'lucide-react';
 import { EmailSignInForm } from '@/components/auth/EmailSignInForm';
 
-export function AuthPage() {
+export function SignupPage() {
   const [, setLocation] = useLocation();
   const navigate = useNavigate();
   const { toast } = useToast();
@@ -32,19 +32,19 @@ export function AuthPage() {
       if (!auth) return;
       
       try {
-        console.log('[AuthPage] Checking for redirect result...');
+        console.log('[SignupPage] Checking for redirect result...');
         const result = await getRedirectResult(auth);
         if (result) {
-          console.log('[AuthPage] Redirect result found:', result);
+          console.log('[SignupPage] Redirect result found:', result);
           setIsRedirecting(true);
           await handleSignInSuccess(result);
         }
       } catch (error: any) {
-        console.error('[AuthPage] Redirect result error:', error);
+        console.error('[SignupPage] Redirect result error:', error);
         setError(error);
         toast({
-          title: "Sign in failed",
-          description: "Failed to complete sign-in. Please try again.",
+          title: "Sign up failed",
+          description: "Failed to complete sign-up. Please try again.",
           variant: "destructive",
         });
       } finally {
@@ -72,7 +72,7 @@ export function AuthPage() {
         hasDomainMismatch
       });
 
-      console.log('[AuthPage] Domain analysis:', {
+      console.log('[SignupPage] Domain analysis:', {
         currentDomain,
         authDomain,
         isReplitDomain,
@@ -81,7 +81,7 @@ export function AuthPage() {
     }
   }, [isInitialized, auth]);
 
-  const handleGoogleSignIn = async () => {
+  const handleGoogleSignUp = async () => {
     if (!auth) {
       toast({
         title: "Error",
@@ -94,35 +94,35 @@ export function AuthPage() {
     setIsProcessing(true);
     
     try {
-      console.log('[AuthPage] Starting Google sign-in process');
-      console.log('[AuthPage] Domain info:', domainInfo);
+      console.log('[SignupPage] Starting Google sign-up process');
+      console.log('[SignupPage] Domain info:', domainInfo);
       
       const provider = new GoogleAuthProvider();
       provider.setCustomParameters({
         prompt: 'select_account',
-        context: 'signin',
+        context: 'signup',
       });
 
-      console.log('[AuthPage] Provider configured, attempting popup...');
+      console.log('[SignupPage] Provider configured, attempting popup...');
       
       // Try popup first
       try {
         const result = await signInWithPopup(auth, provider);
-        console.log('[AuthPage] Popup sign-in successful:', result);
+        console.log('[SignupPage] Popup sign-up successful:', result);
         await handleSignInSuccess(result);
       } catch (popupError: any) {
-        console.error('[AuthPage] Popup failed, falling back to redirect:', popupError);
+        console.error('[SignupPage] Popup failed, falling back to redirect:', popupError);
         
         // Check if it's a domain mismatch error
         if (popupError.code === 'auth/internal-error' && domainInfo?.hasDomainMismatch) {
           toast({
             title: "Domain Configuration Issue",
-            description: "Redirecting to Google sign-in due to domain configuration...",
+            description: "Redirecting to Google sign-up due to domain configuration...",
           });
         } else {
           toast({
             title: "Popup blocked",
-            description: "Redirecting to Google sign-in...",
+            description: "Redirecting to Google sign-up...",
           });
         }
         
@@ -131,16 +131,16 @@ export function AuthPage() {
         // The page will redirect, so we don't need to handle the result here
       }
     } catch (error: any) {
-      console.error('[AuthPage] Google sign-in error:', error);
+      console.error('[SignupPage] Google sign-up error:', error);
       
-      let errorMessage = 'Failed to sign in with Google.';
+      let errorMessage = 'Failed to sign up with Google.';
       
       if (error.code === 'auth/account-exists-with-different-credential') {
         errorMessage = 'An account already exists with the same email address but different sign-in credentials.';
       } else if (error.code === 'auth/invalid-credential') {
-        errorMessage = 'Invalid sign-in credentials.';
+        errorMessage = 'Invalid sign-up credentials.';
       } else if (error.code === 'auth/operation-not-allowed') {
-        errorMessage = 'Google sign-in is not enabled for this app.';
+        errorMessage = 'Google sign-up is not enabled for this app.';
       } else if (error.code === 'auth/user-disabled') {
         errorMessage = 'This account has been disabled.';
       } else if (error.code === 'auth/user-not-found') {
@@ -154,14 +154,14 @@ export function AuthPage() {
           errorMessage = 'Authentication error. Please try again.';
         }
       } else if (error.code === 'auth/popup-closed-by-user') {
-        errorMessage = 'Sign-in was cancelled. Please try again.';
+        errorMessage = 'Sign-up was cancelled. Please try again.';
       } else if (error.code === 'auth/popup-blocked') {
         errorMessage = 'Popup was blocked. Please allow popups and try again.';
       }
 
       setError(error);
       toast({
-        title: "Sign in failed",
+        title: "Sign up failed",
         description: errorMessage,
         variant: "destructive",
       });
@@ -200,7 +200,7 @@ export function AuthPage() {
 
       if (response.ok) {
         toast({
-          title: "Sign in successful",
+          title: "Account created successfully",
           description: `Welcome${user.displayName ? ', ' + user.displayName : ''}!`,
         });
         
@@ -213,7 +213,7 @@ export function AuthPage() {
       console.error('Session establishment error:', error);
       setError(error as Error);
       toast({
-        title: "Sign in failed",
+        title: "Sign up failed",
         description: "Could not establish session with the server. Please try again.",
         variant: "destructive",
       });
@@ -276,9 +276,9 @@ export function AuthPage() {
       <div className="w-full max-w-md space-y-6">
         {/* Header */}
         <div className="text-center space-y-2">
-          <h1 className="text-3xl font-bold">Welcome to ProbateSwift</h1>
+          <h1 className="text-3xl font-bold">Join ProbateSwift</h1>
           <p className="text-muted-foreground">
-            Sign in to access your account and manage your probate process
+            Create your account to start managing your probate process
           </p>
         </div>
 
@@ -296,16 +296,16 @@ export function AuthPage() {
         {/* Main Auth Card */}
         <Card>
           <CardHeader>
-            <CardTitle>Sign in to your account</CardTitle>
+            <CardTitle>Create your account</CardTitle>
             <CardDescription>
-              Choose your preferred sign-in method
+              Choose your preferred sign-up method
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-6">
-            {/* Google Sign-in Button */}
+            {/* Google Sign-up Button */}
             <div className="space-y-4">
               <Button
-                onClick={handleGoogleSignIn}
+                onClick={handleGoogleSignUp}
                 disabled={isProcessingAny}
                 variant="outline"
                 className="w-full"
@@ -336,7 +336,7 @@ export function AuthPage() {
                 {isRedirecting ? 'Redirecting...' : 'Continue with Google'}
               </Button>
               <div className="text-center text-sm text-muted-foreground">
-                Quick and secure sign-in with your Google account
+                Quick and secure sign-up with your Google account
               </div>
             </div>
 
@@ -352,14 +352,14 @@ export function AuthPage() {
               </div>
             </div>
 
-            {/* Email Sign-in Form */}
-            <EmailSignInForm context="signin" />
+            {/* Email Sign-up Form */}
+            <EmailSignInForm context="signup" />
           </CardContent>
         </Card>
 
         {/* Footer */}
         <div className="text-center text-sm text-muted-foreground">
-          By signing in, you agree to our{' '}
+          By creating an account, you agree to our{' '}
           <a href="/terms" className="underline hover:text-primary">
             Terms of Service
           </a>{' '}
@@ -369,14 +369,14 @@ export function AuthPage() {
           </a>
         </div>
 
-        {/* Sign up link */}
+        {/* Sign in link */}
         <div className="text-center text-sm text-muted-foreground">
-          Don't have an account?{' '}
+          Already have an account?{' '}
           <button 
-            onClick={() => navigate('/signup')}
+            onClick={() => navigate('/auth')}
             className="underline hover:text-primary"
           >
-            Sign up here
+            Sign in here
           </button>
         </div>
 
@@ -398,4 +398,4 @@ export function AuthPage() {
       </div>
     </div>
   );
-}
+} 

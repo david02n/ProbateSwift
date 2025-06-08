@@ -105,9 +105,6 @@ function ensureFirebaseInitialized(): { app: FirebaseApp; auth: Auth } {
       console.error('[Firebase] Failed to create auth instance:', error);
       throw new Error(`Firebase auth initialization failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
     }
-    
-    // Auth emulator disabled for Replit compatibility
-    // The emulator connection was causing authentication failures in Replit
   }
   
   if (!fallbackApp || !fallbackAuth) {

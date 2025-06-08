@@ -52,6 +52,10 @@ export function FirebaseTest() {
   };
 
   const handleGoogleSignIn = async () => {
+    if (!auth) {
+      setTestResult('❌ Auth not available for Google sign-in test');
+      return;
+    }
     setIsLoading(true);
     const provider = new GoogleAuthProvider();
     provider.setCustomParameters({ prompt: 'select_account' });
