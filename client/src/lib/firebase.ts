@@ -106,15 +106,8 @@ function ensureFirebaseInitialized(): { app: FirebaseApp; auth: Auth } {
       throw new Error(`Firebase auth initialization failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
     }
     
-    // Connect to Auth Emulator in development
-    if (import.meta.env.DEV) {
-      try {
-        connectAuthEmulator(fallbackAuth, 'http://localhost:9099');
-        console.log('[Firebase] Connected to Auth emulator');
-      } catch (error) {
-        console.warn('[Firebase] Auth emulator connection failed:', error);
-      }
-    }
+    // Auth emulator disabled for Replit compatibility
+    // The emulator connection was causing authentication failures in Replit
   }
   
   if (!fallbackApp || !fallbackAuth) {

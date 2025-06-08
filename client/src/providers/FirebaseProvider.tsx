@@ -83,15 +83,8 @@ export function FirebaseProvider({ children }: FirebaseProviderProps) {
         // Initialize Auth
         const firebaseAuth = getAuth(firebaseApp);
         
-        // Connect to Auth Emulator in development
-        if (import.meta.env.DEV) {
-          try {
-            connectAuthEmulator(firebaseAuth, 'http://localhost:9099');
-            console.log('[Firebase] Connected to Auth emulator');
-          } catch (emulatorError) {
-            console.warn('[Firebase] Auth emulator connection failed:', emulatorError);
-          }
-        }
+        // Auth emulator disabled for Replit compatibility
+        // The emulator connection was causing authentication failures in Replit
 
         // Initialize Analytics conditionally
         let firebaseAnalytics: Analytics | null = null;
