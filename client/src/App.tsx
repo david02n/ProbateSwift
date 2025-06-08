@@ -20,6 +20,7 @@ import EvaluationPage from "@/pages/evaluation-page";
 
 import { useAuth } from "@/hooks/use-auth";
 import { useEffect } from "react";
+import { GoogleSignInButton } from "@/components/auth/GoogleSignInButton";
 
 // Enhanced router component that handles mobile navigation better
 function Router() {
@@ -119,16 +120,19 @@ function Router() {
   if (!user) {
     // Render public routes with more specific route definitions
     return (
-      <Switch>
-        <Route path="/auth">
-          <AuthPage />
-        </Route>
-        <Route path="/auth/:tab">
-          {(params) => <AuthPage tab={params.tab} />}
-        </Route>
-        <Route path="/" component={Home} />
-        <Route path="*" component={NotFound} />
-      </Switch>
+      <>
+        <Switch>
+          <Route path="/auth">
+            <AuthPage />
+          </Route>
+          <Route path="/auth/:tab">
+            {(params) => <AuthPage tab={params.tab} />}
+          </Route>
+          <Route path="/" component={Home} />
+          <Route path="*" component={NotFound} />
+        </Switch>
+        <GoogleSignInButton variant="floating" />
+      </>
     );
   }
   
@@ -159,8 +163,8 @@ function App() {
     <QueryClientProvider client={queryClient}>
       <AuthProvider>
         <TooltipProvider>
-          <Toaster />
           <Router />
+          <Toaster />
         </TooltipProvider>
       </AuthProvider>
     </QueryClientProvider>
