@@ -49,13 +49,10 @@ export const analytics = typeof window !== 'undefined'
   ? isSupported().then(yes => yes ? getAnalytics(app) : null)
   : null;
 
-// Development environment setup
-if (import.meta.env.DEV) {
-  // Connect to auth emulator if running locally
-  if (window.location.hostname === 'localhost') {
-    connectAuthEmulator(auth, 'http://localhost:9099', { disableWarnings: true });
-    console.log('[Firebase] Connected to Auth Emulator');
-  }
+// Development environment setup - Skip emulator for Replit
+if (import.meta.env.DEV && window.location.hostname === 'localhost') {
+  connectAuthEmulator(auth, 'http://localhost:9099', { disableWarnings: true });
+  console.log('[Firebase] Connected to Auth Emulator');
 }
 
 // Helper function to wait for Firebase Auth to initialize
