@@ -8,9 +8,9 @@ import memoize from "memoizee";
 import connectPg from "connect-pg-simple";
 import { storage } from "./storage";
 
-if (!process.env.REPLIT_DOMAINS) {
-  throw new Error("Environment variable REPLIT_DOMAINS not provided");
-}
+// Set default domain if not provided
+const replitDomains = process.env.REPLIT_DOMAINS || `${process.env.REPL_SLUG || 'app'}.${process.env.REPL_OWNER || 'replit'}.repl.co,localhost:5000`;
+console.log('Replit domains configured:', replitDomains);
 
 const getOidcConfig = memoize(
   async () => {
@@ -31,14 +31,18 @@ export function getSession() {
     ttl: sessionTtl,
     tableName: "sessions",
   });
+  
+  // Generate a session secret if not provided
+  const sessionSecret = process.env.SESSION_SECRET || 'default-session-secret-for-development-only';
+  
   return session({
-    secret: process.env.SESSION_SECRET!,
+    secret: sessionSecret,
     store: sessionStore,
     resave: false,
     saveUninitialized: false,
     cookie: {
       httpOnly: true,
-      secure: true,
+      secure: process.env.NODE_ENV === 'production',
       maxAge: sessionTtl,
     },
   });
@@ -78,14 +82,13 @@ export async function setupAuth(app: Express) {
     tokens: client.TokenEndpointResponse & client.TokenEndpointResponseHelpers,
     verified: passport.AuthenticateCallback
   ) => {
-    const user = {};
+    const user: any = {};
     updateUserSession(user, tokens);
     await upsertUser(tokens.claims());
     verified(null, user);
   };
 
-  for (const domain of process.env
-    .REPLIT_DOMAINS!.split(",")) {
+  for (const domain of replitDomains.split(",")) {
     const strategy = new Strategy(
       {
         name: `replitauth:${domain}`,

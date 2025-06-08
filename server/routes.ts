@@ -36,12 +36,21 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Create a HTTP server for the express app
   const httpServer = createServer(app);
   
-  // Register Firebase token authentication middleware
-  // This middleware adds support for Bearer token authorization
-  // which is critical for cross-domain authentication in production
-  const firebaseAuthMiddleware = createFirebaseAuthMiddleware();
-  app.use(firebaseAuthMiddleware);
-  console.log('Firebase Bearer token authentication middleware registered');
+  // Setup Replit authentication
+  await setupAuth(app);
+  console.log('Replit authentication middleware registered');
+
+  // Auth routes for Replit Auth
+  app.get('/api/auth/user', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const user = await storage.getUser(userId);
+      res.json(user);
+    } catch (error) {
+      console.error("Error fetching user:", error);
+      res.status(500).json({ message: "Failed to fetch user" });
+    }
+  });
 
   // Initialize WebSocket Server for real-time notifications
   const wss = new WebSocketServer({ 
