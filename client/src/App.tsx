@@ -135,6 +135,7 @@ function Router() {
             {(params) => <AuthPage tab={params.tab} />}
           </Route>
           <Route path="/" component={Home} />
+          <Route path="/home" component={Home} />
           <Route path="*" component={NotFound} />
         </Switch>
         <GoogleSignInButton variant="floating" />
