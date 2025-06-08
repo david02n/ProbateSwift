@@ -52,6 +52,30 @@ export function FirebaseProvider({ children }: FirebaseProviderProps) {
             throw new Error('Missing required Firebase configuration. Please check your environment variables.');
           }
 
+          // Dynamic auth domain configuration for Replit domains
+          const currentDomain = window.location.hostname;
+          const isReplitDomain = currentDomain.includes('replit.dev') || currentDomain.includes('kirk.replit.dev');
+          
+          if (isReplitDomain) {
+            // For Replit domains, use the current domain as auth domain
+            firebaseConfig.authDomain = currentDomain;
+            console.log('[Firebase] Running on Replit domain, using current domain as auth domain:', currentDomain);
+          } else {
+            console.log('[Firebase] Running on production domain, using configured auth domain');
+          }
+
+          // Check for domain mismatch (this should now be resolved)
+          const configuredAuthDomain = firebaseConfig.authDomain;
+          
+          if (configuredAuthDomain && currentDomain !== configuredAuthDomain) {
+            console.warn('[Firebase] DOMAIN MISMATCH WARNING:');
+            console.warn(`[Firebase] Current domain: ${currentDomain}`);
+            console.warn(`[Firebase] Configured auth domain: ${configuredAuthDomain}`);
+            console.warn('[Firebase] This will cause auth/internal-error. You need to either:');
+            console.warn('[Firebase] 1. Add the current domain to Firebase Console > Authentication > Settings > Authorized domains');
+            console.warn('[Firebase] 2. Or update your environment variables to match the current domain');
+          }
+
           firebaseApp = initializeApp(firebaseConfig);
           console.log('[Firebase] Firebase app initialized successfully');
         }

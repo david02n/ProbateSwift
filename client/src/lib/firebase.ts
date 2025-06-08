@@ -17,6 +17,60 @@ const firebaseConfig = {
   measurementId: import.meta.env.VITE_FIREBASE_MEASUREMENT_ID
 };
 
+// Temporary workaround for Replit domains
+// This allows testing on Replit while keeping production config for probateswift.com
+const getFirebaseConfig = () => {
+  const currentDomain = window.location.hostname;
+  const isReplitDomain = currentDomain.includes('replit.dev') || currentDomain.includes('kirk.replit.dev');
+  
+  // Create a copy of the config
+  const config = { ...firebaseConfig };
+  
+  if (isReplitDomain) {
+    // For Replit domains, use the current domain as auth domain
+    // This ensures the auth domain matches the current domain
+    config.authDomain = currentDomain;
+    console.log('[Firebase] Running on Replit domain, using current domain as auth domain:', currentDomain);
+  } else {
+    console.log('[Firebase] Running on production domain, using configured auth domain');
+  }
+  
+  return config;
+};
+
+// Validate Firebase configuration
+function validateFirebaseConfig() {
+  const config = getFirebaseConfig();
+  const requiredFields = ['apiKey', 'authDomain', 'projectId'];
+  const missingFields = requiredFields.filter(field => !config[field as keyof typeof config]);
+  
+  if (missingFields.length > 0) {
+    console.error('[Firebase] Missing required configuration fields:', missingFields);
+    throw new Error(`Missing required Firebase configuration: ${missingFields.join(', ')}`);
+  }
+  
+  // Check for domain mismatch
+  const currentDomain = window.location.hostname;
+  const configuredAuthDomain = config.authDomain;
+  
+  console.log('[Firebase] Configuration validation passed');
+  console.log('[Firebase] Project ID:', config.projectId);
+  console.log('[Firebase] Auth Domain:', configuredAuthDomain);
+  console.log('[Firebase] Current Domain:', currentDomain);
+  console.log('[Firebase] API Key:', config.apiKey ? 'Set' : 'Missing');
+  console.log('[Firebase] App ID:', config.appId ? 'Set' : 'Missing');
+  
+  // Warn about domain mismatch
+  if (configuredAuthDomain && currentDomain !== configuredAuthDomain) {
+    console.warn('[Firebase] DOMAIN MISMATCH WARNING:');
+    console.warn(`[Firebase] Current domain: ${currentDomain}`);
+    console.warn(`[Firebase] Configured auth domain: ${configuredAuthDomain}`);
+    console.warn('[Firebase] This will cause auth/internal-error. You need to either:');
+    console.warn('[Firebase] 1. Add the current domain to Firebase Console > Authentication > Settings > Authorized domains');
+    console.warn('[Firebase] 2. Or update your environment variables to match the current domain');
+  }
+}
+
 // Fallback initialization for components that need immediate access
 let fallbackApp: FirebaseApp | null = null;
 let fallbackAuth: Auth | null = null;
@@ -29,22 +83,34 @@ function ensureFirebaseInitialized(): { app: FirebaseApp; auth: Auth } {
     
     if (existingApps.length > 0) {
       fallbackApp = existingApps[0];
+      console.log('[Firebase] Using existing Firebase app');
     } else {
       // Validate required config
-      if (!firebaseConfig.apiKey || !firebaseConfig.projectId) {
-        throw new Error('Missing required Firebase configuration. Please check your environment variables.');
-      }
+      validateFirebaseConfig();
       
-      fallbackApp = initializeApp(firebaseConfig);
-      console.log('[Firebase] Fallback app initialized');
+      try {
+        const config = getFirebaseConfig();
+        fallbackApp = initializeApp(config);
+        console.log('[Firebase] Fallback app initialized successfully');
+      } catch (error) {
+        console.error('[Firebase] Failed to initialize app:', error);
+        throw new Error(`Firebase app initialization failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
+      }
     }
     
-    fallbackAuth = getAuth(fallbackApp);
+    try {
+      fallbackAuth = getAuth(fallbackApp);
+      console.log('[Firebase] Auth instance created');
+    } catch (error) {
+      console.error('[Firebase] Failed to create auth instance:', error);
+      throw new Error(`Firebase auth initialization failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
+    }
     
     // Connect to Auth Emulator in development
     if (import.meta.env.DEV) {
       try {
         connectAuthEmulator(fallbackAuth, 'http://localhost:9099');
+        console.log('[Firebase] Connected to Auth emulator');
       } catch (error) {
         console.warn('[Firebase] Auth emulator connection failed:', error);
       }

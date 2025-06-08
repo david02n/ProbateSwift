@@ -21,7 +21,7 @@ export function AuthEntry({
   onSignInSuccess, 
   onSignInError,
   context = 'signin',
-  showDebug = false
+  showDebug = true
 }: AuthEntryProps) {
   const { toast } = useToast();
   const isLoading = useAuthLoading();

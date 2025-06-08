@@ -56,23 +56,52 @@ export function GoogleSignInButton({
     setIsLoading(true);
     
     try {
+      // Validate auth instance
+      if (!auth) {
+        throw new Error('Firebase Auth not initialized');
+      }
+
+      console.log('[GoogleSignIn] Starting Google sign-in process');
+      console.log('[GoogleSignIn] Auth instance:', auth);
+      console.log('[GoogleSignIn] Current domain:', window.location.hostname);
+      console.log('[GoogleSignIn] Auth domain:', auth.app.options.authDomain);
+      
       const provider = new GoogleAuthProvider();
       provider.setCustomParameters({
         prompt: 'select_account',
         context: context,
       });
 
-      // First try popup
+      console.log('[GoogleSignIn] Provider configured:', provider);
+
+      // Check if we're on Replit and use redirect instead of popup
+      const isReplitDomain = window.location.hostname.includes('replit.dev') || 
+                            window.location.hostname.includes('kirk.replit.dev');
+      
+      if (isReplitDomain) {
+        console.log('[GoogleSignIn] Replit domain detected, using redirect method');
+        setIsRedirecting(true);
+        await signInWithRedirect(auth, provider);
+        // The page will redirect, so we don't need to handle the result here
+        return;
+      }
+
+      // First try popup for non-Replit domains
       try {
+        console.log('[GoogleSignIn] Attempting popup sign-in...');
         const result = await signInWithPopup(auth, provider);
+        console.log('[GoogleSignIn] Popup sign-in successful:', result);
         await handleSignInSuccess(result);
       } catch (popupError: any) {
+        console.error('[GoogleSignIn] Popup error:', popupError);
+        
         // If popup is blocked or closed, try redirect
         if (popupError.code === 'auth/popup-blocked' || 
             popupError.code === 'auth/popup-closed-by-user' ||
             popupError.code === 'auth/cancelled-popup-request' ||
             popupError.code === 'auth/popup-closed-by-user') {
           
+          console.log('[GoogleSignIn] Popup blocked, trying redirect...');
           toast({
             title: "Popup blocked",
             description: "Redirecting to Google sign-in...",
@@ -87,6 +116,18 @@ export function GoogleSignInButton({
       }
     } catch (error: any) {
       console.error('Google sign-in error:', error);
+      
+      // Log detailed error information for debugging
+      console.error('[GoogleSignIn] Detailed error info:', {
+        error: error,
+        code: error.code,
+        message: error.message,
+        auth: auth,
+        domain: window.location.hostname,
+        userAgent: navigator.userAgent,
+        timestamp: new Date().toISOString(),
+        authDomain: auth?.app?.options?.authDomain
+      });
       
       let errorMessage = 'Failed to sign in with Google.';
       
@@ -106,6 +147,9 @@ export function GoogleSignInButton({
         errorMessage = 'Popup was blocked. Please allow popups for this site and try again.';
       } else if (error.code === 'auth/popup-closed-by-user') {
         errorMessage = 'Sign-in was cancelled.';
+      } else if (error.code === 'auth/internal-error') {
+        errorMessage = 'Internal authentication error. Please check your Firebase configuration and try again.';
+        console.error('[GoogleSignIn] Internal error - this might be a configuration issue');
       }
 
       setError(error);
@@ -198,7 +242,7 @@ export function GoogleSignInButton({
           />
         </svg>
       )}
-      {isRedirecting ? 'Redirecting...' : children}
+      {children}
     </Button>
   );
 } 
