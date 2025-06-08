@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { auth } from '@/lib/firebase';
-import { GoogleAuthProvider, signInWithRedirect, getRedirectResult } from 'firebase/auth';
+import { GoogleAuthProvider, signInWithPopup, onAuthStateChanged, User } from 'firebase/auth';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { useToast } from '@/hooks/use-toast';
@@ -17,35 +17,19 @@ const FirebaseAuthUI: React.FC<FirebaseAuthUIProps> = ({
 }) => {
   const { toast } = useToast();
   const [isLoading, setIsLoading] = useState(false);
-  const [isCheckingRedirect, setIsCheckingRedirect] = useState(true);
+  const [currentUser, setCurrentUser] = useState<User | null>(null);
 
   useEffect(() => {
-    const checkRedirectResult = async () => {
-      try {
-        const result = await getRedirectResult(auth);
-        if (result) {
-          console.log('[FirebaseUI] Sign-in successful:', result.user.email);
-          onSignInSuccess?.(result.user);
-          toast({
-            title: "Welcome back!",
-            description: `Signed in as ${result.user.email}`,
-          });
-        }
-      } catch (error: any) {
-        console.error('[FirebaseUI] Redirect error:', error);
-        onSignInFailure?.(error);
-        toast({
-          title: "Sign in failed",
-          description: error.message,
-          variant: "destructive",
-        });
-      } finally {
-        setIsCheckingRedirect(false);
+    const unsubscribe = onAuthStateChanged(auth, (user) => {
+      setCurrentUser(user);
+      if (user) {
+        console.log('[FirebaseUI] User signed in:', user.email);
+        onSignInSuccess?.(user);
       }
-    };
+    });
 
-    checkRedirectResult();
-  }, [onSignInSuccess, onSignInFailure, toast]);
+    return () => unsubscribe();
+  }, [onSignInSuccess]);
 
   const handleGoogleSignIn = async () => {
     setIsLoading(true);
@@ -57,27 +41,37 @@ const FirebaseAuthUI: React.FC<FirebaseAuthUIProps> = ({
         prompt: 'select_account'
       });
       
-      console.log('[FirebaseUI] Starting Google sign-in...');
-      await signInWithRedirect(auth, provider);
+      console.log('[FirebaseUI] Starting Google sign-in with popup...');
+      const result = await signInWithPopup(auth, provider);
+      
+      console.log('[FirebaseUI] Sign-in successful:', result.user.email);
+      toast({
+        title: "Welcome back!",
+        description: `Signed in as ${result.user.email}`,
+      });
+      
     } catch (error: any) {
       console.error('[FirebaseUI] Sign-in error:', error);
-      setIsLoading(false);
       onSignInFailure?.(error);
       toast({
         title: "Sign in failed",
         description: error.message,
         variant: "destructive",
       });
+    } finally {
+      setIsLoading(false);
     }
   };
 
-  if (isCheckingRedirect) {
+  if (currentUser) {
     return (
       <Card className="w-full max-w-md mx-auto">
         <CardContent className="pt-6">
           <div className="flex flex-col items-center justify-center space-y-4">
-            <Loader2 className="h-8 w-8 animate-spin text-primary" />
-            <p className="text-sm text-muted-foreground">Checking authentication...</p>
+            <div className="text-center">
+              <p className="text-lg font-medium">Welcome back!</p>
+              <p className="text-sm text-muted-foreground">{currentUser.email}</p>
+            </div>
           </div>
         </CardContent>
       </Card>

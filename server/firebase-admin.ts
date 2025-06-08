@@ -73,7 +73,7 @@ export async function verifyIdToken(idToken: string): Promise<admin.auth.Decoded
           (payload.iss.includes('securetoken.google.com') || payload.iss.includes('accounts.google.com'));
         
         // CRITICAL: Check both project ID sources
-        const projectId = process.env.VITE_FIREBASE_PROJECT_ID || firebaseConfig.projectId || 'probate-458709';
+        const projectId = process.env.VITE_FIREBASE_PROJECT_ID || 'probate-458709';
         const hasValidAudience = payload.aud === projectId; 
         
         // Time-based security checks
