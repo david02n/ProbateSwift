@@ -1,56 +1,24 @@
 import admin from 'firebase-admin';
 
-// Initialize Firebase Admin SDK for server-side token verification
-console.log('Initializing Firebase Admin with project ID:', process.env.VITE_FIREBASE_PROJECT_ID);
+// Set Firebase project ID environment variable that Admin SDK expects
+const projectId = process.env.VITE_FIREBASE_PROJECT_ID || 'probate-458709';
+process.env.GOOGLE_CLOUD_PROJECT = projectId;
+process.env.GCLOUD_PROJECT = projectId;
 
-// In a production environment, we should use a directly configured Firebase Admin instance
-const firebaseConfig = {
-  projectId: process.env.VITE_FIREBASE_PROJECT_ID || 'probate-458709',
-  apiKey: process.env.VITE_FIREBASE_API_KEY,
-  appId: process.env.VITE_FIREBASE_APP_ID
-};
+console.log('Initializing Firebase Admin with project ID:', projectId);
 
-// Log configuration for debugging
-console.log('Firebase Admin configuration:', {
-  projectId: firebaseConfig.projectId,
-  hasApiKey: !!firebaseConfig.apiKey,
-  hasAppId: !!firebaseConfig.appId
-});
-
-// Initialize Firebase Admin SDK properly according to Firebase best practices
-// For production, this is the recommended initialization approach
-// For production environments, proper initialization is critical
-// Firebase recommends using environment variables or explicit credentials
+// Initialize Firebase Admin SDK with explicit project configuration
 try {
-  // Get the Firebase admin app or initialize it
-  const existingApp = admin.apps.length > 0 ? admin.apps[0] : null;
-  
-  if (existingApp) {
-    console.log('Firebase Admin SDK already initialized');
+  if (admin.apps.length === 0) {
+    admin.initializeApp({
+      projectId: projectId,
+    });
+    console.log('Firebase Admin SDK initialized successfully');
   } else {
-    // First try: Service account auto-detection (Google Cloud, etc.)
-    try {
-      const app = admin.initializeApp();
-      console.log('Firebase Admin SDK initialized with default app configuration');
-    } catch (autoDetectError: any) {
-      console.error('Error with auto-detection initialization:', autoDetectError);
-      
-      // Second try: Explicit project configuration (more reliable in production)
-      try {
-        // Most reliable approach for production environments
-        const app = admin.initializeApp({
-          projectId: process.env.VITE_FIREBASE_PROJECT_ID || firebaseConfig.projectId,
-          // Note: We don't need credential file for token verification
-          // Firebase Admin will use Google Application Default Credentials
-        });
-        console.log('Firebase Admin initialized with explicit project ID configuration');
-      } catch (fallbackError: any) {
-        console.error('Critical error: Firebase Admin initialization failed completely:', fallbackError);
-      }
-    }
+    console.log('Firebase Admin SDK already initialized');
   }
 } catch (error: any) {
-  console.error('Unexpected error during Firebase Admin initialization:', error);
+  console.error('Firebase Admin initialization error:', error);
 }
 
 export const auth = admin.auth();
