@@ -76,18 +76,92 @@ export function setupStytchAuth(app: Express) {
     }
   });
 
-  // Magic link callback endpoint
+  // Send magic link endpoint
+  app.post('/api/auth/send-magic-link', async (req, res) => {
+    try {
+      const { email, loginRedirectURL, signupRedirectURL } = req.body;
+      
+      if (!email) {
+        return res.status(400).json({ message: 'Email is required' });
+      }
+
+      // Send magic link via Stytch
+      const result = await stytchClient.magicLinks.email.loginOrCreate({
+        email,
+        login_magic_link_url: loginRedirectURL || `${req.protocol}://${req.get('host')}/auth/callback`,
+        signup_magic_link_url: signupRedirectURL || `${req.protocol}://${req.get('host')}/auth/callback`,
+      });
+
+      if (result.status_code === 200) {
+        res.json({ success: true, message: 'Magic link sent successfully' });
+      } else {
+        res.status(400).json({ message: 'Failed to send magic link' });
+      }
+    } catch (error) {
+      console.error('Magic link error:', error);
+      res.status(500).json({ message: 'Failed to send magic link' });
+    }
+  });
+
+  // Google OAuth initiation endpoint - simplified implementation
+  app.get('/api/auth/google', async (req, res) => {
+    try {
+      // For now, redirect to magic link flow
+      // This can be enhanced once OAuth is properly configured in Stytch
+      res.redirect('/auth?provider=google');
+    } catch (error) {
+      console.error('Google OAuth error:', error);
+      res.redirect('/auth?error=oauth_error');
+    }
+  });
+
+  // Logout endpoint
+  app.post('/api/auth/logout', async (req, res) => {
+    try {
+      const sessionToken = req.session.stytchSessionToken;
+      
+      if (sessionToken) {
+        // Revoke the session with Stytch
+        await stytchClient.sessions.revoke({
+          session_token: sessionToken,
+        });
+      }
+      
+      // Clear local session
+      req.session.destroy((err) => {
+        if (err) {
+          console.error('Session destruction error:', err);
+        }
+        res.json({ success: true, message: 'Logged out successfully' });
+      });
+    } catch (error) {
+      console.error('Logout error:', error);
+      res.status(500).json({ message: 'Logout failed' });
+    }
+  });
+
+  // Authentication callback endpoint (handles both magic links and OAuth)
   app.get('/api/auth/callback', async (req, res) => {
     try {
-      const { token } = req.query;
+      const { token, stytch_token_type } = req.query;
       
       if (!token || typeof token !== 'string') {
         return res.redirect('/auth?error=invalid_token');
       }
 
-      const result = await stytchClient.magicLinks.authenticate({
-        token,
-      });
+      let result;
+      
+      // Handle different authentication types
+      if (stytch_token_type === 'oauth') {
+        result = await stytchClient.oauth.authenticate({
+          token,
+        });
+      } else {
+        // Default to magic link authentication
+        result = await stytchClient.magicLinks.authenticate({
+          token,
+        });
+      }
 
       if (result.status_code === 200) {
         // Store session token
@@ -102,12 +176,12 @@ export function setupStytchAuth(app: Express) {
           profileImageUrl: null,
         });
 
-        res.redirect('/dashboard');
+        res.redirect('/?auth_success=true');
       } else {
         res.redirect('/auth?error=authentication_failed');
       }
     } catch (error) {
-      console.error('Magic link callback error:', error);
+      console.error('Authentication callback error:', error);
       res.redirect('/auth?error=server_error');
     }
   });

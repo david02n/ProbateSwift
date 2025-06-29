@@ -104,50 +104,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Document upload endpoint
-  app.post('/api/documents/upload', requireAuth, upload.single('file'), async (req: Request, res: Response) => {
-    try {
-      const file = req.file;
-      const { type, caseId, metadata } = req.body;
-      
-      if (!file) {
-        return res.status(400).json({ message: 'No file uploaded' });
-      }
-
-      // Get user from authenticated request
-      const user = (req as any).user;
-      
-      // Store document information in database
-      const document = await storage.createDocument({
-        type: type || 'general',
-        userId: user.id,
-        caseId: caseId ? parseInt(caseId) : undefined,
-        filename: file.filename,
-        storagePath: file.path,
-        metadata: metadata ? JSON.parse(metadata) : null,
-        status: 'uploaded',
-        fileSize: file.size,
-        fileType: file.mimetype,
-        notes: null
-      });
-
-      res.json({
-        message: 'File uploaded successfully',
-        document: document
-      });
-
-      // Broadcast upload notification
-      broadcast({
-        type: 'document_uploaded',
-        userId: user.id,
-        documentId: document.id,
-        filename: file.filename
-      });
-
-    } catch (error) {
-      console.error('Document upload error:', error);
-      res.status(500).json({ message: 'Failed to upload document' });
-    }
+  // Test authenticated endpoint
+  app.get('/api/test-auth', requireAuth, (req: Request, res: Response) => {
+    const user = (req as any).user;
+    res.json({ message: 'Authentication successful', user });
   });
 
   // Basic health check endpoint
