@@ -108,12 +108,34 @@ export function setupStytchAuth(app: Express) {
     }
   });
 
-  // Google OAuth initiation endpoint - simplified implementation
+  // Google OAuth initiation endpoint
   app.get('/api/auth/google', async (req, res) => {
     try {
-      // For now, redirect to magic link flow
-      // This can be enhanced once OAuth is properly configured in Stytch
-      res.redirect('/auth?provider=google');
+      const redirectUrl = `${req.protocol}://${req.get('host')}/api/auth/callback`;
+      console.log('Starting Google OAuth with redirect URL:', redirectUrl);
+      
+      // For development, redirect to magic link flow since OAuth needs proper Stytch configuration
+      if (process.env.NODE_ENV === 'development') {
+        console.log('Development mode: redirecting to auth page with Google provider hint');
+        return res.redirect('/auth?provider=google&message=google_oauth_unavailable');
+      }
+      
+      // Production OAuth flow (requires proper Stytch OAuth configuration)
+      const result = await stytchClient.oauth.start({
+        oauth_provider: 'google' as any,
+        login_redirect_url: redirectUrl,
+        signup_redirect_url: redirectUrl,
+      });
+
+      console.log('Stytch OAuth result:', result.status_code, result);
+
+      if (result.status_code === 200) {
+        console.log('Redirecting to Google OAuth URL:', (result as any).oauth_url);
+        res.redirect((result as any).oauth_url);
+      } else {
+        console.error('Failed to start Google OAuth:', result);
+        res.redirect('/auth?error=oauth_start_failed');
+      }
     } catch (error) {
       console.error('Google OAuth error:', error);
       res.redirect('/auth?error=oauth_error');

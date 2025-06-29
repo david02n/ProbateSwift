@@ -115,5 +115,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
     res.json({ status: 'ok', timestamp: new Date().toISOString() });
   });
 
+  // Assessment endpoint - returns null for development
+  app.get('/api/assessment', (req: Request, res: Response) => {
+    res.json(null);
+  });
+
+  // Probate cases endpoint - returns empty array for development
+  app.get('/api/probate-cases', (req: Request, res: Response) => {
+    res.json([]);
+  });
+
   return httpServer;
 }
