@@ -57,12 +57,11 @@ app.use(express.urlencoded({ extended: false }));
   app.use(errorHandler);
 
   // Start server
-  server.listen({
-    port: config.PORT,
-    host: config.HOST,
-    reusePort: true,
-  }, () => {
-    log(`Server running in ${config.NODE_ENV} mode on port ${config.PORT}`);
+  const port = config.PORT;
+  const host = config.NODE_ENV === 'production' ? '0.0.0.0' : config.HOST;
+  
+  server.listen(port, host, () => {
+    log(`Server running in ${config.NODE_ENV} mode on ${host}:${port}`);
   });
 })().catch((error) => {
   console.error('Failed to start server:', error);

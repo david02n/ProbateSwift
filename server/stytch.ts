@@ -125,7 +125,7 @@ export function setupStytchAuth(app: Express) {
         // Upsert user in local DB
         await storage.upsertUser({
           id: result.user_id,
-          email: result.email,
+          email: result.user?.emails?.[0]?.email || email,
           firstName: result.user?.name?.first_name || null,
           lastName: result.user?.name?.last_name || null,
           profileImageUrl: null,
@@ -160,7 +160,7 @@ export function setupStytchAuth(app: Express) {
         // Upsert user in local DB
         await storage.upsertUser({
           id: result.user_id,
-          email: result.email,
+          email: result.user?.emails?.[0]?.email || email,
           firstName: result.user?.name?.first_name || null,
           lastName: result.user?.name?.last_name || null,
           profileImageUrl: null,
