@@ -17,16 +17,24 @@ export default function AuthPage() {
     const urlParams = new URLSearchParams(window.location.search);
     const token = urlParams.get('token');
     const errorParam = urlParams.get('error');
+    const message = urlParams.get('message');
     
     if (errorParam) {
       setError('Authentication failed. Please try again.');
+    }
+    
+    if (message === 'please_use_email') {
+      toast({
+        title: 'Use Email Login',
+        description: 'Please use your email address to sign in or create an account.',
+      });
     }
     
     if (token) {
       // Handle successful authentication callback
       handleAuthCallback(token);
     }
-  }, []);
+  }, [toast]);
 
   const handleAuthCallback = async (token: string) => {
     setIsLoading(true);
