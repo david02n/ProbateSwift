@@ -45,58 +45,33 @@ function Router() {
     );
   }
 
+  // Handle authentication routing
+  if (!user) {
+    return (
+      <Switch>
+        <Route path="/auth/callback" component={AuthCallback} />
+        <Route path="/auth" component={AuthPage} />
+        <Route>
+          <Redirect to="/auth" />
+        </Route>
+      </Switch>
+    );
+  }
+
   return (
     <Switch>
-      {/* Authentication callback route */}
-      <Route path="/auth/callback">
-        <AuthCallback />
-      </Route>
-      
-      {/* Public routes - accessible without authentication */}
-      <Route path="/auth">
-        <AuthPage />
-      </Route>
-      
-      {/* Redirect to auth if not authenticated */}
-      {!user && <Redirect to="/auth" />}
-      
-      {/* Protected routes - require authentication */}
-      {user && (
-        <>
-          <Route path="/">
-            <Home />
-          </Route>
-          <Route path="/dashboard">
-            <DashboardPage />
-          </Route>
-          <Route path="/new-dashboard">
-            <NewDashboardPage />
-          </Route>
-          <Route path="/people">
-            <PeoplePage />
-          </Route>
-          <Route path="/estate">
-            <EstatePage />
-          </Route>
-          <Route path="/documents">
-            <DocumentsPage />
-          </Route>
-          <Route path="/documents/upload">
-            <DocumentUploadPage />
-          </Route>
-          <Route path="/deceased-details/:personId?">
-            <DeceasedDetailsPage />
-          </Route>
-          <Route path="/evaluation">
-            <EvaluationPage />
-          </Route>
-        </>
-      )}
-      
-      {/* 404 route */}
-      <Route>
-        <NotFound />
-      </Route>
+      <Route path="/auth/callback" component={AuthCallback} />
+      <Route path="/auth" component={AuthPage} />
+      <Route path="/" component={Home} />
+      <Route path="/dashboard" component={DashboardPage} />
+      <Route path="/new-dashboard" component={NewDashboardPage} />
+      <Route path="/people" component={PeoplePage} />
+      <Route path="/estate" component={EstatePage} />
+      <Route path="/documents" component={DocumentsPage} />
+      <Route path="/documents/upload" component={DocumentUploadPage} />
+      <Route path="/deceased-details/:personId?" component={DeceasedDetailsPage} />
+      <Route path="/evaluation" component={EvaluationPage} />
+      <Route component={NotFound} />
     </Switch>
   );
 }

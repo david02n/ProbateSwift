@@ -3,13 +3,20 @@ import helmet from 'helmet';
 import rateLimit from 'express-rate-limit';
 import { config } from '../config';
 
-// Create rate limiter
+// Create rate limiter with generous limits for development
 const limiter = rateLimit({
-  windowMs: config.RATE_LIMIT_WINDOW_MS,
-  max: config.RATE_LIMIT_MAX_REQUESTS,
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: 1000, // Very high limit for development
   message: { error: 'Too many requests, please try again later.' },
   standardHeaders: true,
   legacyHeaders: false,
+  skip: (req) => {
+    // Skip rate limiting for auth endpoints during development
+    if (process.env.NODE_ENV === 'development' && req.path.startsWith('/api/auth')) {
+      return true;
+    }
+    return false;
+  },
 });
 
 // Configure Helmet with secure defaults
@@ -22,7 +29,7 @@ const helmetConfig = helmet({
         "'unsafe-inline'", 
         "'unsafe-eval'", 
         'https://*.replit.dev',
-        'https://*.firebaseapp.com',
+        'https://*.stytch.com',
         'https://*.googleapis.com',
         'https://www.gstatic.com'
       ],
