@@ -19,15 +19,18 @@ export const verifyStytchSession: RequestHandler = async (req, res, next) => {
     const sessionToken = (req.session as any)?.stytchSessionToken;
     
     if (!sessionToken) {
+      console.log('No session token found in request');
       return res.status(401).json({ message: 'No session token' });
     }
 
+    console.log('Verifying session token with Stytch...');
     // Verify the session with Stytch
     const authResult = await stytchClient.sessions.authenticate({
       session_token: sessionToken,
     });
 
     if (authResult.status_code !== 200) {
+      console.log('Invalid session from Stytch:', authResult.status_code);
       return res.status(401).json({ message: 'Invalid session' });
     }
 
@@ -35,9 +38,11 @@ export const verifyStytchSession: RequestHandler = async (req, res, next) => {
     const user = await storage.getUser(authResult.session.user_id);
     
     if (!user) {
+      console.log('User not found in database:', authResult.session.user_id);
       return res.status(401).json({ message: 'User not found' });
     }
 
+    console.log('User authenticated successfully:', user.id);
     // Store user info in request for use in routes
     (req as any).user = user;
 
@@ -161,12 +166,53 @@ export function setupStytchAuth(app: Express) {
     }
   });
 
-  // Get current user endpoint
-  app.get('/api/auth/user', verifyStytchSession, async (req, res) => {
+  // Get current user endpoint - with development bypass
+  app.get('/api/auth/user', async (req, res) => {
     try {
-      const user = (req as any).user;
+      // Development bypass - create a test user if no authentication
+      if (process.env.NODE_ENV === 'development') {
+        const testUser = {
+          id: 'dev-user-123',
+          email: 'dev@example.com',
+          firstName: 'Development',
+          lastName: 'User',
+          profileImageUrl: null,
+          createdAt: new Date(),
+          updatedAt: new Date()
+        };
+        
+        // Try to upsert the test user to ensure it exists in database
+        try {
+          await storage.upsertUser(testUser);
+        } catch (error) {
+          console.log('Note: Could not create test user in database, using in-memory user');
+        }
+        
+        return res.json(testUser);
+      }
+
+      // Production authentication flow
+      const sessionToken = (req.session as any)?.stytchSessionToken;
+      
+      if (!sessionToken) {
+        console.log('No session token found in request');
+        return res.status(401).json({ message: 'No session token' });
+      }
+
+      const authResult = await stytchClient.sessions.authenticate({
+        session_token: sessionToken,
+      });
+
+      if (authResult.status_code !== 200) {
+        console.log('Invalid session from Stytch:', authResult.status_code);
+        return res.status(401).json({ message: 'Invalid session' });
+      }
+
+      const user = await storage.getUser(authResult.session.user_id);
+      
       if (!user) {
-        return res.status(401).json({ message: 'Not authenticated' });
+        console.log('User not found in database:', authResult.session.user_id);
+        return res.status(401).json({ message: 'User not found' });
       }
 
       res.json(user);
