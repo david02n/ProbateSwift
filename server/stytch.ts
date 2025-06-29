@@ -184,10 +184,15 @@ export function setupStytchAuth(app: Express) {
       const redirectUrl = `${req.protocol}://${req.get('host')}/api/auth/callback`;
       console.log('Starting Google OAuth with redirect URL:', redirectUrl);
       
-      // Use correct Stytch OAuth URL according to documentation
-      const apiUrl = process.env.NODE_ENV === 'production' ? 'https://api.stytch.com' : 'https://test.stytch.com';
+      // Use correct Stytch OAuth URL - detect environment from token
+      const publicToken = process.env.STYTCH_PUBLIC_TOKEN || process.env.STYTCH_PROJECT_ID || '';
+      const isLiveToken = publicToken.includes('live');
+      const apiUrl = isLiveToken ? 'https://api.stytch.com' : 'https://test.stytch.com';
+      
+      console.log('Token type detection - isLive:', isLiveToken, 'apiUrl:', apiUrl);
+      console.log('Public token prefix:', publicToken.substring(0, 30));
       const params = new URLSearchParams({
-        public_token: process.env.STYTCH_PUBLIC_TOKEN || '',
+        public_token: publicToken,
         login_redirect_url: redirectUrl,
         signup_redirect_url: redirectUrl
       });
