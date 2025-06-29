@@ -115,31 +115,6 @@ export function setupStytchAuth(app: Express) {
     }
   });
 
-  // Logout endpoint
-  app.post('/api/auth/logout', async (req, res) => {
-    try {
-      const sessionToken = req.session.stytchSessionToken;
-      
-      if (sessionToken) {
-        // Revoke the session with Stytch
-        await stytchClient.sessions.revoke({
-          session_token: sessionToken,
-        });
-      }
-      
-      // Clear local session
-      req.session.destroy((err) => {
-        if (err) {
-          console.error('Session destruction error:', err);
-        }
-        res.json({ success: true, message: 'Logged out successfully' });
-      });
-    } catch (error) {
-      console.error('Logout error:', error);
-      res.status(500).json({ message: 'Logout failed' });
-    }
-  });
-
   // Authentication callback endpoint (handles both magic links and OAuth)
   app.get('/api/auth/callback', async (req, res) => {
     try {
@@ -165,7 +140,7 @@ export function setupStytchAuth(app: Express) {
 
       if (result.status_code === 200) {
         // Store session token
-        req.session.stytchSessionToken = result.session_token;
+        (req.session as any).stytchSessionToken = result.session_token;
         
         // Upsert user in our database
         await storage.upsertUser({
@@ -204,7 +179,7 @@ export function setupStytchAuth(app: Express) {
   // Logout endpoint
   app.post('/api/auth/logout', verifyStytchSession, async (req, res) => {
     try {
-      const sessionToken = req.session?.stytchSessionToken;
+      const sessionToken = (req.session as any)?.stytchSessionToken;
       
       if (sessionToken) {
         // Revoke the session in Stytch

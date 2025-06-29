@@ -1,5 +1,6 @@
 import express from "express";
 import cors from "cors";
+import session from "express-session";
 import { registerRoutes } from "./routes";
 import { setupVite, serveStatic, log } from "./vite";
 import { config } from "./config";
@@ -19,6 +20,18 @@ app.use(cors(securityMiddleware.corsOptions));
 
 // Apply rate limiting to all routes
 app.use(securityMiddleware.limiter);
+
+// Session middleware (required for Stytch authentication)
+app.use(session({
+  secret: process.env.SESSION_SECRET || 'dev-secret-key-change-in-production',
+  resave: false,
+  saveUninitialized: false,
+  cookie: {
+    secure: config.NODE_ENV === 'production',
+    httpOnly: true,
+    maxAge: 24 * 60 * 60 * 1000 // 24 hours
+  }
+}));
 
 // Body parsing middleware
 app.use(express.json());
