@@ -19,7 +19,7 @@ import {
 } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { getQueryFn } from "@/lib/queryClient";
-import { AssessmentResult, Executor, EvaluationResponse } from "@shared/schema";
+import { AssessmentResult, Executor, EvaluationResponse, ProbateCase } from "@shared/schema";
 import { EvaluationFlow } from "@/components/evaluation/EvaluationFlow";
 import { MilestoneProgress } from "@/components/milestones/MilestoneProgress";
 import { getUnlockedTabs } from "@shared/milestone-config";
@@ -78,7 +78,7 @@ const DeceasedFormMilestone: React.FC = () => {
     refetchInterval: 30000, // Refresh every 30 seconds
   });
   
-  const isComplete = completionData?.complete || false;
+  const isComplete = (completionData as any)?.complete || false;
   
   return (
     <div className="mb-8 relative">
@@ -136,8 +136,18 @@ const DashboardPage: React.FC = () => {
     queryFn: getQueryFn({ on401: "returnNull" }),
   });
 
+  // Fetch probate cases
+  const {
+    data: probateCases = [],
+    isLoading: isLoadingCases
+  } = useQuery<ProbateCase[]>({
+    queryKey: ["/api/probate-cases"],
+    queryFn: getQueryFn({ on401: "returnNull" }),
+  });
+
   const handleLogout = () => {
-    logoutMutation.mutate();
+    // Simple logout redirect for development
+    window.location.href = '/auth';
   };
 
   return (
@@ -146,7 +156,7 @@ const DashboardPage: React.FC = () => {
         <div className="flex justify-between items-center mb-8">
           <div>
             <h1 className="text-3xl font-bold text-gray-900">
-              Welcome, {user?.firstName || "User"}
+              Welcome, {(user as any)?.firstName || "User"}
             </h1>
             <p className="text-charcoal/70">
               Continue your probate journey with ProbateSwift
