@@ -38,11 +38,8 @@ export const verifyStytchSession: RequestHandler = async (req, res, next) => {
       return res.status(401).json({ message: 'User not found' });
     }
 
-    // Store full user info in request for use in routes
-    req.user = {
-      ...user,
-      stytchUserId: authResult.session.user_id,
-    };
+    // Store user info in request for use in routes
+    (req as any).user = user;
 
     next();
   } catch (error) {
@@ -118,14 +115,9 @@ export function setupStytchAuth(app: Express) {
   // Get current user endpoint
   app.get('/api/auth/user', verifyStytchSession, async (req, res) => {
     try {
-      const userId = req.user?.stytchUserId;
-      if (!userId) {
-        return res.status(401).json({ message: 'Not authenticated' });
-      }
-
-      const user = await storage.getUser(userId);
+      const user = (req as any).user;
       if (!user) {
-        return res.status(404).json({ message: 'User not found' });
+        return res.status(401).json({ message: 'Not authenticated' });
       }
 
       res.json(user);
@@ -159,29 +151,6 @@ export function setupStytchAuth(app: Express) {
 }
 
 // Type extensions for Express
-declare global {
-  namespace Express {
-    interface User {
-      id: string;
-      email: string | null;
-      firstName: string | null;
-      lastName: string | null;
-      profileImageUrl: string | null;
-      createdAt: Date | null;
-      updatedAt: Date | null;
-      password: string | null;
-      lastLogin: Date | null;
-      isGuest: boolean | null;
-      firebaseUid: string | null;
-      photoURL: string | null;
-    }
-
-    interface Request {
-      user?: User;
-    }
-  }
-}
-
 declare module 'express-session' {
   interface SessionData {
     stytchSessionToken?: string;
