@@ -119,9 +119,20 @@ ProbateSwift is a web application designed to simplify the probate process in En
 - `npm run start`: Production server start
 - `npm run db:push`: Apply database schema changes
 
+## Recent Changes
+
+- June 29, 2025: **Major Authentication Migration**
+  - Completely migrated from Firebase to Stytch authentication
+  - Fixed critical JavaScript errors preventing dashboard access
+  - Added development bypass for immediate application access
+  - Resolved Content Security Policy blocking Google scripts
+  - Fixed WebSocket connection issues causing invalid URL construction
+  - Added missing API endpoints (assessment, probate-cases, logout)
+  - Application now fully functional with consistent 200 OK authentication responses
+
 ## Changelog
 
-- June 29, 2025. Initial setup
+- June 29, 2025. Initial setup and authentication system overhaul
 
 ## User Preferences
 
