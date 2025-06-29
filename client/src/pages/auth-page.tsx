@@ -1,12 +1,9 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Shield } from 'lucide-react';
+import StytchLoginComponent from './StytchLoginComponent'; // assuming this component is defined elsewhere
 
 export function AuthPage() {
-  const handleReplitSignIn = () => {
-    window.location.href = '/api/login';
-  };
-
   return (
     <div className="container flex items-center justify-center min-h-screen py-12">
       <Card className="w-full max-w-md">
@@ -19,15 +16,8 @@ export function AuthPage() {
             Sign in to access your account and manage your probate process
           </CardDescription>
         </CardHeader>
-        <CardContent className="space-y-4">
-          <Button 
-            onClick={handleReplitSignIn}
-            className="w-full"
-            size="lg"
-          >
-            Sign in with Replit
-          </Button>
-          
+        <CardContent>
+          <StytchLoginComponent />
           <div className="text-center text-sm text-muted-foreground">
             By signing in, you agree to our{' '}
             <a href="/terms" className="underline hover:text-primary">

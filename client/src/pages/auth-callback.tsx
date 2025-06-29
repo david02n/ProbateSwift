@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { getRedirectResult } from 'firebase/auth';
-import { useFirebase } from '@/providers/FirebaseProvider';
+
 import { useAuthStore } from '@/stores/auth-store';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';

@@ -1,23 +1,13 @@
-import { createContext, useContext, useEffect, useState, ReactNode } from 'react';
-import { initializeApp, getApps, FirebaseApp } from 'firebase/app';
-import { getAuth, Auth, onAuthStateChanged } from 'firebase/auth';
-import { getAnalytics, isSupported, Analytics } from 'firebase/analytics';
-
-interface FirebaseContextType {
-  app: FirebaseApp | null;
-  auth: Auth | null;
-  analytics: Analytics | null;
-  isInitialized: boolean;
   error: Error | null;
 }
 
 const FirebaseContext = createContext<FirebaseContextType | undefined>(undefined);
 
-interface FirebaseProviderProps {
+
   children: ReactNode;
 }
 
-export function FirebaseProvider({ children }: FirebaseProviderProps) {
+
   const [app, setApp] = useState<FirebaseApp | null>(null);
   const [auth, setAuth] = useState<Auth | null>(null);
   const [analytics, setAnalytics] = useState<Analytics | null>(null);
@@ -135,7 +125,7 @@ export function FirebaseProvider({ children }: FirebaseProviderProps) {
 export function useFirebase() {
   const context = useContext(FirebaseContext);
   if (context === undefined) {
-    throw new Error('useFirebase must be used within a FirebaseProvider');
+
   }
   return context;
 }

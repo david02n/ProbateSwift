@@ -42,11 +42,8 @@ const helmetConfig = helmet({
       connectSrc: [
         "'self'", 
         'https://*.probateswift.com', 
-        'https://*.replit.dev', 
-        'wss://*.replit.dev',
-        'https://*.firebaseapp.com',
         'https://*.googleapis.com',
-        'https://firebase.googleapis.com'
+        'https://accounts.google.com'
       ],
       fontSrc: [
         "'self'", 
@@ -58,7 +55,7 @@ const helmetConfig = helmet({
       mediaSrc: ["'self'"],
       frameSrc: [
         "'self'",
-        'https://*.firebaseapp.com',
+        
         'https://accounts.google.com'
       ],
     },

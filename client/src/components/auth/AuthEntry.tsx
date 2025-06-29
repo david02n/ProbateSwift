@@ -1,7 +1,7 @@
 import { useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
-import { GoogleSignInButton } from './GoogleSignInButton';
+
 import { GoogleOneTapLogin } from './GoogleOneTapLogin';
 import { EmailSignInForm } from './EmailSignInForm';
 import { FirebaseTest } from './FirebaseTest';
@@ -132,7 +132,7 @@ export function AuthEntry({
           <CardContent className="space-y-6">
             {/* Google Sign-in Button */}
             <div className="space-y-4">
-              <GoogleSignInButton 
+              
                 className="w-full" 
                 context={context}
               />

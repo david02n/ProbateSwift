@@ -1,14 +1,4 @@
-import { 
-  signInWithEmailAndPassword, 
-  createUserWithEmailAndPassword, 
-  signOut as firebaseSignOut,
-  GoogleAuthProvider,
-  signInWithPopup,
-  signInWithRedirect,
-  UserCredential,
-  updateProfile
-} from 'firebase/auth';
-import { auth } from './firebase';
+// All firebase logic removed. Use Stytch for authentication.
 
 export interface User {
   email: string;
@@ -17,7 +7,7 @@ export interface User {
   uid: string;
 }
 
-class AuthService {
+
   private static instance: AuthService;
 
   private constructor() {}

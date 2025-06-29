@@ -13,7 +13,7 @@ const googleAuthSchema = z.object({
   email: z.string().email().optional(),
   displayName: z.string().optional(),
   photoURL: z.string().url().optional(),
-  firebaseUid: z.string().optional(),
+  
 });
 
 router.post('/google', 

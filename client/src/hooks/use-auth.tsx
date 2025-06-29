@@ -2,7 +2,7 @@ import { createContext, ReactNode, useContext, useState, useEffect } from "react
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest, getQueryFn } from "@/lib/queryClient";
-import { useFirebase } from "@/providers/FirebaseProvider";
+
 import { onAuthStateChanged, User as FirebaseUser } from "firebase/auth";
 import { useMediaQuery } from "@/hooks/use-media-query";
 

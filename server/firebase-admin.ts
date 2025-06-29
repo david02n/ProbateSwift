@@ -1,10 +1,3 @@
-import admin from 'firebase-admin';
-
-// Set Firebase project ID environment variable that Admin SDK expects
-const projectId = process.env.VITE_FIREBASE_PROJECT_ID || 'probate-458709';
-process.env.GOOGLE_CLOUD_PROJECT = projectId;
-process.env.GCLOUD_PROJECT = projectId;
-
 console.log('Initializing Firebase Admin with project ID:', projectId);
 
 // Initialize Firebase Admin SDK with explicit project configuration
@@ -21,10 +14,10 @@ try {
   console.error('Firebase Admin initialization error:', error);
 }
 
-export const auth = admin.auth();
+ const auth = admin.auth();
 
 // Utility function to verify a Firebase ID token
-export async function verifyIdToken(idToken: string): Promise<admin.auth.DecodedIdToken> {
+ async function verifyIdToken(idToken: string): Promise<admin.auth.DecodedIdToken> {
   try {
     // This is the Firebase recommended approach for token verification
     // It handles token expiration, signature validation, and project matching

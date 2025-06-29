@@ -13,9 +13,13 @@ interface StytchLoginProps {
 
 export default function StytchLoginComponent({ onSuccess, onError }: StytchLoginProps) {
   const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [isGoogleLoading, setIsGoogleLoading] = useState(false);
   const [emailSent, setEmailSent] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [mode, setMode] = useState<'magic' | 'password'>('magic');
+  const [authType, setAuthType] = useState<'signin' | 'signup'>('signin');
 
   const handleEmailLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -63,6 +67,38 @@ export default function StytchLoginComponent({ onSuccess, onError }: StytchLogin
     }
   };
 
+  const handlePasswordAuth = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!email || !password) return;
+
+    setIsLoading(true);
+    try {
+      const response = await fetch(`/api/auth/${authType === 'signin' ? 'password-login' : 'password-signup'}`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ 
+          email,
+          password
+        }),
+        credentials: 'include',
+      });
+
+      if (response.ok) {
+        onSuccess?.();
+      } else {
+        throw new Error('Failed to authenticate');
+      }
+    } catch (error) {
+      console.error('Authentication error:', error);
+      setError('Invalid email or password');
+      onError?.(error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   if (emailSent) {
     return (
       <div className="text-center py-8">
@@ -84,6 +120,45 @@ export default function StytchLoginComponent({ onSuccess, onError }: StytchLogin
 
   return (
     <div className="space-y-4">
+      {/* Auth mode toggles */}
+      <div className="flex justify-center gap-2 mb-2">
+        <Button
+          type="button"
+          variant={mode === 'magic' ? 'default' : 'outline'}
+          size="sm"
+          onClick={() => setMode('magic')}
+        >
+          Magic Link
+        </Button>
+        <Button
+          type="button"
+          variant={mode === 'password' ? 'default' : 'outline'}
+          size="sm"
+          onClick={() => setMode('password')}
+        >
+          Password
+        </Button>
+      </div>
+      {mode === 'password' && (
+        <div className="flex justify-center gap-2 mb-2">
+          <Button
+            type="button"
+            variant={authType === 'signin' ? 'default' : 'outline'}
+            size="sm"
+            onClick={() => setAuthType('signin')}
+          >
+            Sign In
+          </Button>
+          <Button
+            type="button"
+            variant={authType === 'signup' ? 'default' : 'outline'}
+            size="sm"
+            onClick={() => setAuthType('signup')}
+          >
+            Sign Up
+          </Button>
+        </div>
+      )}
       {/* Google OAuth Button */}
       <Button
         onClick={handleGoogleLogin}
@@ -111,44 +186,103 @@ export default function StytchLoginComponent({ onSuccess, onError }: StytchLogin
         </div>
       </div>
 
-      {/* Email Magic Link Form */}
-      <form onSubmit={handleEmailLogin} className="space-y-4">
-        <div className="space-y-2">
-          <Label htmlFor="email">Email address</Label>
-          <Input
-            id="email"
-            type="email"
-            placeholder="Enter your email"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            required
-            disabled={isLoading}
-          />
-        </div>
-        
-        <Button
-          type="submit"
-          disabled={isLoading || !email}
-          className="w-full"
-          size="lg"
-        >
-          {isLoading ? (
-            <>
-              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-              Sending magic link...
-            </>
-          ) : (
-            <>
-              <Mail className="mr-2 h-4 w-4" />
-              Send magic link
-            </>
-          )}
-        </Button>
-      </form>
+      {/* Error message */}
+      {error && (
+        <div className="text-center text-red-600 text-xs mb-2">{error}</div>
+      )}
 
-      <p className="text-xs text-center text-gray-500">
-        We'll email you a magic link for a password-free sign in.
-      </p>
+      {/* Email/Password Form */}
+      {mode === 'magic' ? (
+        <form onSubmit={handleEmailLogin} className="space-y-4">
+          <div className="space-y-2">
+            <Label htmlFor="email">Email address</Label>
+            <Input
+              id="email"
+              type="email"
+              placeholder="Enter your email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              required
+              disabled={isLoading}
+            />
+          </div>
+          <Button
+            type="submit"
+            disabled={isLoading || !email}
+            className="w-full"
+            size="lg"
+          >
+            {isLoading ? (
+              <>
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                Sending magic link...
+              </>
+            ) : (
+              <>
+                <Mail className="mr-2 h-4 w-4" />
+                Send magic link
+              </>
+            )}
+          </Button>
+        </form>
+      ) : (
+        <form onSubmit={handlePasswordAuth} className="space-y-4">
+          <div className="space-y-2">
+            <Label htmlFor="email">Email address</Label>
+            <Input
+              id="email"
+              type="email"
+              placeholder="Enter your email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              required
+              disabled={isLoading}
+            />
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="password">Password</Label>
+            <Input
+              id="password"
+              type="password"
+              placeholder="Enter your password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              required
+              disabled={isLoading}
+              autoComplete={authType === 'signup' ? 'new-password' : 'current-password'}
+            />
+          </div>
+          <Button
+            type="submit"
+            disabled={isLoading || !email || !password}
+            className="w-full"
+            size="lg"
+          >
+            {isLoading ? (
+              <>
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                {authType === 'signup' ? 'Signing up...' : 'Signing in...'}
+              </>
+            ) : (
+              <>
+                {authType === 'signup' ? 'Sign Up' : 'Sign In'}
+              </>
+            )}
+          </Button>
+        </form>
+      )}
+
+      {mode === 'magic' ? (
+        <p className="text-xs text-center text-gray-500">
+          We'll email you a magic link for a password-free sign in.
+        </p>
+      ) : (
+        <p className="text-xs text-center text-gray-500">
+          {authType === 'signup'
+            ? 'Create a new account using email and password.'
+            : 'Sign in with your email and password.'}
+        </p>
+      )}
     </div>
   );
 }

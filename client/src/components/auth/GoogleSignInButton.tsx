@@ -1,11 +1,4 @@
-import { useState } from 'react';
-import { signInWithPopup, signInWithRedirect, GoogleAuthProvider, getRedirectResult } from 'firebase/auth';
-import { auth } from '@/lib/firebase';
-import { Button } from '@/components/ui/button';
-import { useToast } from '@/hooks/use-toast';
-import { useAuthStore } from '@/stores/auth-store';
-import { Loader2 } from 'lucide-react';
-import { useEffect } from 'react';
+// GoogleSignInButton is deprecated. Use Stytch login component instead.
 
 interface GoogleSignInButtonProps {
   className?: string;

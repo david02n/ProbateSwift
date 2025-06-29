@@ -70,8 +70,8 @@ export const useAuthStore = create<AuthState>()(
     // Logout action
     logout: async () => {
       try {
-        // Call Replit logout
-        window.location.href = '/api/logout';
+        // Only Stytch logout supported now. Implement Stytch logout here.
+        // Example: await stytchClient.logout();
       } catch (error) {
         console.error('Logout error:', error);
         set({ error: error as Error });

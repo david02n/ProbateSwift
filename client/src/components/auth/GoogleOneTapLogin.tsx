@@ -1,8 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
-import { signInWithCredential, GoogleAuthProvider } from 'firebase/auth';
-import { auth } from '@/lib/firebase';
-import { useToast } from '@/hooks/use-toast';
-import { useAuthStore } from '@/stores/auth-store';
+// GoogleOneTapLogin is deprecated. Use Stytch login component instead.
 
 interface GoogleOneTapLoginProps {
   onSignInSuccess?: (user: any) => void;

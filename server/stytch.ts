@@ -108,6 +108,76 @@ export function setupStytchAuth(app: Express) {
     }
   });
 
+  // Password signup endpoint
+  app.post('/api/auth/password-signup', async (req, res) => {
+    try {
+      const { email, password } = req.body;
+      if (!email || !password) {
+        return res.status(400).json({ message: 'Email and password are required' });
+      }
+      // Create user in Stytch
+      const result = await stytchClient.passwords.create({
+        email,
+        password,
+        session_duration_minutes: 60 * 24 * 30, // 30 days
+      });
+      if (result.status_code === 200 && result.session_token) {
+        // Upsert user in local DB
+        await storage.upsertUser({
+          id: result.user_id,
+          email: result.email,
+          firstName: result.user?.name?.first_name || null,
+          lastName: result.user?.name?.last_name || null,
+          profileImageUrl: null,
+        });
+        // Set session token in Express session
+        (req.session as any).stytchSessionToken = result.session_token;
+        res.json({ success: true, user_id: result.user_id });
+      } else {
+        res.status(400).json({ message: 'Failed to sign up with password' });
+      }
+    } catch (error: any) {
+      console.error('Stytch password signup error:', error);
+      const msg = error?.error_message || error?.message || 'Internal server error';
+      res.status(500).json({ message: msg });
+    }
+  });
+
+  // Password login endpoint
+  app.post('/api/auth/password-login', async (req, res) => {
+    try {
+      const { email, password } = req.body;
+      if (!email || !password) {
+        return res.status(400).json({ message: 'Email and password are required' });
+      }
+      // Authenticate user with Stytch
+      const result = await stytchClient.passwords.authenticate({
+        email,
+        password,
+        session_duration_minutes: 60 * 24 * 30, // 30 days
+      });
+      if (result.status_code === 200 && result.session_token) {
+        // Upsert user in local DB
+        await storage.upsertUser({
+          id: result.user_id,
+          email: result.email,
+          firstName: result.user?.name?.first_name || null,
+          lastName: result.user?.name?.last_name || null,
+          profileImageUrl: null,
+        });
+        // Set session token in Express session
+        (req.session as any).stytchSessionToken = result.session_token;
+        res.json({ success: true, user_id: result.user_id });
+      } else {
+        res.status(401).json({ message: 'Invalid email or password' });
+      }
+    } catch (error: any) {
+      console.error('Stytch password login error:', error);
+      const msg = error?.error_message || error?.message || 'Internal server error';
+      res.status(401).json({ message: msg });
+    }
+  });
+
   // Google OAuth initiation endpoint
   app.get('/api/auth/google', async (req, res) => {
     try {

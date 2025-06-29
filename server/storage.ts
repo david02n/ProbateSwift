@@ -34,74 +34,62 @@ import {
 import { db } from "./db";
 import { eq } from "drizzle-orm";
 
-// Interface for storage operations
 export interface IStorage {
-  // User operations (mandatory for Replit Auth)
   getUser(id: string): Promise<User | undefined>;
   upsertUser(user: UpsertUser): Promise<User>;
-  
-  // Assessment methods
+
   getAssessmentResult(id: number): Promise<AssessmentResult | undefined>;
   getAssessmentResultsByUserId(userId: string): Promise<AssessmentResult[]>;
   createAssessmentResult(assessment: InsertAssessmentResult): Promise<AssessmentResult>;
   updateAssessmentResult(id: number, assessment: Partial<InsertAssessmentResult>): Promise<AssessmentResult | undefined>;
-  
-  // Probate Case methods
+
   getProbateCase(id: number): Promise<ProbateCase | undefined>;
   getProbateCasesByUserId(userId: string): Promise<ProbateCase[]>;
   createProbateCase(caseData: InsertProbateCase): Promise<ProbateCase>;
   updateProbateCase(id: number, caseData: Partial<InsertProbateCase>): Promise<ProbateCase | undefined>;
-  
-  // People/Executor methods
+
   getExecutor(id: number): Promise<Executor | undefined>;
   getExecutorsByCaseId(caseId: number): Promise<Executor[]>;
   getPeopleByCaseId(caseId: number): Promise<Executor[]>;
   createExecutor(executorData: InsertExecutor): Promise<Executor>;
   updateExecutor(id: number, executorData: Partial<InsertExecutor>): Promise<Executor | undefined>;
   deleteExecutor(id: number): Promise<void>;
-  
-  // Estate Asset methods
+
   getEstateAsset(id: number): Promise<EstateAsset | undefined>;
   getEstateAssetsByCaseId(caseId: number): Promise<EstateAsset[]>;
   createEstateAsset(assetData: InsertEstateAsset): Promise<EstateAsset>;
   updateEstateAsset(id: number, assetData: Partial<InsertEstateAsset>): Promise<EstateAsset | undefined>;
   deleteEstateAsset(id: number): Promise<void>;
-  
-  // Estate Liability methods
+
   getEstateLiability(id: number): Promise<EstateLiability | undefined>;
   getEstateLiabilitiesByCaseId(caseId: number): Promise<EstateLiability[]>;
   createEstateLiability(liabilityData: InsertEstateLiability): Promise<EstateLiability>;
   updateEstateLiability(id: number, liabilityData: Partial<InsertEstateLiability>): Promise<EstateLiability | undefined>;
   deleteEstateLiability(id: number): Promise<void>;
-  
-  // Document methods
+
   getDocument(id: number): Promise<Document | undefined>;
   getDocumentsByCaseId(caseId: number): Promise<Document[]>;
   getDocumentsByType(caseId: number, type: string): Promise<Document[]>;
   createDocument(documentData: InsertDocument): Promise<Document>;
   updateDocument(id: number, documentData: Partial<InsertDocument>): Promise<Document | undefined>;
-  
-  // Task methods
+
   getTask(id: number): Promise<Task | undefined>;
   getTasksByCaseId(caseId: number): Promise<Task[]>;
   createTask(taskData: InsertTask): Promise<Task>;
   updateTask(id: number, taskData: Partial<InsertTask>): Promise<Task | undefined>;
-  
-  // Deceased Form Fields methods
+
   getDeceasedFormFields(personId: number): Promise<DeceasedFormFields | undefined>;
   createDeceasedFormFields(data: InsertDeceasedFormFields): Promise<DeceasedFormFields>;
   updateDeceasedFormFields(personId: number, data: Partial<InsertDeceasedFormFields>): Promise<DeceasedFormFields | undefined>;
   isDeceasedFormFieldsComplete(personId: number): Promise<boolean>;
   getDeceasedFormFieldsCompletionStatus(personId: number): Promise<{ complete: boolean; missingFields: string[] }>;
-  
-  // Evaluation Response methods
+
   getEvaluationResponse(caseId: number): Promise<EvaluationResponse | undefined>;
   createEvaluationResponse(data: InsertEvaluationResponse): Promise<EvaluationResponse>;
   updateEvaluationResponse(caseId: number, data: Partial<InsertEvaluationResponse>): Promise<EvaluationResponse | undefined>;
 }
 
 export class DatabaseStorage implements IStorage {
-  // User operations (mandatory for Replit Auth)
   async getUser(id: string): Promise<User | undefined> {
     const [user] = await db.select().from(users).where(eq(users.id, id));
     return user;
@@ -122,7 +110,6 @@ export class DatabaseStorage implements IStorage {
     return user;
   }
 
-  // Assessment methods
   async getAssessmentResult(id: number): Promise<AssessmentResult | undefined> {
     const [result] = await db.select().from(assessmentResults).where(eq(assessmentResults.id, id));
     return result;

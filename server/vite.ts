@@ -79,14 +79,6 @@ export function serveStatic(app: Express) {
   // Serve static assets from public directory
   app.use(express.static(path.join(__dirname, '../public')));
 
-  // Firebase auth handler proxy - redirect to Firebase
-  app.get('/__/auth/*', (req, res) => {
-    console.log('Firebase auth handler request:', req.url);
-    // For Firebase auth handlers, we need to serve the Firebase SDK's built-in handler
-    // This is typically handled by Firebase Hosting, but we need to provide a fallback
-    res.redirect(`https://probate-458709.firebaseapp.com${req.url}`);
-  });
-
   // Handle client-side routing - serve index.html for all non-API routes
   app.use("*", (_req, res) => {
     res.sendFile(path.resolve(distPath, "index.html"));

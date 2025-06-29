@@ -8,23 +8,7 @@ export function SimpleAuthPage() {
   const { toast } = useToast();
   const [isLoading, setIsLoading] = useState(false);
 
-  const handleSignIn = async () => {
-    setIsLoading(true);
-    
-    try {
-      console.log('[SimpleAuth] Redirecting to Replit login');
-      window.location.href = '/api/login';
-      
-    } catch (error: any) {
-      console.error('[SimpleAuth] Error:', error);
-      setIsLoading(false);
-      toast({
-        title: "Authentication Error",
-        description: "Failed to initiate sign-in. Please try again.",
-        variant: "destructive",
-      });
-    }
-  };
+  // Only Stytch login is supported now. Remove legacy handlers.
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">

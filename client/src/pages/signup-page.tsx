@@ -1,14 +1,11 @@
 import { useLocation } from 'wouter';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
 import { Shield } from 'lucide-react';
 
 export function SignupPage() {
   const [, setLocation] = useLocation();
 
-  const handleReplitSignUp = () => {
-    window.location.href = '/api/login';
-  };
+  // Only Stytch signup is supported now. Remove legacy handlers.
 
   return (
     <div className="container flex items-center justify-center min-h-screen py-12">

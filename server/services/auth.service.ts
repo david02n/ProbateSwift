@@ -1,5 +1,5 @@
 import { Request, Response } from 'express';
-import { auth as firebaseAuth } from '../firebase-admin';
+
 import { storage } from '../storage';
 import { config } from '../config';
 import { AppError, AuthenticationError, ValidationError } from '../errors';
@@ -12,7 +12,7 @@ const googleAuthSchema = z.object({
   email: z.string().email().optional(),
   displayName: z.string().optional(),
   photoURL: z.string().url().optional(),
-  firebaseUid: z.string().optional(),
+  
 });
 
 export class AuthService {
@@ -35,14 +35,14 @@ export class AuthService {
       // Validate request data
       const data = googleAuthSchema.parse(req.body);
       
-      // Verify Firebase token
-      const decodedToken = await firebaseAuth.verifyIdToken(data.idToken);
+      
+      
       
       // Extract user information
       const email = decodedToken.email || data.email;
       const displayName = decodedToken.name || data.displayName || '';
       const photoURL = decodedToken.picture || data.photoURL || '';
-      const firebaseUid = decodedToken.uid || data.firebaseUid;
+      
       
       if (!email) {
         throw new ValidationError('Email is required for authentication');
@@ -58,7 +58,7 @@ export class AuthService {
           firstName: displayName.split(' ')[0] || undefined,
           lastName: displayName.split(' ').slice(1).join(' ') || undefined,
           photoURL: photoURL || undefined,
-          firebaseUid: firebaseUid || undefined,
+          
           isGuest: false,
           password: '', // Required by schema but not used for Google auth
         };
@@ -70,7 +70,7 @@ export class AuthService {
           firstName: displayName.split(' ')[0] || user.firstName || undefined,
           lastName: displayName.split(' ').slice(1).join(' ') || user.lastName || undefined,
           photoURL: photoURL || user.photoURL || undefined,
-          firebaseUid: firebaseUid || user.firebaseUid || undefined,
+          
         });
         await storage.updateUserLastLogin(user.id);
       }

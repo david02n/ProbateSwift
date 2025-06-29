@@ -116,6 +116,7 @@ export default function AuthPage() {
               onSuccess={handleAuthSuccess}
               onError={handleAuthError}
             />
+            {/* Only Stytch login is supported now. */}
           </CardContent>
         </Card>
 
