@@ -2,20 +2,24 @@ import * as stytch from 'stytch';
 import type { Express, RequestHandler } from 'express';
 import { storage } from './storage';
 
-if (!process.env.STYTCH_PROJECT_ID || !process.env.STYTCH_SECRET) {
-  throw new Error('STYTCH_PROJECT_ID and STYTCH_SECRET must be set');
-}
+const authConfigured = Boolean(process.env.STYTCH_PROJECT_ID && process.env.STYTCH_SECRET);
 
 // Initialize Stytch client
-export const stytchClient = new stytch.Client({
-  project_id: process.env.STYTCH_PROJECT_ID,
-  secret: process.env.STYTCH_SECRET,
-  env: process.env.NODE_ENV === 'production' ? stytch.envs.live : stytch.envs.test,
-});
+export const stytchClient = authConfigured
+  ? new stytch.Client({
+      project_id: process.env.STYTCH_PROJECT_ID!,
+      secret: process.env.STYTCH_SECRET!,
+      env: process.env.NODE_ENV === 'production' ? stytch.envs.live : stytch.envs.test,
+    })
+  : null;
 
 // Middleware to verify Stytch session
 export const verifyStytchSession: RequestHandler = async (req, res, next) => {
   try {
+    if (!stytchClient) {
+      return res.status(503).json({ message: 'Authentication is not configured' });
+    }
+
     const sessionToken = (req.session as any)?.stytchSessionToken;
     
     if (!sessionToken) {
@@ -55,6 +59,16 @@ export const verifyStytchSession: RequestHandler = async (req, res, next) => {
 
 // Setup Stytch authentication routes
 export function setupStytchAuth(app: Express) {
+  if (!stytchClient) {
+    console.warn('Stytch is not configured. Auth routes will return 503 until STYTCH_PROJECT_ID and STYTCH_SECRET are set.');
+
+    app.use('/api/auth', (_req, res) => {
+      res.status(503).json({ message: 'Authentication is not configured' });
+    });
+
+    return;
+  }
+
   // Magic link authentication endpoint
   app.post('/api/auth/magic-link', async (req, res) => {
     try {

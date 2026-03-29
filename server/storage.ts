@@ -31,7 +31,7 @@ import {
   type EvaluationResponse,
   type InsertEvaluationResponse
 } from "@shared/schema";
-import { db } from "./db";
+import { db, hasDatabase } from "./db";
 import { eq } from "drizzle-orm";
 
 export interface IStorage {
@@ -89,13 +89,89 @@ export interface IStorage {
   updateEvaluationResponse(caseId: number, data: Partial<InsertEvaluationResponse>): Promise<EvaluationResponse | undefined>;
 }
 
+class MemoryStorage implements IStorage {
+  private users = new Map<string, User>();
+
+  async getUser(id: string): Promise<User | undefined> {
+    return this.users.get(id);
+  }
+
+  async upsertUser(userData: UpsertUser): Promise<User> {
+    const user: User = {
+      id: userData.id,
+      email: userData.email ?? null,
+      firstName: userData.firstName ?? null,
+      lastName: userData.lastName ?? null,
+      profileImageUrl: userData.profileImageUrl ?? null,
+      password: null,
+      lastLogin: null,
+      isGuest: false,
+      firebaseUid: null,
+      photoURL: null,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    };
+
+    this.users.set(user.id, user);
+    return user;
+  }
+
+  async getAssessmentResult(): Promise<AssessmentResult | undefined> { return undefined; }
+  async getAssessmentResultsByUserId(): Promise<AssessmentResult[]> { return []; }
+  async createAssessmentResult(): Promise<AssessmentResult> { throw new Error("Database is not configured"); }
+  async updateAssessmentResult(): Promise<AssessmentResult | undefined> { throw new Error("Database is not configured"); }
+  async getProbateCase(): Promise<ProbateCase | undefined> { return undefined; }
+  async getProbateCasesByUserId(): Promise<ProbateCase[]> { return []; }
+  async createProbateCase(): Promise<ProbateCase> { throw new Error("Database is not configured"); }
+  async updateProbateCase(): Promise<ProbateCase | undefined> { throw new Error("Database is not configured"); }
+  async getExecutor(): Promise<Executor | undefined> { return undefined; }
+  async getExecutorsByCaseId(): Promise<Executor[]> { return []; }
+  async getPeopleByCaseId(): Promise<Executor[]> { return []; }
+  async createExecutor(): Promise<Executor> { throw new Error("Database is not configured"); }
+  async updateExecutor(): Promise<Executor | undefined> { throw new Error("Database is not configured"); }
+  async deleteExecutor(): Promise<void> { throw new Error("Database is not configured"); }
+  async getEstateAsset(): Promise<EstateAsset | undefined> { return undefined; }
+  async getEstateAssetsByCaseId(): Promise<EstateAsset[]> { return []; }
+  async createEstateAsset(): Promise<EstateAsset> { throw new Error("Database is not configured"); }
+  async updateEstateAsset(): Promise<EstateAsset | undefined> { throw new Error("Database is not configured"); }
+  async deleteEstateAsset(): Promise<void> { throw new Error("Database is not configured"); }
+  async getEstateLiability(): Promise<EstateLiability | undefined> { return undefined; }
+  async getEstateLiabilitiesByCaseId(): Promise<EstateLiability[]> { return []; }
+  async createEstateLiability(): Promise<EstateLiability> { throw new Error("Database is not configured"); }
+  async updateEstateLiability(): Promise<EstateLiability | undefined> { throw new Error("Database is not configured"); }
+  async deleteEstateLiability(): Promise<void> { throw new Error("Database is not configured"); }
+  async getDocument(): Promise<Document | undefined> { return undefined; }
+  async getDocumentsByCaseId(): Promise<Document[]> { return []; }
+  async getDocumentsByType(): Promise<Document[]> { return []; }
+  async createDocument(): Promise<Document> { throw new Error("Database is not configured"); }
+  async updateDocument(): Promise<Document | undefined> { throw new Error("Database is not configured"); }
+  async getTask(): Promise<Task | undefined> { return undefined; }
+  async getTasksByCaseId(): Promise<Task[]> { return []; }
+  async createTask(): Promise<Task> { throw new Error("Database is not configured"); }
+  async updateTask(): Promise<Task | undefined> { throw new Error("Database is not configured"); }
+  async getDeceasedFormFields(): Promise<DeceasedFormFields | undefined> { return undefined; }
+  async createDeceasedFormFields(): Promise<DeceasedFormFields> { throw new Error("Database is not configured"); }
+  async updateDeceasedFormFields(): Promise<DeceasedFormFields | undefined> { throw new Error("Database is not configured"); }
+  async isDeceasedFormFieldsComplete(): Promise<boolean> { return false; }
+  async getDeceasedFormFieldsCompletionStatus(): Promise<{ complete: boolean; missingFields: string[] }> {
+    return { complete: false, missingFields: ["Database is not configured"] };
+  }
+  async getEvaluationResponse(): Promise<EvaluationResponse | undefined> { return undefined; }
+  async createEvaluationResponse(): Promise<EvaluationResponse> { throw new Error("Database is not configured"); }
+  async updateEvaluationResponse(): Promise<EvaluationResponse | undefined> { throw new Error("Database is not configured"); }
+}
+
 export class DatabaseStorage implements IStorage {
   async getUser(id: string): Promise<User | undefined> {
+    if (!db) return undefined;
     const [user] = await db.select().from(users).where(eq(users.id, id));
     return user;
   }
 
   async upsertUser(userData: UpsertUser): Promise<User> {
+    if (!db) {
+      throw new Error("Database is not configured");
+    }
     const [user] = await db
       .insert(users)
       .values(userData)
@@ -111,16 +187,16 @@ export class DatabaseStorage implements IStorage {
   }
 
   async getAssessmentResult(id: number): Promise<AssessmentResult | undefined> {
-    const [result] = await db.select().from(assessmentResults).where(eq(assessmentResults.id, id));
+    const [result] = await db!.select().from(assessmentResults).where(eq(assessmentResults.id, id));
     return result;
   }
 
   async getAssessmentResultsByUserId(userId: string): Promise<AssessmentResult[]> {
-    return await db.select().from(assessmentResults).where(eq(assessmentResults.userId, userId));
+    return await db!.select().from(assessmentResults).where(eq(assessmentResults.userId, userId));
   }
 
   async createAssessmentResult(assessment: InsertAssessmentResult): Promise<AssessmentResult> {
-    const [result] = await db
+    const [result] = await db!
       .insert(assessmentResults)
       .values(assessment)
       .returning();
@@ -128,7 +204,7 @@ export class DatabaseStorage implements IStorage {
   }
 
   async updateAssessmentResult(id: number, assessment: Partial<InsertAssessmentResult>): Promise<AssessmentResult | undefined> {
-    const [result] = await db
+    const [result] = await db!
       .update(assessmentResults)
       .set({ ...assessment, updatedAt: new Date() })
       .where(eq(assessmentResults.id, id))
@@ -138,16 +214,16 @@ export class DatabaseStorage implements IStorage {
 
   // Probate Case methods
   async getProbateCase(id: number): Promise<ProbateCase | undefined> {
-    const [probateCase] = await db.select().from(probateCases).where(eq(probateCases.id, id));
+    const [probateCase] = await db!.select().from(probateCases).where(eq(probateCases.id, id));
     return probateCase;
   }
 
   async getProbateCasesByUserId(userId: string): Promise<ProbateCase[]> {
-    return await db.select().from(probateCases).where(eq(probateCases.userId, userId));
+    return await db!.select().from(probateCases).where(eq(probateCases.userId, userId));
   }
 
   async createProbateCase(caseData: InsertProbateCase): Promise<ProbateCase> {
-    const [probateCase] = await db
+    const [probateCase] = await db!
       .insert(probateCases)
       .values(caseData)
       .returning();
@@ -155,7 +231,7 @@ export class DatabaseStorage implements IStorage {
   }
 
   async updateProbateCase(id: number, caseData: Partial<InsertProbateCase>): Promise<ProbateCase | undefined> {
-    const [probateCase] = await db
+    const [probateCase] = await db!
       .update(probateCases)
       .set({ ...caseData, updatedAt: new Date() })
       .where(eq(probateCases.id, id))
@@ -165,20 +241,20 @@ export class DatabaseStorage implements IStorage {
 
   // People/Executor methods
   async getExecutor(id: number): Promise<Executor | undefined> {
-    const [executor] = await db.select().from(executors).where(eq(executors.id, id));
+    const [executor] = await db!.select().from(executors).where(eq(executors.id, id));
     return executor;
   }
 
   async getExecutorsByCaseId(caseId: number): Promise<Executor[]> {
-    return await db.select().from(executors).where(eq(executors.caseId, caseId));
+    return await db!.select().from(executors).where(eq(executors.caseId, caseId));
   }
 
   async getPeopleByCaseId(caseId: number): Promise<Executor[]> {
-    return await db.select().from(executors).where(eq(executors.caseId, caseId));
+    return await db!.select().from(executors).where(eq(executors.caseId, caseId));
   }
 
   async createExecutor(executorData: InsertExecutor): Promise<Executor> {
-    const [executor] = await db
+    const [executor] = await db!
       .insert(executors)
       .values(executorData)
       .returning();
@@ -186,7 +262,7 @@ export class DatabaseStorage implements IStorage {
   }
 
   async updateExecutor(id: number, executorData: Partial<InsertExecutor>): Promise<Executor | undefined> {
-    const [executor] = await db
+    const [executor] = await db!
       .update(executors)
       .set({ ...executorData, updatedAt: new Date() })
       .where(eq(executors.id, id))
@@ -195,21 +271,21 @@ export class DatabaseStorage implements IStorage {
   }
 
   async deleteExecutor(id: number): Promise<void> {
-    await db.delete(executors).where(eq(executors.id, id));
+    await db!.delete(executors).where(eq(executors.id, id));
   }
 
   // Estate Asset methods
   async getEstateAsset(id: number): Promise<EstateAsset | undefined> {
-    const [asset] = await db.select().from(estateAssets).where(eq(estateAssets.id, id));
+    const [asset] = await db!.select().from(estateAssets).where(eq(estateAssets.id, id));
     return asset;
   }
 
   async getEstateAssetsByCaseId(caseId: number): Promise<EstateAsset[]> {
-    return await db.select().from(estateAssets).where(eq(estateAssets.caseId, caseId));
+    return await db!.select().from(estateAssets).where(eq(estateAssets.caseId, caseId));
   }
 
   async createEstateAsset(assetData: InsertEstateAsset): Promise<EstateAsset> {
-    const [asset] = await db
+    const [asset] = await db!
       .insert(estateAssets)
       .values(assetData)
       .returning();
@@ -217,7 +293,7 @@ export class DatabaseStorage implements IStorage {
   }
 
   async updateEstateAsset(id: number, assetData: Partial<InsertEstateAsset>): Promise<EstateAsset | undefined> {
-    const [asset] = await db
+    const [asset] = await db!
       .update(estateAssets)
       .set({ ...assetData, updatedAt: new Date() })
       .where(eq(estateAssets.id, id))
@@ -226,21 +302,21 @@ export class DatabaseStorage implements IStorage {
   }
 
   async deleteEstateAsset(id: number): Promise<void> {
-    await db.delete(estateAssets).where(eq(estateAssets.id, id));
+    await db!.delete(estateAssets).where(eq(estateAssets.id, id));
   }
 
   // Estate Liability methods
   async getEstateLiability(id: number): Promise<EstateLiability | undefined> {
-    const [liability] = await db.select().from(estateLiabilities).where(eq(estateLiabilities.id, id));
+    const [liability] = await db!.select().from(estateLiabilities).where(eq(estateLiabilities.id, id));
     return liability;
   }
 
   async getEstateLiabilitiesByCaseId(caseId: number): Promise<EstateLiability[]> {
-    return await db.select().from(estateLiabilities).where(eq(estateLiabilities.caseId, caseId));
+    return await db!.select().from(estateLiabilities).where(eq(estateLiabilities.caseId, caseId));
   }
 
   async createEstateLiability(liabilityData: InsertEstateLiability): Promise<EstateLiability> {
-    const [liability] = await db
+    const [liability] = await db!
       .insert(estateLiabilities)
       .values(liabilityData)
       .returning();
@@ -248,7 +324,7 @@ export class DatabaseStorage implements IStorage {
   }
 
   async updateEstateLiability(id: number, liabilityData: Partial<InsertEstateLiability>): Promise<EstateLiability | undefined> {
-    const [liability] = await db
+    const [liability] = await db!
       .update(estateLiabilities)
       .set({ ...liabilityData, updatedAt: new Date() })
       .where(eq(estateLiabilities.id, id))
@@ -257,25 +333,25 @@ export class DatabaseStorage implements IStorage {
   }
 
   async deleteEstateLiability(id: number): Promise<void> {
-    await db.delete(estateLiabilities).where(eq(estateLiabilities.id, id));
+    await db!.delete(estateLiabilities).where(eq(estateLiabilities.id, id));
   }
 
   // Document methods
   async getDocument(id: number): Promise<Document | undefined> {
-    const [document] = await db.select().from(documents).where(eq(documents.id, id));
+    const [document] = await db!.select().from(documents).where(eq(documents.id, id));
     return document;
   }
 
   async getDocumentsByCaseId(caseId: number): Promise<Document[]> {
-    return await db.select().from(documents).where(eq(documents.caseId, caseId));
+    return await db!.select().from(documents).where(eq(documents.caseId, caseId));
   }
 
   async getDocumentsByType(caseId: number, type: string): Promise<Document[]> {
-    return await db.select().from(documents).where(eq(documents.caseId, caseId)).where(eq(documents.type, type));
+    return await db!.select().from(documents).where(eq(documents.caseId, caseId)).where(eq(documents.type, type));
   }
 
   async createDocument(documentData: InsertDocument): Promise<Document> {
-    const [document] = await db
+    const [document] = await db!
       .insert(documents)
       .values(documentData)
       .returning();
@@ -283,7 +359,7 @@ export class DatabaseStorage implements IStorage {
   }
 
   async updateDocument(id: number, documentData: Partial<InsertDocument>): Promise<Document | undefined> {
-    const [document] = await db
+    const [document] = await db!
       .update(documents)
       .set({ ...documentData, updatedAt: new Date() })
       .where(eq(documents.id, id))
@@ -293,16 +369,16 @@ export class DatabaseStorage implements IStorage {
 
   // Task methods
   async getTask(id: number): Promise<Task | undefined> {
-    const [task] = await db.select().from(tasks).where(eq(tasks.id, id));
+    const [task] = await db!.select().from(tasks).where(eq(tasks.id, id));
     return task;
   }
 
   async getTasksByCaseId(caseId: number): Promise<Task[]> {
-    return await db.select().from(tasks).where(eq(tasks.caseId, caseId));
+    return await db!.select().from(tasks).where(eq(tasks.caseId, caseId));
   }
 
   async createTask(taskData: InsertTask): Promise<Task> {
-    const [task] = await db
+    const [task] = await db!
       .insert(tasks)
       .values(taskData)
       .returning();
@@ -310,7 +386,7 @@ export class DatabaseStorage implements IStorage {
   }
 
   async updateTask(id: number, taskData: Partial<InsertTask>): Promise<Task | undefined> {
-    const [task] = await db
+    const [task] = await db!
       .update(tasks)
       .set({ ...taskData, updatedAt: new Date() })
       .where(eq(tasks.id, id))
@@ -320,12 +396,12 @@ export class DatabaseStorage implements IStorage {
 
   // Deceased Form Fields methods
   async getDeceasedFormFields(personId: number): Promise<DeceasedFormFields | undefined> {
-    const [fields] = await db.select().from(deceasedFormFields).where(eq(deceasedFormFields.personId, personId));
+    const [fields] = await db!.select().from(deceasedFormFields).where(eq(deceasedFormFields.personId, personId));
     return fields;
   }
 
   async createDeceasedFormFields(data: InsertDeceasedFormFields): Promise<DeceasedFormFields> {
-    const [fields] = await db
+    const [fields] = await db!
       .insert(deceasedFormFields)
       .values(data)
       .returning();
@@ -333,7 +409,7 @@ export class DatabaseStorage implements IStorage {
   }
 
   async updateDeceasedFormFields(personId: number, data: Partial<InsertDeceasedFormFields>): Promise<DeceasedFormFields | undefined> {
-    const [fields] = await db
+    const [fields] = await db!
       .update(deceasedFormFields)
       .set({ ...data, updatedAt: new Date() })
       .where(eq(deceasedFormFields.personId, personId))
@@ -376,12 +452,12 @@ export class DatabaseStorage implements IStorage {
 
   // Evaluation Response methods
   async getEvaluationResponse(caseId: number): Promise<EvaluationResponse | undefined> {
-    const [response] = await db.select().from(evaluationResponses).where(eq(evaluationResponses.caseId, caseId));
+    const [response] = await db!.select().from(evaluationResponses).where(eq(evaluationResponses.caseId, caseId));
     return response;
   }
 
   async createEvaluationResponse(data: InsertEvaluationResponse): Promise<EvaluationResponse> {
-    const [response] = await db
+    const [response] = await db!
       .insert(evaluationResponses)
       .values(data)
       .returning();
@@ -389,7 +465,7 @@ export class DatabaseStorage implements IStorage {
   }
 
   async updateEvaluationResponse(caseId: number, data: Partial<InsertEvaluationResponse>): Promise<EvaluationResponse | undefined> {
-    const [response] = await db
+    const [response] = await db!
       .update(evaluationResponses)
       .set({ ...data, updatedAt: new Date() })
       .where(eq(evaluationResponses.caseId, caseId))
@@ -398,4 +474,4 @@ export class DatabaseStorage implements IStorage {
   }
 }
 
-export const storage = new DatabaseStorage();
+export const storage = hasDatabase ? new DatabaseStorage() : new MemoryStorage();

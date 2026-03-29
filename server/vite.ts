@@ -3,6 +3,7 @@ import fs from "fs";
 import path from "path";
 import { createServer as createViteServer, createLogger } from "vite";
 import { type Server } from "http";
+import { fileURLToPath } from "url";
 import viteConfig from "../vite.config";
 import { nanoid } from "nanoid";
 
@@ -68,11 +69,10 @@ export async function setupVite(app: Express, server: Server) {
 }
 
 export function serveStatic(app: Express) {
-  // Universal __dirname replacement for ES modules
-  import { fileURLToPath } from 'url';
   const __filename = fileURLToPath(import.meta.url);
   const __dirname = path.dirname(__filename);
   const distPath = path.resolve(__dirname, "public");
+  const publicPath = path.resolve(__dirname, "../public");
 
   if (!fs.existsSync(distPath)) {
     throw new Error(
@@ -80,8 +80,11 @@ export function serveStatic(app: Express) {
     );
   }
 
-  // Serve static assets from public directory
-  app.use(express.static(path.join(__dirname, '../public'))); // __dirname is now defined above
+  // Serve built frontend assets first, then repo-level public assets if present.
+  app.use(express.static(distPath));
+  if (fs.existsSync(publicPath)) {
+    app.use(express.static(publicPath));
+  }
 
   // Handle client-side routing - serve index.html for all non-API routes
   app.use("*", (_req, res) => {

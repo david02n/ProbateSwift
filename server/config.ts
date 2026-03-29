@@ -11,8 +11,8 @@ const envSchema = z.object({
   HOST: z.string().default('0.0.0.0'),
   
   // Security
-  SESSION_SECRET: z.string().min(32, 'Session secret must be at least 32 characters'),
-  COOKIE_SECRET: z.string().min(32, 'Cookie secret must be at least 32 characters'),
+  SESSION_SECRET: z.string().min(32, 'Session secret must be at least 32 characters').default('development-session-secret-change-me'),
+  COOKIE_SECRET: z.string().min(32, 'Cookie secret must be at least 32 characters').default('development-cookie-secret-change-me'),
   
   // Domains and CORS
   ALLOWED_ORIGINS: z.string()
@@ -20,7 +20,7 @@ const envSchema = z.object({
     .default('http://localhost:5000,https://probateswift.com'),
   
   // Database
-  DATABASE_URL: z.string().url('Invalid database URL'),
+  DATABASE_URL: z.string().url('Invalid database URL').optional(),
   
   // Firebase (if used)
   FIREBASE_PROJECT_ID: z.string().optional(),
