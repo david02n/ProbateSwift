@@ -6,6 +6,7 @@ import { setupVite, serveStatic, log } from "./vite";
 import { config } from "./config";
 import { securityMiddleware } from "./middleware/security";
 import { errorHandler, notFoundHandler, asyncHandler } from "./errors";
+import { createSessionStore } from "./session-store";
 
 
 const app = express();
@@ -23,12 +24,15 @@ app.use(securityMiddleware.limiter);
 
 // Session middleware (required for Stytch authentication)
 app.use(session({
-  secret: process.env.SESSION_SECRET || 'dev-secret-key-change-in-production',
+  store: createSessionStore(),
+  name: "probateswift.sid",
+  secret: config.SESSION_SECRET,
   resave: false,
   saveUninitialized: false,
   cookie: {
     secure: config.NODE_ENV === 'production',
     httpOnly: true,
+    sameSite: 'lax',
     maxAge: 24 * 60 * 60 * 1000 // 24 hours
   }
 }));
