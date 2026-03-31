@@ -18,9 +18,26 @@ You have two valid options:
 
 This app uses the Postgres `sessions` table for session storage when `DATABASE_URL` is present.
 
+## Authentication
+
+ProbateSwift now uses Clerk as the only authentication provider.
+
+Set:
+
+- `CLERK_SECRET_KEY`
+- `VITE_CLERK_PUBLISHABLE_KEY`
+
+Then configure your Clerk instance to allow:
+
+- `https://probateswift.com`
+- `https://www.probateswift.com`
+- your Railway preview domain
+
+Google sign-in should be configured inside Clerk rather than in the app codebase.
+
 ## Sessions
 
-Production sessions now use `connect-pg-simple` when a database connection is available.
+Production sessions use `connect-pg-simple` when a database connection is available.
 
 If `DATABASE_URL` is missing, the app falls back to the default memory session store, which is suitable only for development or temporary smoke tests.
 
@@ -43,11 +60,11 @@ Without a volume, uploaded files will be lost on redeploy or restart.
 1. Add a public Railway domain.
 2. If you use a custom domain, attach it after the first successful deploy.
 3. Update `ALLOWED_ORIGINS` to include the Railway domain and final custom domain.
-4. Update Stytch redirect URLs to the Railway or custom domain.
+4. Update Clerk allowed origins and redirect URLs to the Railway or custom domain.
 5. If you use Railway Postgres, run `npm run db:push` once with `DATABASE_URL` configured.
 
 ## Notes
 
 - Railway injects a `PORT` variable. The app already listens on `process.env.PORT`.
 - The healthcheck endpoint is available at `/api/health`.
-- Replit-specific dev plugins in `vite.config.ts` are gated to Replit development mode and do not block Railway production deploys.
+- The public site currently uses a cookie consent banner with strictly necessary cookies only. Non-essential analytics remain disabled until they are wired behind consent.

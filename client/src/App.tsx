@@ -1,4 +1,4 @@
-import { Switch, Route, Redirect, useLocation } from "wouter";
+import { Switch, Route, Redirect } from "wouter";
 import { queryClient } from "./lib/queryClient";
 import { QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/toaster";
@@ -7,8 +7,9 @@ import { useAuth } from "@/hooks/use-auth";
 import NotFound from "@/pages/not-found";
 import Home from "@/pages/Home";
 import AuthPage from "@/pages/AuthPage";
-
-import { AppFallback } from "@/components/AppFallback";
+import TermsPage from "@/pages/TermsPage";
+import PrivacyPage from "@/pages/PrivacyPage";
+import CookiesPage from "@/pages/CookiesPage";
 
 // New redesigned pages
 import NewDashboardPage from "@/pages/new-dashboard";
@@ -25,7 +26,6 @@ import { useEffect } from "react";
 // Enhanced router component that handles mobile navigation better
 function Router() {
   const { user, isLoading } = useAuth();
-  const [location, setLocation] = useLocation();
 
   // Clean up URL fragments and handle routing
   useEffect(() => {
@@ -49,16 +49,17 @@ function Router() {
     return (
       <Switch>
         <Route path="/auth" component={AuthPage} />
-        <Route path="/" component={AuthPage} />
-        <Route component={AuthPage} />
+        <Route path="/terms" component={TermsPage} />
+        <Route path="/privacy" component={PrivacyPage} />
+        <Route path="/cookies" component={CookiesPage} />
+        <Route path="/" component={Home} />
+        <Route component={NotFound} />
       </Switch>
     );
   }
 
   return (
     <Switch>
-      <Route path="/auth" component={AuthPage} />
-      <Route path="/" component={Home} />
       <Route path="/dashboard" component={DashboardPage} />
       <Route path="/new-dashboard" component={NewDashboardPage} />
       <Route path="/people" component={PeoplePage} />
@@ -67,6 +68,15 @@ function Router() {
       <Route path="/documents/upload" component={DocumentUploadPage} />
       <Route path="/deceased-details/:personId?" component={DeceasedDetailsPage} />
       <Route path="/evaluation" component={EvaluationPage} />
+      <Route path="/auth">
+        <Redirect to="/dashboard" />
+      </Route>
+      <Route path="/terms" component={TermsPage} />
+      <Route path="/privacy" component={PrivacyPage} />
+      <Route path="/cookies" component={CookiesPage} />
+      <Route path="/">
+        <Redirect to="/dashboard" />
+      </Route>
       <Route component={NotFound} />
     </Switch>
   );

@@ -22,11 +22,6 @@ const envSchema = z.object({
   // Database
   DATABASE_URL: z.string().url('Invalid database URL').optional(),
   
-  // Firebase (if used)
-  FIREBASE_PROJECT_ID: z.string().optional(),
-  FIREBASE_PRIVATE_KEY: z.string().optional(),
-  FIREBASE_CLIENT_EMAIL: z.string().email().optional(),
-  
   // File upload
   UPLOAD_DIR: z.string().default(path.join(process.cwd(), 'uploads')),
   MAX_FILE_SIZE: z.string().transform(Number).default('5242880'), // 5MB in bytes

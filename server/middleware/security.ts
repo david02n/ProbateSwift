@@ -28,14 +28,12 @@ const helmetConfig = helmet({
         "'self'", 
         "'unsafe-inline'", 
         "'unsafe-eval'", 
-        'https://*.replit.dev',
         'https://*.clerk.accounts.dev',
         'https://*.clerk.dev',
         'https://clerk.probateswift.com',
         'https://*.googleapis.com',
         'https://www.gstatic.com',
-        'https://accounts.google.com',
-        'https://replit.com'
+        'https://accounts.google.com'
       ],
       styleSrc: [
         "'self'", 
@@ -46,13 +44,12 @@ const helmetConfig = helmet({
       connectSrc: [
         "'self'", 
         'https://*.probateswift.com', 
-        'https://*.replit.dev',
-        'wss://*.replit.dev',
+        'https://*.railway.app',
+        'wss://*.railway.app',
         'https://*.clerk.accounts.dev',
         'https://*.clerk.dev',
         'https://clerk.probateswift.com',
         'https://*.googleapis.com',
-        'https://firebase.googleapis.com',
         'https://accounts.google.com'
       ],
       fontSrc: [
@@ -100,11 +97,10 @@ const corsOptions = {
     }
 
     const allowedOrigins = config.ALLOWED_ORIGINS;
-    const isReplitDomain = origin.includes('.replit.dev') || origin.includes('.kirk.replit.dev');
     const isRailwayDomain = origin.includes('.railway.app') || origin.includes('.up.railway.app');
     const isLocalhost = origin.includes('localhost') || origin.includes('127.0.0.1');
     
-    if (allowedOrigins.includes(origin) || isReplitDomain || isRailwayDomain || isLocalhost) {
+    if (allowedOrigins.includes(origin) || isRailwayDomain || isLocalhost) {
       callback(null, true);
     } else {
       callback(new Error('Not allowed by CORS'));

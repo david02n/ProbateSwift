@@ -2,7 +2,7 @@ import { pgTable, text, serial, timestamp, boolean, integer, numeric, date, json
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
 
-// Session storage table for Replit Auth
+// Session storage table
 export const sessions = pgTable(
   "sessions",
   {
@@ -13,16 +13,16 @@ export const sessions = pgTable(
   (table) => [index("IDX_session_expire").on(table.expire)],
 );
 
-// User model updated for Replit Auth
+// User model
 export const users = pgTable("users", {
-  id: varchar("id").primaryKey().notNull(), // Replit user ID (string)
+  id: varchar("id").primaryKey().notNull(),
   email: varchar("email").unique(),
   firstName: varchar("first_name"),
   lastName: varchar("last_name"),
   profileImageUrl: varchar("profile_image_url"),
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
-  // Keep legacy fields for backward compatibility
+  // Keep legacy fields for backward compatibility with existing records.
   password: text("password"),
   lastLogin: timestamp("last_login"),
   isGuest: boolean("is_guest").default(false),
