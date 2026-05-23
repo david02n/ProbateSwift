@@ -2,6 +2,7 @@ import type { Express, Request, Response, NextFunction } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
 import { requireClerkAuth, setupClerkAuth } from "./clerk";
+import { insertAssessmentResultSchema, insertProbateCaseSchema } from "@shared/schema";
 import multer from "multer";
 import * as fs from "fs";
 import * as path from "path";
@@ -108,14 +109,55 @@ export async function registerRoutes(app: Express): Promise<Server> {
     res.json({ status: 'ok', timestamp: new Date().toISOString() });
   });
 
-  // Assessment endpoint - returns null for development
-  app.get('/api/assessment', (req: Request, res: Response) => {
-    res.json(null);
+  app.get('/api/assessment', requireAuth, async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const user = (req as any).user;
+      const results = await storage.getAssessmentResultsByUserId(user.id);
+      const latestResult = results.at(-1) ?? null;
+      res.json(latestResult);
+    } catch (error) {
+      next(error);
+    }
   });
 
-  // Probate cases endpoint - returns empty array for development
-  app.get('/api/probate-cases', (req: Request, res: Response) => {
-    res.json([]);
+  app.post('/api/assessment', requireAuth, async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const user = (req as any).user;
+      const parsed = insertAssessmentResultSchema.parse({
+        ...req.body,
+        userId: user.id,
+      });
+
+      const created = await storage.createAssessmentResult(parsed);
+      res.status(201).json(created);
+    } catch (error) {
+      next(error);
+    }
+  });
+
+  app.get('/api/probate-cases', requireAuth, async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const user = (req as any).user;
+      const cases = await storage.getProbateCasesByUserId(user.id);
+      res.json(cases);
+    } catch (error) {
+      next(error);
+    }
+  });
+
+  app.post('/api/probate-cases', requireAuth, async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const user = (req as any).user;
+      const parsed = insertProbateCaseSchema.parse({
+        ...req.body,
+        userId: user.id,
+      });
+
+      const created = await storage.createProbateCase(parsed);
+      res.status(201).json(created);
+    } catch (error) {
+      next(error);
+    }
   });
 
   return httpServer;
