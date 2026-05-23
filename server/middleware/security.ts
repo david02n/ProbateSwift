@@ -3,6 +3,30 @@ import helmet from 'helmet';
 import rateLimit from 'express-rate-limit';
 import { config } from '../config';
 
+const parseOriginHost = (origin: string) => {
+  try {
+    return new URL(origin).hostname.toLowerCase();
+  } catch {
+    return null;
+  }
+};
+
+const railwayPublicDomain = process.env.RAILWAY_PUBLIC_DOMAIN?.toLowerCase();
+const railwayStaticUrl = process.env.RAILWAY_STATIC_URL?.toLowerCase();
+const allowedOriginHosts = new Set(
+  config.ALLOWED_ORIGINS
+    .map(parseOriginHost)
+    .filter((host): host is string => Boolean(host)),
+);
+
+if (railwayPublicDomain) {
+  allowedOriginHosts.add(railwayPublicDomain);
+}
+
+if (railwayStaticUrl) {
+  allowedOriginHosts.add(railwayStaticUrl);
+}
+
 // Create rate limiter with generous limits for development
 const limiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes
@@ -96,11 +120,18 @@ const corsOptions = {
       return callback(null, true);
     }
 
-    const allowedOrigins = config.ALLOWED_ORIGINS;
+    const originHost = parseOriginHost(origin);
     const isRailwayDomain = origin.includes('.railway.app') || origin.includes('.up.railway.app');
     const isLocalhost = origin.includes('localhost') || origin.includes('127.0.0.1');
-    
-    if (allowedOrigins.includes(origin) || isRailwayDomain || isLocalhost) {
+    const isProbateSwiftDomain = originHost === 'probateswift.com' || originHost === 'www.probateswift.com';
+
+    if (
+      config.ALLOWED_ORIGINS.includes(origin) ||
+      (originHost !== null && allowedOriginHosts.has(originHost)) ||
+      isProbateSwiftDomain ||
+      isRailwayDomain ||
+      isLocalhost
+    ) {
       callback(null, true);
     } else {
       callback(new Error('Not allowed by CORS'));
