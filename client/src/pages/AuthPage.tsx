@@ -40,8 +40,8 @@ export default function AuthPage() {
               <p>Only strictly necessary cookies are active while we finish consent-gated analytics.</p>
             </div>
             <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
-              <p className="font-medium text-slate-900">Google auth ready</p>
-              <p>Clerk handles sign-in and account sessions for ProbateSwift.</p>
+              <p className="font-medium text-slate-900">Clerk authentication</p>
+              <p>One secure sign-in flow for ProbateSwift accounts and sessions.</p>
             </div>
           </div>
         </div>

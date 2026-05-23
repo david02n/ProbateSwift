@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { useLocation, Link } from "wouter";
+import { Link, useLocation } from "wouter";
 import { SwiftLogoWithText } from "@/components/ui/SwiftLogo";
 import { Button } from "@/components/ui/button";
 import {
@@ -17,7 +17,7 @@ interface HeaderProps {
 }
 
 export const NewHeader: React.FC<HeaderProps> = ({ className = "" }) => {
-  const [location, setLocation] = useLocation();
+  const [location] = useLocation();
   const { user, logoutMutation } = useAuth();
   const [isOpen, setIsOpen] = useState(false);
 
@@ -113,10 +113,10 @@ export const NewHeader: React.FC<HeaderProps> = ({ className = "" }) => {
           ) : (
             <div className="flex items-center space-x-4">
               <Link href="/auth">
-                <Button variant="outline">Log In</Button>
+                <Button variant="outline">Sign in</Button>
               </Link>
-              <Link href="/auth?tab=register">
-                <Button>Register</Button>
+              <Link href="/auth">
+                <Button>Create account</Button>
               </Link>
             </div>
           )}

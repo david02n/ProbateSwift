@@ -111,7 +111,7 @@ const Result: React.FC<ResultProps> = ({ type, title, description, restart }) =>
       {type === "probate-required" && (
         <Link href="/auth">
           <Button className="bg-primary text-white hover:bg-primary/90">
-            Register to Begin
+            Create your account
           </Button>
         </Link>
       )}
@@ -430,8 +430,8 @@ const AssessmentPreview: React.FC = () => {
           
           <p className="mt-6 text-mid-grey">
             Want to save your assessment progress?{" "}
-            <Link href="/auth?tab=register" className="text-primary hover:underline font-medium">
-              Create a free account
+            <Link href="/auth" className="text-primary hover:underline font-medium">
+              Create your account
             </Link>
           </p>
         </div>

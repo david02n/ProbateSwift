@@ -53,10 +53,10 @@ const LandingPage: React.FC = () => {
             </div>
             <div className="flex items-center space-x-4">
               <Button variant="outline" onClick={() => window.location.href = '/auth'}>
-                Sign In
+                Sign in
               </Button>
               <Button onClick={() => window.location.href = '/auth'}>
-                Get Started
+                Create account
               </Button>
             </div>
           </div>
@@ -90,7 +90,7 @@ const LandingPage: React.FC = () => {
                 className="px-8 py-3 text-lg"
                 onClick={() => window.location.href = '/auth'}
               >
-                Sign Up Now
+                Create account
               </Button>
             </div>
           </div>

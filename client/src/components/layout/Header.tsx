@@ -2,7 +2,7 @@ import React, { useEffect, useState } from "react";
 import { Link } from "wouter";
 import { Button } from "@/components/ui/button";
 import { SwiftLogoWithText } from "@/components/ui/SwiftLogo";
-import { Menu, User, LogOut, Smartphone } from "lucide-react";
+import { Menu, User, LogOut } from "lucide-react";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { useAuth } from "@/hooks/use-auth";
 import { useToast } from "@/hooks/use-toast";
@@ -149,19 +149,12 @@ const Header: React.FC = () => {
             <>
               <Link href="/auth">
                 <Button variant="ghost" className="hidden text-charcoal/90 hover:bg-transparent hover:text-primary md:inline-flex">
-                  {isMobile ? (
-                    <span className="flex items-center">
-                      <Smartphone className="mr-1 h-3 w-3" />
-                      Mobile Login
-                    </span>
-                  ) : (
-                    "Log In"
-                  )}
+                  Sign in
                 </Button>
               </Link>
               <Link href="/auth">
                 <Button className="min-w-[120px] justify-center rounded-full bg-primary px-6 py-2 text-white shadow-sm hover:bg-primary/90">
-                  Get Started
+                  Create account
                 </Button>
               </Link>
             </>
@@ -232,7 +225,7 @@ const Header: React.FC = () => {
                       <>
                         <Link href="/auth" className="w-full">
                           <Button className="w-full justify-center rounded-full bg-primary py-2 text-white hover:bg-primary/90">
-                            Get Started
+                            Create account
                           </Button>
                         </Link>
                         <Link href="/auth" className="w-full">
@@ -240,14 +233,7 @@ const Header: React.FC = () => {
                             variant="outline"
                             className="w-full justify-center rounded-full border-gray-200 py-2 text-charcoal hover:bg-gray-50"
                           >
-                            {isMobile ? (
-                              <span className="flex items-center justify-center">
-                                <Smartphone className="mr-2 h-4 w-4" />
-                                Mobile Login
-                              </span>
-                            ) : (
-                              "Log In"
-                            )}
+                            Sign in
                           </Button>
                         </Link>
                       </>

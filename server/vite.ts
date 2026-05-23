@@ -81,13 +81,20 @@ export function serveStatic(app: Express) {
   }
 
   // Serve built frontend assets first, then repo-level public assets if present.
-  app.use(express.static(distPath));
+  app.use(express.static(distPath, {
+    setHeaders: (res, filePath) => {
+      if (filePath.endsWith(".html")) {
+        res.setHeader("Cache-Control", "no-store");
+      }
+    },
+  }));
   if (fs.existsSync(publicPath)) {
     app.use(express.static(publicPath));
   }
 
   // Handle client-side routing - serve index.html for all non-API routes
   app.use("*", (_req, res) => {
+    res.setHeader("Cache-Control", "no-store");
     res.sendFile(path.resolve(distPath, "index.html"));
   });
 }
