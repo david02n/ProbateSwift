@@ -55,6 +55,7 @@ const helmetConfig = helmet({
         'https://*.clerk.accounts.dev',
         'https://*.clerk.dev',
         'https://clerk.probateswift.com',
+        'https://challenges.cloudflare.com',
         'https://*.googleapis.com',
         'https://www.gstatic.com',
         'https://accounts.google.com'
@@ -68,7 +69,7 @@ const helmetConfig = helmet({
         "'self'",
         'blob:'
       ],
-      imgSrc: ["'self'", 'data:', 'https:'],
+      imgSrc: ["'self'", 'data:', 'https:', 'https://challenges.cloudflare.com'],
       connectSrc: [
         "'self'", 
         'https://*.probateswift.com', 
@@ -77,6 +78,7 @@ const helmetConfig = helmet({
         'https://*.clerk.accounts.dev',
         'https://*.clerk.dev',
         'https://clerk.probateswift.com',
+        'https://challenges.cloudflare.com',
         'https://*.googleapis.com',
         'https://accounts.google.com'
       ],
