@@ -143,7 +143,7 @@ export async function uploadDocument(
  */
 export async function checkDocumentStatus(documentId: number): Promise<DocumentAnalysisResult | null> {
   try {
-    const response = await axios.get(`/api/documents/${documentId}`);
+    const response = await axios.get(`/api/documents/item/${documentId}`);
     
     if (response.data && response.data.status) {
       // If processing is complete, return the result

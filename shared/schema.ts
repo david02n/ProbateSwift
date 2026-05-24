@@ -262,6 +262,7 @@ export const insertExecutorSchema = createInsertSchema(executors)
     personPosition: true,
     status: true,
     needsMoreInfo: true,
+    documentId: true,
     // Legacy fields included for compatibility
     address: true,
     phone: true,

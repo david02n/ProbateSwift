@@ -1,34 +1,55 @@
 import { useState } from 'react';
-import { CheckCircle, Circle, Lock, ChevronRight } from 'lucide-react';
+import { CheckCircle, Circle, Lock, ChevronRight, FileText, FileCheck, Users, Scale, Lightbulb } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
-import { 
-  MILESTONES, 
-  getMilestoneProgress, 
-  getUnlockedTasks, 
+import {
+  MILESTONES,
+  getMilestoneProgress,
+  getUnlockedTasks,
   getNextMilestone,
+  generatePersonalisedTasks,
   type Milestone,
-  type TaskCategory 
+  type TaskCategory,
+  type PersonalisedTask,
 } from '@shared/milestone-config';
 
 interface MilestoneProgressProps {
   completedSections: string[];
+  evaluationFlags?: Record<string, any> | null;
   onStartEvaluation: () => void;
   onNavigateToTab: (tab: string) => void;
 }
 
-export function MilestoneProgress({ 
-  completedSections, 
-  onStartEvaluation, 
-  onNavigateToTab 
+const CATEGORY_ICONS: Record<PersonalisedTask["category"], React.ReactNode> = {
+  documents: <FileText className="h-4 w-4" />,
+  forms:     <FileCheck className="h-4 w-4" />,
+  people:    <Users className="h-4 w-4" />,
+  legal:     <Scale className="h-4 w-4" />,
+  advice:    <Lightbulb className="h-4 w-4" />,
+};
+
+const CATEGORY_COLOURS: Record<PersonalisedTask["category"], string> = {
+  documents: "bg-blue-100 text-blue-700",
+  forms:     "bg-purple-100 text-purple-700",
+  people:    "bg-teal-100 text-teal-700",
+  legal:     "bg-amber-100 text-amber-700",
+  advice:    "bg-orange-100 text-orange-700",
+};
+
+export function MilestoneProgress({
+  completedSections,
+  evaluationFlags,
+  onStartEvaluation,
+  onNavigateToTab,
 }: MilestoneProgressProps) {
   const [expanded, setExpanded] = useState<string | null>(null);
-  
+
   const completedMilestones = getMilestoneProgress(completedSections);
   const unlockedTasks = getUnlockedTasks(completedSections);
   const nextMilestone = getNextMilestone(completedSections);
+  const personalisedTasks = generatePersonalisedTasks(evaluationFlags);
   
   const progressPercentage = (completedMilestones.length / MILESTONES.length) * 100;
 
@@ -182,8 +203,60 @@ export function MilestoneProgress({
         })}
       </div>
 
-      {/* Unlocked Task Categories */}
-      {unlockedTasks.length > 0 && (
+      {/* Personalised task list — shown once evaluation flags are available */}
+      {personalisedTasks.length > 0 && (
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center justify-between">
+              <span>Your Action Plan</span>
+              <Badge variant="secondary">{personalisedTasks.length} tasks</Badge>
+            </CardTitle>
+            <p className="text-sm text-gray-500">
+              These steps are specific to your probate case, based on your evaluation answers.
+            </p>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-3">
+              {personalisedTasks.map((task, index) => (
+                <div
+                  key={task.id}
+                  className="flex items-start gap-3 p-3 border rounded-lg hover:bg-gray-50 transition-colors"
+                >
+                  <div className="flex-shrink-0 mt-0.5 text-gray-400">
+                    <span className="font-mono text-xs text-gray-400 w-5 inline-block text-right mr-1">
+                      {index + 1}.
+                    </span>
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-start gap-2 flex-wrap">
+                      <h4 className="font-medium text-sm text-gray-900 flex-1">{task.title}</h4>
+                      <span className={`inline-flex items-center gap-1 text-xs px-2 py-0.5 rounded-full font-medium ${CATEGORY_COLOURS[task.category]}`}>
+                        {CATEGORY_ICONS[task.category]}
+                        {task.category.charAt(0).toUpperCase() + task.category.slice(1)}
+                      </span>
+                    </div>
+                    <p className="text-xs text-gray-500 mt-1">{task.description}</p>
+                  </div>
+                  {task.tab && (
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="flex-shrink-0 h-7 text-xs"
+                      onClick={() => onNavigateToTab(task.tab!)}
+                    >
+                      Go
+                      <ChevronRight className="ml-1 h-3 w-3" />
+                    </Button>
+                  )}
+                </div>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Generic unlocked work areas — shown when no personalised tasks yet */}
+      {personalisedTasks.length === 0 && unlockedTasks.length > 0 && (
         <Card>
           <CardHeader>
             <CardTitle>Available Work Areas</CardTitle>
@@ -195,8 +268,8 @@ export function MilestoneProgress({
                   <h4 className="font-medium mb-2">{category.name}</h4>
                   <p className="text-sm text-gray-600 mb-3">{category.description}</p>
                   <div className="space-y-1">
-                    {category.tasks.slice(0, 3).map((task, index) => (
-                      <div key={index} className="text-xs text-gray-500 flex items-center">
+                    {category.tasks.slice(0, 3).map((task, taskIndex) => (
+                      <div key={taskIndex} className="text-xs text-gray-500 flex items-center">
                         <Circle className="h-3 w-3 mr-2" />
                         {task}
                       </div>

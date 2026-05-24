@@ -326,88 +326,115 @@ export const detailedEvaluationSections: EvaluationSection[] = [
 ];
 
 // Logic engine for deriving flags from answers
+// Uses the canonical question keys defined in landingPageQuestions and detailedEvaluationSections above.
 export function deriveEvaluationFlags(answers: Record<string, any>): Record<string, any> {
   const flags: Record<string, any> = {};
-  
-  // Eligibility checks
-  flags.eligible_to_apply = true;
-  flags.needs_probate = true;
-  flags.probate_type = 'grant_of_probate';
-  
-  // Check basic eligibility
-  if (answers.q1_executor_named === false && answers.q2_power_of_attorney === false) {
-    flags.eligible_to_apply = false;
-    flags.error_reason = 'Not named as executor and no power of attorney';
-  }
-  
-  // Determine probate type
-  if (!answers.has_will || answers.has_will === false) {
-    flags.probate_type = 'letters_of_administration';
-  }
-  
-  // Document requirements
+
+  // ── Jurisdiction ─────────────────────────────────────────────────────────
+  flags.jurisdiction_supported =
+    answers.death_in_england_wales === true &&
+    answers.deceased_domiciled_uk === true;
+
+  // ── Will / probate type ───────────────────────────────────────────────────
+  flags.has_will = answers.has_will === true;
+
+  // Accept named-executor signal from either the landing page or the detailed section
+  const applicantIsExecutor =
+    answers.named_executor_in_will === true ||
+    answers.applicant_named_executor === true;
+
+  flags.probate_type = flags.has_will
+    ? applicantIsExecutor
+      ? "grant_of_probate"
+      : "letters_of_administration"
+    : "letters_of_administration";
+
+  // ── Complexity / specialist flags ─────────────────────────────────────────
+  flags.has_foreign_assets    = answers.deceased_foreign_assets === true;
+  flags.has_settled_land      = answers.deceased_settled_land === true;
+  flags.has_trust_involvement = answers.trust_involvement === true;
+  flags.family_adoptions      = answers.family_adoptions === true;
+  flags.foreign_wills         = answers.foreign_wills === true;
+  flags.married_after_will    = answers.married_after_will === true;
+  flags.acting_under_poa      = answers.acting_under_poa === true;
+
+  // ── IHT / estate threshold ────────────────────────────────────────────────
+  const estateValueBand  = answers.estate_value_estimate as string | undefined;
+  const isHighValueBand  = estateValueBand === "Over £325,000";
+  const hasGifts         = answers.gifts_last_7_years === true;
+  const hasTrusts        = answers.trust_involvement === true;
+  const hasForeignAssets = answers.deceased_foreign_assets === true;
+
+  // estate_excepted_from_iht is the definitive answer from Section 5;
+  // fall back to the landing-page value band when Section 5 hasn't been answered yet.
+  const estateExcepted =
+    answers.estate_excepted_from_iht === true ||
+    estateValueBand === "Under £5,000";
+
+  flags.estate_likely_excepted =
+    estateExcepted && !hasGifts && !hasTrusts && !hasForeignAssets && !isHighValueBand;
+
+  flags.iht400_required =
+    !flags.estate_likely_excepted && answers.iht400_completed !== true;
+
+  // ── Document requirements ─────────────────────────────────────────────────
   flags.needs_renunciation_form = false;
-  flags.needs_pa13 = false;
-  flags.needs_translation = false;
-  
-  if (answers.q15_all_executors_applying === false) {
-    const reasons = answers.q16_non_applying_reasons || [];
-    if (reasons.includes('Renouncing')) {
-      flags.needs_renunciation_form = true;
-    }
+  if (answers.all_executors_applying === false) {
+    const reasons: unknown = answers.non_applying_executor_reasons ?? [];
+    flags.needs_renunciation_form = Array.isArray(reasons)
+      ? reasons.includes("renunciation")
+      : reasons === "renunciation";
   }
-  
-  if (answers.q13_will_revoked === true) {
-    flags.needs_pa13 = true;
-  }
-  
-  if (answers.q14_foreign_wills === true) {
-    flags.needs_translation = true;
-  }
-  
-  // IHT form determination
-  flags.iht_form_required = 'IHT205';
-  
-  const grossValue = answers.q17_gross_value || 0;
-  const hasForeignAssets = answers.q7_foreign_assets === true;
-  
-  if (grossValue > 325000 || hasForeignAssets) {
-    flags.iht_form_required = 'IHT400';
-  }
-  
-  // Estate status - if IHT400 required or gross value > £5000, estate needs detailed asset/liability tracking
-  flags.estateNotExcepted = flags.iht_form_required === 'IHT400' || grossValue > 5000;
-  
-  // PA1P sections required
+
+  flags.needs_translation  = answers.foreign_wills === true;
+  flags.needs_alias_details = answers.deceased_other_names === true;
+
+  // ── PA1P sections required ────────────────────────────────────────────────
+  const hasUnder18Beneficiaries = answers.under18_beneficiaries === true;
   flags.pa1p_sections = {
-    section_a: true, // Always required
-    section_b: true, // Always required
-    section_c: true, // Always required
-    section_d: answers.q4_under18_gift === true,
-    section_e: answers.q15_all_executors_applying === false,
-    section_f: answers.q7_alt_names === true,
-    section_g: answers.q10_adoptions === true
+    section_a: true, // always required
+    section_b: true,
+    section_c: true,
+    section_d: hasUnder18Beneficiaries,
+    section_e: answers.all_executors_applying === false,
+    section_f: answers.deceased_other_names === true,
+    section_g: answers.family_adoptions === true,
   };
-  
-  // Validation flags
-  flags.application_ready = true;
-  flags.missing_requirements = [];
-  
-  if (answers.q19_iht_done !== true) {
-    flags.application_ready = false;
-    flags.missing_requirements.push('IHT form must be completed first');
+
+  // ── Specialist advice needed ───────────────────────────────────────────────
+  flags.needs_specialist_advice = [
+    flags.has_foreign_assets,
+    flags.has_settled_land,
+    flags.has_trust_involvement,
+    flags.family_adoptions,
+    flags.foreign_wills,
+    flags.married_after_will,
+  ].some(Boolean);
+
+  // ── Application blockers ──────────────────────────────────────────────────
+  flags.application_blocked = !flags.jurisdiction_supported;
+  flags.blocker_reason = flags.application_blocked
+    ? "Probate not handled for this jurisdiction"
+    : null;
+
+  // ── Readiness ─────────────────────────────────────────────────────────────
+  const numApplicants = Number(answers.number_of_applicants ?? 1);
+  const missingRequirements: string[] = [];
+
+  if (flags.iht400_required) {
+    missingRequirements.push("IHT400 must be completed and submitted to HMRC first");
   }
-  
-  if (answers.q3_applicant_count > 4) {
-    flags.application_ready = false;
-    flags.missing_requirements.push('Maximum 4 applicants allowed');
+  if (numApplicants > 4) {
+    missingRequirements.push("Maximum of 4 applicants allowed");
   }
-  
-  if (answers.q4_under18_gift === true && (answers.q3_applicant_count || 1) < 2) {
-    flags.application_ready = false;
-    flags.missing_requirements.push('At least 2 applicants required when under-18s receive gifts');
+  if (hasUnder18Beneficiaries && numApplicants < 2) {
+    missingRequirements.push("At least 2 applicants required when under-18 beneficiaries receive gifts");
   }
-  
+
+  flags.missing_requirements = missingRequirements;
+  flags.application_ready =
+    !flags.application_blocked && missingRequirements.length === 0;
+
   return flags;
 }
 

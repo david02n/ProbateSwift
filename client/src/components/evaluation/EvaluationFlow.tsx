@@ -12,7 +12,6 @@ import { apiRequest } from '@/lib/queryClient';
 import { useToast } from '@/hooks/use-toast';
 import { detailedEvaluationSections, deriveEvaluationFlags } from '@shared/evaluation-config';
 import type { EvaluationQuestion } from '@shared/evaluation-config';
-import { deriveRoutingState, isEvaluationComplete } from '@shared/evaluation-routing';
 import { EvaluationResults } from './EvaluationResults';
 
 interface EvaluationFlowProps {

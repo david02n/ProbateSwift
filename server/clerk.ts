@@ -62,7 +62,10 @@ export function setupClerkAuth(app: Express) {
     res.status(204).end();
   });
 
-  app.get("/api/test-auth", requireClerkAuth, (req: Request, res: Response) => {
-    res.json({ message: "Authentication successful", user: (req as any).user });
-  });
+  // Debug endpoint — development only
+  if (process.env.NODE_ENV !== "production") {
+    app.get("/api/test-auth", requireClerkAuth, (req: Request, res: Response) => {
+      res.json({ message: "Authentication successful", user: (req as any).user });
+    });
+  }
 }

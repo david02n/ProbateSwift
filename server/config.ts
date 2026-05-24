@@ -29,6 +29,24 @@ const envSchema = z.object({
   // Rate limiting
   RATE_LIMIT_WINDOW_MS: z.string().transform(Number).default('900000'), // 15 minutes
   RATE_LIMIT_MAX_REQUESTS: z.string().transform(Number).default('100'),
+
+  // AWS S3
+  AWS_ACCESS_KEY_ID: z.string().optional(),
+  AWS_SECRET_ACCESS_KEY: z.string().optional(),
+  AWS_REGION: z.string().default('eu-west-2'),
+  S3_BUCKET_NAME: z.string().default('probateswift-documents'),
+
+  // n8n integration
+  N8N_WEBHOOK_SECRET: z.string().optional(),
+
+  // App base URL (used to construct callback URLs sent to n8n)
+  APP_BASE_URL: z.string().optional(),
+
+  // GetAddress.io
+  GET_ADDRESS_API_KEY: z.string().optional(),
+
+  // Document processing
+  GEMINI_API_KEY: z.string().optional(),
 });
 
 // Parse and validate environment variables

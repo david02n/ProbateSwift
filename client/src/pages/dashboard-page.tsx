@@ -3,126 +3,23 @@ import { useAuth } from "@/hooks/use-auth";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { 
-  ArrowRight, 
-  Check, 
-  FileText, 
-  HelpCircle, 
-  LogOut, 
+import {
+  ArrowRight,
+  Check,
+  FileText,
+  HelpCircle,
+  LogOut,
   User,
   Home,
-  PoundSterling,
-  Send,
   MessageSquare,
   Upload,
   Trophy
 } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { getQueryFn } from "@/lib/queryClient";
-import { AssessmentResult, Executor, EvaluationResponse, ProbateCase } from "@shared/schema";
+import { AssessmentResult, ProbateCase } from "@shared/schema";
 import { EvaluationFlow } from "@/components/evaluation/EvaluationFlow";
 import { MilestoneProgress } from "@/components/milestones/MilestoneProgress";
-import { getUnlockedTabs } from "@shared/milestone-config";
-
-// Component for the deceased form milestone with dynamic completion status
-const DeceasedFormMilestone: React.FC = () => {
-  // Fetch the list of executors to find the deceased person
-  const { data: executors = [] } = useQuery<Executor[]>({
-    queryKey: ["/api/executors"],
-    queryFn: getQueryFn({ on401: "throw" }),
-  });
-  
-  // Find the deceased person in the executors list
-  const deceasedPerson = executors.find(exec => 
-    exec.relationshipToDeceased === 'Deceased'
-  );
-  
-  // If no deceased person is found, show a default state
-  if (!deceasedPerson) {
-    return (
-      <div className="mb-8 relative">
-        <div className="absolute -left-12 top-0 h-6 w-6 rounded-full bg-mid-grey flex items-center justify-center border-4 border-white">
-          <FileText className="h-3 w-3 text-white" />
-        </div>
-        <div className="bg-muted p-4 rounded-lg border border-mid-grey/10">
-          <div className="flex items-center justify-between">
-            <h3 className="font-medium flex items-center">
-              <span>Complete Deceased Person's Legal Questionnaire</span>
-              <span className="ml-2 text-xs py-0.5 px-2 bg-mid-grey/10 text-mid-grey rounded-full">Not Started</span>
-            </h3>
-            <div>
-              <Button 
-                variant="outline" 
-                size="sm" 
-                className="h-7 text-xs"
-                onClick={() => {
-                  window.location.href = '/people';
-                }}
-              >
-                Add Deceased
-              </Button>
-            </div>
-          </div>
-          <p className="text-sm text-charcoal/70 mt-2">
-            Provide all required deceased-specific information including marital status, foreign assets, and legal history.
-          </p>
-        </div>
-      </div>
-    );
-  }
-  
-  // Query the deceased form completion status
-  const { data: completionData, isLoading } = useQuery({
-    queryKey: [`/api/deceased-form-fields/${deceasedPerson.id}/complete`],
-    queryFn: getQueryFn({ on401: "throw" }),
-    refetchInterval: 30000, // Refresh every 30 seconds
-  });
-  
-  const isComplete = (completionData as any)?.complete || false;
-  
-  return (
-    <div className="mb-8 relative">
-      <div className="absolute -left-12 top-0 h-6 w-6 rounded-full bg-amber flex items-center justify-center border-4 border-white">
-        {isComplete ? (
-          <Check className="h-3 w-3 text-white" />
-        ) : (
-          <FileText className="h-3 w-3 text-white" />
-        )}
-      </div>
-      <div className={`p-4 rounded-lg border ${
-        isComplete ? 'bg-success/5 border-success/20' : 'bg-amber/5 border-amber/20'
-      }`}>
-        <div className="flex items-center justify-between">
-          <h3 className="font-medium flex items-center">
-            <span>Complete Deceased Person's Legal Questionnaire</span>
-            <span className={`ml-2 text-xs py-0.5 px-2 rounded-full ${
-              isComplete ? 'bg-success/10 text-success' : 'bg-amber/10 text-amber'
-            }`}>
-              {isComplete ? 'Complete' : 'Pending'}
-            </span>
-          </h3>
-          <div>
-            <Button 
-              variant="outline" 
-              size="sm" 
-              className="h-7 text-xs bg-white"
-              onClick={() => {
-                window.location.href = `/people/${deceasedPerson.id}/deceased-details`;
-              }}
-            >
-              {isComplete ? 'Review' : 'Complete Now'}
-            </Button>
-          </div>
-        </div>
-        <p className="text-sm text-charcoal/70 mt-2">
-          {isComplete 
-            ? `All deceased-specific information has been completed for ${deceasedPerson.firstName} ${deceasedPerson.lastName}.`
-            : 'Provide all required deceased-specific information including marital status, foreign assets, and legal history.'}
-        </p>
-      </div>
-    </div>
-  );
-};
 
 const DashboardPage: React.FC = () => {
   const { user, logoutMutation } = useAuth();
@@ -136,6 +33,8 @@ const DashboardPage: React.FC = () => {
     queryFn: getQueryFn({ on401: "returnNull" }),
   });
 
+  const [activeTab, setActiveTab] = useState("overview");
+
   // Fetch probate cases
   const {
     data: probateCases = [],
@@ -145,8 +44,26 @@ const DashboardPage: React.FC = () => {
     queryFn: getQueryFn({ on401: "returnNull" }),
   });
 
+  const currentCase = probateCases[0] ?? null;
+
+  // Fetch milestone progress — re-runs whenever evaluation is saved
+  const {
+    data: progress,
+    refetch: refetchProgress,
+  } = useQuery<{
+    completedSections: string[];
+    counts: { people: number; assets: number; liabilities: number; documents: number };
+    evaluationStarted: boolean;
+    evaluationFlags: Record<string, any> | null;
+  }>({
+    queryKey: ["/api/probate-cases", currentCase?.id, "progress"],
+    queryFn: getQueryFn({ on401: "returnNull" }),
+    enabled: !!currentCase,
+  });
+
+  const completedSections = progress?.completedSections ?? [];
+
   const handleLogout = () => {
-    // Simple logout redirect for development
     window.location.href = '/auth';
   };
 
@@ -168,7 +85,7 @@ const DashboardPage: React.FC = () => {
           </Button>
         </div>
 
-        <Tabs defaultValue="overview" className="w-full">
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
           <TabsList className="mb-6">
             <TabsTrigger value="overview">Overview</TabsTrigger>
             <TabsTrigger value="evaluation">Evaluation</TabsTrigger>
@@ -236,13 +153,9 @@ const DashboardPage: React.FC = () => {
                         )}
                       </div>
                       
-                      <Button 
+                      <Button
                         className="w-full bg-primary hover:bg-primary/90"
-                        onClick={() => {
-                          document.querySelector('[value="tasks"]')?.dispatchEvent(
-                            new MouseEvent('click', { bubbles: true })
-                          );
-                        }}
+                        onClick={() => setActiveTab("tasks")}
                       >
                         View Probate Tasks
                         <ArrowRight className="ml-2 h-4 w-4" />
@@ -455,264 +368,37 @@ const DashboardPage: React.FC = () => {
           </TabsContent>
 
           <TabsContent value="tasks">
-            <Card>
-              <CardHeader>
-                <CardTitle>Your Tasks</CardTitle>
-                <CardDescription>
-                  Track your progress through the probate process
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                {isLoadingAssessment ? (
-                  <div className="flex justify-center py-8">
-                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
-                  </div>
-                ) : assessmentResult && assessmentResult.isProbateRequired ? (
-                  <div className="space-y-4">
-                    <div className="text-sm text-charcoal/70 mb-4">
-                      Complete these milestones to progress with your probate application
-                    </div>
-                    
-                    {/* Milestones Timeline */}
-                    <div className="relative border-l-2 border-primary/10 ml-4 pl-8 pb-4">
-                      
-                      {/* Initial Assessment Milestone */}
-                      <div className="mb-8 relative">
-                        {/* Timeline circle indicator */}
-                        <div className="absolute -left-12 top-0 h-6 w-6 rounded-full bg-success flex items-center justify-center border-4 border-white">
-                          <Check className="h-3 w-3 text-white" />
-                        </div>
-                        {/* Content */}
-                        <div className="bg-success/5 p-4 rounded-lg border border-success/20">
-                          <div className="flex items-center justify-between">
-                            <h3 className="font-medium flex items-center">
-                              <span>Probate Assessment</span>
-                              <span className="ml-2 text-xs py-0.5 px-2 bg-success/10 text-success rounded-full">Complete</span>
-                            </h3>
-                            <div>
-                              <Button 
-                                variant="outline" 
-                                size="sm" 
-                                className="h-7 text-xs"
-                                onClick={() => window.location.href = "/#assessment"}
-                              >
-                                Review
-                              </Button>
-                            </div>
-                          </div>
-                          <p className="text-sm text-charcoal/70 mt-2">
-                            You've completed your initial assessment. Based on your answers, probate is required.
-                          </p>
-                        </div>
-                      </div>
-                      
-                      {/* Executor Information Milestone */}
-                      <div className="mb-8 relative">
-                        <div className="absolute -left-12 top-0 h-6 w-6 rounded-full bg-amber flex items-center justify-center border-4 border-white">
-                          <FileText className="h-3 w-3 text-white" />
-                        </div>
-                        <div className="bg-amber/5 p-4 rounded-lg border border-amber/20">
-                          <div className="flex items-center justify-between">
-                            <h3 className="font-medium flex items-center">
-                              <span>Enter Executor Info</span>
-                              <span className="ml-2 text-xs py-0.5 px-2 bg-amber/10 text-amber rounded-full">Pending</span>
-                            </h3>
-                            <div>
-                              <Button 
-                                variant="outline" 
-                                size="sm" 
-                                className="h-7 text-xs bg-white"
-                              >
-                                Start
-                              </Button>
-                            </div>
-                          </div>
-                          <p className="text-sm text-charcoal/70 mt-2">
-                            Provide executor details including contact information and relationship to the deceased.
-                          </p>
-                        </div>
-                      </div>
-                      
-                      {/* Death Certificate Milestone */}
-                      <div className="mb-8 relative">
-                        <div className="absolute -left-12 top-0 h-6 w-6 rounded-full bg-mid-grey flex items-center justify-center border-4 border-white">
-                          <FileText className="h-3 w-3 text-white" />
-                        </div>
-                        <div className="bg-muted p-4 rounded-lg border border-mid-grey/10">
-                          <div className="flex items-center justify-between">
-                            <h3 className="font-medium flex items-center">
-                              <span>Upload Death Certificate</span>
-                              <span className="ml-2 text-xs py-0.5 px-2 bg-mid-grey/10 text-mid-grey rounded-full">Not Started</span>
-                            </h3>
-                            <div>
-                              <Button 
-                                variant="outline" 
-                                size="sm" 
-                                className="h-7 text-xs"
-                                disabled
-                              >
-                                Upload
-                              </Button>
-                            </div>
-                          </div>
-                          <p className="text-sm text-charcoal/70 mt-2">
-                            Upload an official death certificate. This is required for the probate application.
-                          </p>
-                        </div>
-                      </div>
-                      
-                      {/* Deceased Questionnaire Milestone */}
-                      <DeceasedFormMilestone />
-                      
-                      
-                      {/* Will Upload Milestone - Conditional */}
-                      {assessmentResult.hasWill && (
-                        <div className="mb-8 relative">
-                          <div className="absolute -left-12 top-0 h-6 w-6 rounded-full bg-mid-grey flex items-center justify-center border-4 border-white">
-                            <FileText className="h-3 w-3 text-white" />
-                          </div>
-                          <div className="bg-muted p-4 rounded-lg border border-mid-grey/10">
-                            <div className="flex items-center justify-between">
-                              <h3 className="font-medium flex items-center">
-                                <span>Upload Will</span>
-                                <span className="ml-2 text-xs py-0.5 px-2 bg-mid-grey/10 text-mid-grey rounded-full">Not Started</span>
-                              </h3>
-                              <div>
-                                <Button 
-                                  variant="outline" 
-                                  size="sm" 
-                                  className="h-7 text-xs"
-                                  disabled
-                                >
-                                  Upload
-                                </Button>
-                              </div>
-                            </div>
-                            <p className="text-sm text-charcoal/70 mt-2">
-                              Upload the original will and any codicils. This must be the official signed version.
-                            </p>
-                          </div>
-                        </div>
-                      )}
-                      
-                      {/* Property Valuation */}
-                      <div className="mb-8 relative">
-                        <div className="absolute -left-12 top-0 h-6 w-6 rounded-full bg-mid-grey flex items-center justify-center border-4 border-white">
-                          <Home className="h-3 w-3 text-white" />
-                        </div>
-                        <div className="bg-muted p-4 rounded-lg border border-mid-grey/10">
-                          <div className="flex items-center justify-between">
-                            <h3 className="font-medium flex items-center">
-                              <span>Property Valuation</span>
-                              <span className="ml-2 text-xs py-0.5 px-2 bg-mid-grey/10 text-mid-grey rounded-full">Not Started</span>
-                            </h3>
-                            <div>
-                              <Button 
-                                variant="outline" 
-                                size="sm" 
-                                className="h-7 text-xs"
-                                disabled
-                              >
-                                Start
-                              </Button>
-                            </div>
-                          </div>
-                          <p className="text-sm text-charcoal/70 mt-2">
-                            Enter details and value of any property owned by the deceased.
-                          </p>
-                        </div>
-                      </div>
-                      
-                      {/* Financial Accounts */}
-                      <div className="mb-8 relative">
-                        <div className="absolute -left-12 top-0 h-6 w-6 rounded-full bg-mid-grey flex items-center justify-center border-4 border-white">
-                          <PoundSterling className="h-3 w-3 text-white" />
-                        </div>
-                        <div className="bg-muted p-4 rounded-lg border border-mid-grey/10">
-                          <div className="flex items-center justify-between">
-                            <h3 className="font-medium flex items-center">
-                              <span>Financial Accounts</span>
-                              <span className="ml-2 text-xs py-0.5 px-2 bg-mid-grey/10 text-mid-grey rounded-full">Not Started</span>
-                            </h3>
-                            <div>
-                              <Button 
-                                variant="outline" 
-                                size="sm" 
-                                className="h-7 text-xs"
-                                disabled
-                              >
-                                Start
-                              </Button>
-                            </div>
-                          </div>
-                          <p className="text-sm text-charcoal/70 mt-2">
-                            Enter details of bank accounts, savings, and investments owned by the deceased.
-                          </p>
-                        </div>
-                      </div>
-                      
-                      {/* Submit Application */}
-                      <div className="relative">
-                        <div className="absolute -left-12 top-0 h-6 w-6 rounded-full bg-mid-grey flex items-center justify-center border-4 border-white">
-                          <Send className="h-3 w-3 text-white" />
-                        </div>
-                        <div className="bg-muted p-4 rounded-lg border border-mid-grey/10">
-                          <div className="flex items-center justify-between">
-                            <h3 className="font-medium flex items-center">
-                              <span>Submit Application</span>
-                              <span className="ml-2 text-xs py-0.5 px-2 bg-mid-grey/10 text-mid-grey rounded-full">Locked</span>
-                            </h3>
-                            <div>
-                              <Button 
-                                variant="outline" 
-                                size="sm" 
-                                className="h-7 text-xs"
-                                disabled
-                              >
-                                Submit
-                              </Button>
-                            </div>
-                          </div>
-                          <p className="text-sm text-charcoal/70 mt-2">
-                            Complete all previous tasks before submitting your probate application.
-                          </p>
-                        </div>
-                      </div>
-                    </div>
-                    
-                    <div className="mt-6 text-sm text-center text-charcoal/70">
-                      Complete all required tasks to submit your probate application
-                    </div>
-                  </div>
-                ) : (
+            {isLoadingCases ? (
+              <div className="flex justify-center py-12">
+                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+              </div>
+            ) : currentCase ? (
+              <MilestoneProgress
+                completedSections={completedSections}
+                evaluationFlags={progress?.evaluationFlags}
+                onStartEvaluation={() => setActiveTab("evaluation")}
+                onNavigateToTab={setActiveTab}
+              />
+            ) : (
+              <Card>
+                <CardContent>
                   <div className="flex flex-col items-center justify-center py-12 text-center">
-                    <Check className="h-12 w-12 text-mid-grey mb-4" />
-                    <h3 className="text-lg font-medium mb-2">No Tasks Yet</h3>
+                    <Trophy className="h-12 w-12 text-mid-grey mb-4" />
+                    <h3 className="text-lg font-medium mb-2">No Active Case Yet</h3>
                     <p className="text-charcoal/70 mb-4 max-w-md mx-auto">
-                      Complete your assessment to get a personalized task list for your probate process
+                      Your progress milestones will appear here once a probate case is created.
                     </p>
-                    <Button 
+                    <Button
                       className="bg-primary hover:bg-primary/90"
-                      onClick={() => {
-                        // First attempt: redirect to home and trigger the assessment section
-                        window.location.href = "/#assessment";
-                        
-                        // Add a fallback in case the direct link doesn't work
-                        setTimeout(() => {
-                          // Try to find and click on the assessment section link
-                          const assessmentLink = document.querySelector('a[href="#assessment"]');
-                          if (assessmentLink) {
-                            (assessmentLink as HTMLElement).click();
-                          }
-                        }, 500);
-                      }}
+                      onClick={() => setActiveTab("evaluation")}
                     >
-                      Start Assessment
+                      Start Evaluation
+                      <ArrowRight className="ml-2 h-4 w-4" />
                     </Button>
                   </div>
-                )}
-              </CardContent>
-            </Card>
+                </CardContent>
+              </Card>
+            )}
           </TabsContent>
 
           {/* Chat & Support Tab */}
@@ -853,10 +539,10 @@ const DashboardPage: React.FC = () => {
           <TabsContent value="evaluation">
             <div className="space-y-6">
               {probateCases && probateCases.length > 0 ? (
-                <EvaluationFlow 
-                  caseId={probateCases[0].id} 
-                  onComplete={(flags) => {
-                    console.log('Evaluation completed with flags:', flags);
+                <EvaluationFlow
+                  caseId={probateCases[0].id}
+                  onComplete={(_flags) => {
+                    refetchProgress();
                   }}
                 />
               ) : (

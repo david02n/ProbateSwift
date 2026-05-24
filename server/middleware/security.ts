@@ -27,20 +27,22 @@ if (railwayStaticUrl) {
   allowedOriginHosts.add(railwayStaticUrl);
 }
 
-// Create rate limiter with generous limits for development
+// General API rate limiter — uses env config (default 100 req / 15 min per IP)
 const limiter = rateLimit({
-  windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 1000, // Very high limit for development
+  windowMs: config.RATE_LIMIT_WINDOW_MS,
+  max: config.RATE_LIMIT_MAX_REQUESTS,
   message: { error: 'Too many requests, please try again later.' },
   standardHeaders: true,
   legacyHeaders: false,
-  skip: (req) => {
-    // Skip rate limiting for auth endpoints during development
-    if (process.env.NODE_ENV === 'development' && req.path.startsWith('/api/auth')) {
-      return true;
-    }
-    return false;
-  },
+});
+
+// Stricter limiter for expensive / sensitive endpoints (uploads, auth)
+export const strictLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: 20,
+  message: { error: 'Too many requests to this endpoint, please try again later.' },
+  standardHeaders: true,
+  legacyHeaders: false,
 });
 
 // Configure Helmet with secure defaults
@@ -145,8 +147,8 @@ const corsOptions = {
     }
   },
   credentials: true,
-  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With'],
+  methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'X-Webhook-Secret'],
   exposedHeaders: ['Set-Cookie'],
   maxAge: 86400, // 24 hours
 };

@@ -158,9 +158,186 @@ export function getUnlockedTabs(completedSections: string[]): string[] {
 
 export function getNextMilestone(completedSections: string[]): Milestone | null {
   const completedMilestones = getMilestoneProgress(completedSections);
-  const nextMilestone = MILESTONES.find(milestone => 
+  const nextMilestone = MILESTONES.find(milestone =>
     !completedMilestones.some(completed => completed.id === milestone.id)
   );
-  
+
   return nextMilestone || null;
+}
+
+// ── Personalised task list ────────────────────────────────────────────────────
+// Generated from evaluation derivedFlags — these are the specific legal steps
+// *this* user needs to take, as opposed to the generic milestone stages above.
+
+export interface PersonalisedTask {
+  id: string;
+  title: string;
+  description: string;
+  category: "documents" | "forms" | "people" | "legal" | "advice";
+  /** Dashboard tab to navigate to when the user clicks the task */
+  tab?: string;
+  priority: number; // lower = higher priority
+}
+
+export function generatePersonalisedTasks(
+  flags: Record<string, any> | null | undefined
+): PersonalisedTask[] {
+  if (!flags) return [];
+
+  const tasks: PersonalisedTask[] = [];
+
+  // ── Jurisdiction / eligibility ───────────────────────────────────────────
+  if (flags.application_blocked) {
+    tasks.push({
+      id: "blocked_specialist",
+      title: "Consult a probate specialist",
+      description: flags.blocker_reason
+        ? `Your application requires specialist guidance: ${flags.blocker_reason}`
+        : "Your situation falls outside our standard process — please seek legal advice.",
+      category: "advice",
+      priority: 0,
+    });
+    // Return early — no point listing steps they can't yet take
+    return tasks;
+  }
+
+  // ── Application type ─────────────────────────────────────────────────────
+  if (flags.probate_type === "grant_of_probate") {
+    tasks.push({
+      id: "pa1p_form",
+      title: "Complete PA1P probate application form",
+      description: "As executor of the estate you will apply for a Grant of Probate using form PA1P.",
+      category: "forms",
+      tab: "documents",
+      priority: 20,
+    });
+  } else if (flags.probate_type === "letters_of_administration") {
+    tasks.push({
+      id: "pa1a_form",
+      title: "Complete PA1A letters of administration form",
+      description: "With no will, you will apply for Letters of Administration using form PA1A.",
+      category: "forms",
+      tab: "documents",
+      priority: 20,
+    });
+  }
+
+  // ── Will ─────────────────────────────────────────────────────────────────
+  if (flags.has_will) {
+    tasks.push({
+      id: "upload_will",
+      title: "Upload the original will",
+      description: "The original signed will (and any codicils) must be submitted with the probate application.",
+      category: "documents",
+      tab: "documents",
+      priority: 10,
+    });
+  }
+
+  if (flags.needs_renunciation_form) {
+    tasks.push({
+      id: "renunciation",
+      title: "Obtain executor renunciation forms",
+      description: "One or more named executors are not applying. They must each sign a deed of renunciation (PA15).",
+      category: "forms",
+      priority: 15,
+    });
+  }
+
+  if (flags.needs_translation) {
+    tasks.push({
+      id: "translations",
+      title: "Arrange certified translations",
+      description: "Foreign-language documents must be accompanied by certified English translations.",
+      category: "documents",
+      priority: 12,
+    });
+  }
+
+  // ── Inheritance tax ──────────────────────────────────────────────────────
+  if (flags.iht400_required) {
+    tasks.push({
+      id: "iht400",
+      title: "Complete IHT400 inheritance tax form",
+      description: "The estate exceeds the excepted estate threshold. Submit IHT400 to HMRC before the probate application.",
+      category: "forms",
+      priority: 18,
+    });
+    tasks.push({
+      id: "iht400_submit",
+      title: "Pay any inheritance tax due to HMRC",
+      description: "Inheritance tax must be paid (or a payment arrangement agreed) before probate will be granted.",
+      category: "legal",
+      priority: 19,
+    });
+  } else if (flags.estate_likely_excepted) {
+    tasks.push({
+      id: "excepted_estate",
+      title: "Complete excepted estate declaration",
+      description: "The estate appears to fall below the IHT threshold. Complete the excepted estate form (IHT205 or Estate Return) to confirm.",
+      category: "forms",
+      priority: 18,
+    });
+  }
+
+  // ── Alias / name ─────────────────────────────────────────────────────────
+  if (flags.needs_alias_details) {
+    tasks.push({
+      id: "alias_evidence",
+      title: "Provide alias name evidence",
+      description: "The deceased held assets under a different name. Prepare evidence (e.g. marriage certificate, deed poll) to explain the alias.",
+      category: "documents",
+      tab: "documents",
+      priority: 11,
+    });
+  }
+
+  // ── People / executors ───────────────────────────────────────────────────
+  tasks.push({
+    id: "death_certificate",
+    title: "Obtain the official death certificate",
+    description: "You will need at least one certified copy of the death certificate. Banks and institutions often require originals.",
+    category: "documents",
+    tab: "documents",
+    priority: 5,
+  });
+
+  tasks.push({
+    id: "add_deceased_details",
+    title: "Add full deceased person details",
+    description: "Enter the deceased person's full legal name, date of birth, date of death, and last address into the system.",
+    category: "people",
+    tab: "people",
+    priority: 6,
+  });
+
+  // ── Specialist advice ────────────────────────────────────────────────────
+  if (flags.needs_specialist_advice) {
+    tasks.push({
+      id: "specialist_advice",
+      title: "Consult a probate solicitor",
+      description: "Your situation includes factors (foreign assets, trusts, or adoption) that may require specialist legal advice.",
+      category: "advice",
+      priority: 1,
+    });
+  }
+
+  // ── Submission ───────────────────────────────────────────────────────────
+  tasks.push({
+    id: "swear_oath",
+    title: "Swear the oath / make a statement of truth",
+    description: "You will need to attend a solicitor or probate registry to swear the oath or sign a statement of truth before submitting.",
+    category: "legal",
+    priority: 25,
+  });
+
+  tasks.push({
+    id: "submit_application",
+    title: "Submit the probate application",
+    description: "Send the completed application, will (if applicable), IHT forms, and fee to the Probate Registry.",
+    category: "legal",
+    priority: 30,
+  });
+
+  return tasks.sort((a, b) => a.priority - b.priority);
 }
