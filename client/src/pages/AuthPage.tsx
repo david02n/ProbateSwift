@@ -72,93 +72,118 @@ export default function AuthPage() {
   }, [isLoaded, isSignedIn, setLocation]);
 
   return (
-    <div className="min-h-screen bg-[#F6F0E7] px-6 py-12 text-[#1E2A33] sm:px-8">
-      <div className="mx-auto flex min-h-[calc(100vh-6rem)] max-w-[1160px] flex-col justify-center gap-12 lg:grid lg:grid-cols-[1.05fr_0.95fr] lg:items-center lg:gap-[56px]">
-        {/* Left: brand + offer reassurances */}
-        <div className="space-y-8">
+    <div className="flex min-h-screen flex-col bg-[#F6F0E7] text-[#1E2A33]">
+      {/* Header bar */}
+      <header className="border-b border-[#E3D9C9]">
+        <div className="mx-auto flex w-full max-w-[1160px] items-center justify-between gap-4 px-6 py-[18px]">
           <Link
             href="/"
             className="inline-flex items-center gap-2.5 text-[#082D48] no-underline transition hover:opacity-80"
           >
-            <img src="/assets/swift_navy.png" alt="" className="block h-[34px] w-[34px]" />
+            <img src="/assets/swift_navy.png" alt="" className="block h-[32px] w-[32px]" />
             <span className="text-[20px] font-extrabold tracking-[-0.02em]">ProbateSwift</span>
           </Link>
-
-          <div className="space-y-4">
-            <div className="inline-flex items-center gap-2 rounded-full bg-[#E4EAF0] px-[14px] py-[7px] text-[13px] font-bold tracking-[0.02em] text-[#082D48]">
-              Secure probate workspace
-            </div>
-            <h1 className="m-0 max-w-[520px] text-[34px] font-extrabold leading-[1.06] tracking-[-0.025em] text-[#082D48] md:text-[44px]">
-              Pick up where you left off.
-            </h1>
-            <p className="m-0 max-w-[520px] text-[18px] leading-[1.55] text-[#5C6670]">
-              Create an account or sign in to access your dashboard, upload documents, and continue
-              through the ProbateSwift workflow. It only takes a moment.
-            </p>
-          </div>
-
-          <div className="grid gap-4 sm:grid-cols-2">
-            {reassurances.map((item) => (
-              <div
-                key={item.title}
-                className="rounded-[16px] border border-[#E3D9C9] bg-white p-[18px]"
-              >
-                <div className="mb-1.5 flex items-start gap-2.5">
-                  <span className="mt-0.5 font-extrabold text-[#082D48]">✓</span>
-                  <p className="m-0 text-[15px] font-bold text-[#1E2A33]">{item.title}</p>
-                </div>
-                <p className="m-0 pl-[26px] text-[14px] leading-[1.5] text-[#5C6670]">{item.body}</p>
-              </div>
-            ))}
-          </div>
+          <Link
+            href="/"
+            className="inline-flex items-center gap-1.5 text-[15px] font-medium text-[#5C6670] no-underline transition hover:text-[#082D48]"
+          >
+            <span className="text-[16px]">←</span> Back to site
+          </Link>
         </div>
+      </header>
 
-        {/* Right: sign-in card */}
-        <div className="w-full">
-          <div className="mx-auto max-w-[440px] rounded-[22px] border border-[#E3D9C9] bg-white p-7 shadow-[0_30px_60px_-36px_rgba(8,45,72,0.4)] sm:p-9">
-            <div className="mb-6">
-              <h2 className="m-0 text-[24px] font-extrabold tracking-[-0.02em] text-[#082D48]">
-                Sign in to ProbateSwift
-              </h2>
-              <p className="m-0 mt-1.5 text-[15px] text-[#5C6670]">
-                Welcome back. Sign in or create an account to continue.
+      {/* Main */}
+      <main className="flex flex-1 items-center px-6 py-12">
+        <div className="mx-auto grid w-full max-w-[1160px] items-center gap-12 lg:grid-cols-[1.05fr_0.95fr] lg:gap-[56px]">
+          {/* Left: offer reassurances */}
+          <div className="space-y-8">
+            <div className="space-y-4">
+              <div className="inline-flex items-center gap-2 rounded-full bg-[#E4EAF0] px-[14px] py-[7px] text-[13px] font-bold tracking-[0.02em] text-[#082D48]">
+                Secure probate workspace
+              </div>
+              <h1 className="m-0 max-w-[520px] text-[36px] font-extrabold leading-[1.06] tracking-[-0.025em] text-[#082D48] md:text-[48px]">
+                Pick up where you left off.
+              </h1>
+              <p className="m-0 max-w-[520px] text-[18px] leading-[1.55] text-[#5C6670]">
+                Create an account or sign in to access your dashboard, upload documents, and continue
+                through the ProbateSwift workflow. It only takes a moment.
               </p>
             </div>
-            <SignIn
-              appearance={signInAppearance}
-              routing="path"
-              path="/auth"
-              fallbackRedirectUrl="/dashboard"
-              signUpFallbackRedirectUrl="/dashboard"
-              signUpUrl="/auth"
-            />
+
+            <div className="grid gap-4 sm:grid-cols-2">
+              {reassurances.map((item) => (
+                <div
+                  key={item.title}
+                  className="rounded-[16px] border border-[#E3D9C9] bg-white p-[18px]"
+                >
+                  <div className="mb-2 flex items-center gap-2.5">
+                    <span className="flex h-[22px] w-[22px] flex-shrink-0 items-center justify-center rounded-[7px] bg-[#E4EAF0] text-[12px] font-bold text-[#082D48]">
+                      ✓
+                    </span>
+                    <p className="m-0 text-[15px] font-bold text-[#1E2A33]">{item.title}</p>
+                  </div>
+                  <p className="m-0 text-[14px] leading-[1.5] text-[#5C6670]">{item.body}</p>
+                </div>
+              ))}
+            </div>
           </div>
 
-          <p className="mx-auto mt-6 max-w-[440px] text-center text-[14px] leading-[1.6] text-[#8A8278]">
-            By continuing, you agree to our{' '}
-            <Link href="/terms" className="font-semibold text-[#082D48] underline underline-offset-4">
-              Terms of Service
-            </Link>
-            ,{' '}
-            <Link href="/privacy" className="font-semibold text-[#082D48] underline underline-offset-4">
-              Privacy Policy
-            </Link>
-            , and{' '}
-            <Link href="/cookies" className="font-semibold text-[#082D48] underline underline-offset-4">
-              Cookie Policy
-            </Link>
-            .{' '}
+          {/* Right: sign-in card */}
+          <div className="w-full">
+            <div className="mx-auto max-w-[440px] rounded-[22px] border border-[#E3D9C9] bg-white p-7 shadow-[0_30px_60px_-36px_rgba(8,45,72,0.4)] sm:p-9">
+              <div className="mb-6">
+                <h2 className="m-0 text-[24px] font-extrabold tracking-[-0.02em] text-[#082D48]">
+                  Sign in to ProbateSwift
+                </h2>
+                <p className="m-0 mt-1.5 text-[15px] text-[#5C6670]">
+                  Welcome back. Sign in or create an account to continue.
+                </p>
+              </div>
+              <SignIn
+                appearance={signInAppearance}
+                routing="path"
+                path="/auth"
+                fallbackRedirectUrl="/dashboard"
+                signUpFallbackRedirectUrl="/dashboard"
+                signUpUrl="/auth"
+              />
+            </div>
+
+            <p className="mx-auto mt-6 max-w-[440px] text-center text-[14px] leading-[1.6] text-[#8A8278]">
+              By continuing, you agree to our{' '}
+              <Link href="/terms" className="font-semibold text-[#082D48] underline underline-offset-4">
+                Terms of Service
+              </Link>
+              ,{' '}
+              <Link href="/privacy" className="font-semibold text-[#082D48] underline underline-offset-4">
+                Privacy Policy
+              </Link>
+              , and{' '}
+              <Link href="/cookies" className="font-semibold text-[#082D48] underline underline-offset-4">
+                Cookie Policy
+              </Link>
+              .
+            </p>
+          </div>
+        </div>
+      </main>
+
+      {/* Footer bar */}
+      <footer className="border-t border-[#E3D9C9]">
+        <div className="mx-auto flex w-full max-w-[1160px] flex-col items-center justify-between gap-2 px-6 py-6 text-[13px] text-[#8A8278] sm:flex-row">
+          <span>© ProbateSwift. Not a law firm. England &amp; Wales.</span>
+          <div className="flex items-center gap-4">
             <button
               type="button"
               onClick={openCookieSettings}
-              className="cursor-pointer border-none bg-transparent p-0 font-semibold text-[#082D48] underline underline-offset-4"
+              className="cursor-pointer border-none bg-transparent p-0 text-[13px] text-[#8A8278] underline-offset-4 transition hover:text-[#082D48] hover:underline"
             >
-              Manage cookie settings
+              Cookie settings
             </button>
-            .
-          </p>
+            <span>Your data is encrypted, never sold.</span>
+          </div>
         </div>
-      </div>
+      </footer>
       <CookieConsentBanner />
     </div>
   );
