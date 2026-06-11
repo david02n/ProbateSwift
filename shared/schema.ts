@@ -59,6 +59,17 @@ export const evaluationResponses = pgTable("evaluation_responses", {
 
 // Relationships will be manually handled in queries
 
+// Marketing leads model - anonymous early-access / notify-me captures from the
+// relaunch landing page assessment (not tied to an authenticated user).
+export const leads = pgTable("leads", {
+  id: serial("id").primaryKey(),
+  email: text("email").notNull(),
+  resultType: text("result_type"), // "good" | "complex" | "none" - assessment outcome at capture time
+  assessmentData: jsonb("assessment_data").$type<Record<string, any>>(), // the answers that produced the result
+  source: text("source").default("landing_assessment"), // where the capture happened
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
 // Probate case model - this represents a single probate application
 export const probateCases = pgTable("probate_cases", {
   id: serial("id").primaryKey(),
@@ -225,6 +236,17 @@ export const insertAssessmentResultSchema = createInsertSchema(assessmentResults
     assessmentData: true,
   });
 
+export const insertLeadSchema = createInsertSchema(leads)
+  .pick({
+    email: true,
+    resultType: true,
+    assessmentData: true,
+    source: true,
+  })
+  .extend({
+    email: z.string().email(),
+  });
+
 export const insertProbateCaseSchema = createInsertSchema(probateCases)
   .pick({
     userId: true,
@@ -337,6 +359,9 @@ export type User = typeof users.$inferSelect;
 
 export type InsertAssessmentResult = z.infer<typeof insertAssessmentResultSchema>;
 export type AssessmentResult = typeof assessmentResults.$inferSelect;
+
+export type InsertLead = z.infer<typeof insertLeadSchema>;
+export type Lead = typeof leads.$inferSelect;
 
 export type InsertProbateCase = z.infer<typeof insertProbateCaseSchema>;
 export type ProbateCase = typeof probateCases.$inferSelect;

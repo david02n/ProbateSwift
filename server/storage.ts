@@ -14,6 +14,9 @@ import {
   type UpsertUser,
   type AssessmentResult,
   type InsertAssessmentResult,
+  leads,
+  type Lead,
+  type InsertLead,
   type ProbateCase,
   type InsertProbateCase,
   type Executor,
@@ -42,6 +45,8 @@ export interface IStorage {
   getAssessmentResultsByUserId(userId: string): Promise<AssessmentResult[]>;
   createAssessmentResult(assessment: InsertAssessmentResult): Promise<AssessmentResult>;
   updateAssessmentResult(id: number, assessment: Partial<InsertAssessmentResult>): Promise<AssessmentResult | undefined>;
+
+  createLead(lead: InsertLead): Promise<Lead>;
 
   getProbateCase(id: number): Promise<ProbateCase | undefined>;
   getProbateCasesByUserId(userId: string): Promise<ProbateCase[]>;
@@ -120,6 +125,7 @@ class MemoryStorage implements IStorage {
   async getAssessmentResultsByUserId(): Promise<AssessmentResult[]> { return []; }
   async createAssessmentResult(): Promise<AssessmentResult> { throw new Error("Database is not configured"); }
   async updateAssessmentResult(): Promise<AssessmentResult | undefined> { throw new Error("Database is not configured"); }
+  async createLead(): Promise<Lead> { throw new Error("Database is not configured"); }
   async getProbateCase(): Promise<ProbateCase | undefined> { return undefined; }
   async getProbateCasesByUserId(): Promise<ProbateCase[]> { return []; }
   async createProbateCase(): Promise<ProbateCase> { throw new Error("Database is not configured"); }
@@ -208,6 +214,14 @@ export class DatabaseStorage implements IStorage {
       .update(assessmentResults)
       .set({ ...assessment, updatedAt: new Date() })
       .where(eq(assessmentResults.id, id))
+      .returning();
+    return result;
+  }
+
+  async createLead(lead: InsertLead): Promise<Lead> {
+    const [result] = await db!
+      .insert(leads)
+      .values(lead)
       .returning();
     return result;
   }

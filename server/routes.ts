@@ -2,7 +2,8 @@ import type { Express, Request, Response, NextFunction } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
 import { requireClerkAuth, setupClerkAuth } from "./clerk";
-import { insertAssessmentResultSchema, insertProbateCaseSchema } from "@shared/schema";
+import { insertAssessmentResultSchema, insertProbateCaseSchema, insertLeadSchema } from "@shared/schema";
+import { strictLimiter } from "./middleware/security";
 import { WebSocketServer, WebSocket } from "ws";
 import { getAuth } from "@clerk/express";
 import { registerCaseRoutes } from "./routes/cases";
@@ -116,6 +117,25 @@ export async function registerRoutes(app: Express): Promise<Server> {
       });
       const created = await storage.createAssessmentResult(parsed);
       res.status(201).json(created);
+    } catch (error) {
+      next(error);
+    }
+  });
+
+  // ── Marketing leads (public, no auth) ─────────────────────────────────────
+  // Captures early-access / notify-me emails from the relaunch landing
+  // assessment. Rate-limited since it is unauthenticated.
+  app.post("/api/leads", strictLimiter, async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const parsed = insertLeadSchema.safeParse(req.body);
+      if (!parsed.success) {
+        return res.status(400).json({
+          error: "Please enter a valid email address.",
+          code: "VALIDATION_ERROR",
+        });
+      }
+      const created = await storage.createLead(parsed.data);
+      res.status(201).json({ id: created.id });
     } catch (error) {
       next(error);
     }

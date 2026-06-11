@@ -5,7 +5,7 @@ import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { useAuth } from "@/hooks/use-auth";
 import NotFound from "@/pages/not-found";
-import Home from "@/pages/Home";
+import RelaunchLanding from "@/pages/relaunch-landing";
 import AuthPage from "@/pages/AuthPage";
 import ClerkCallbackPage from "@/pages/ClerkCallbackPage";
 import TermsPage from "@/pages/TermsPage";
@@ -55,7 +55,7 @@ function Router() {
         <Route path="/terms" component={TermsPage} />
         <Route path="/privacy" component={PrivacyPage} />
         <Route path="/cookies" component={CookiesPage} />
-        <Route path="/" component={Home} />
+        <Route path="/" component={RelaunchLanding} />
         <Route component={NotFound} />
       </Switch>
     );
