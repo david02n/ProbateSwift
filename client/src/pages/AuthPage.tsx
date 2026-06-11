@@ -1,9 +1,52 @@
 import { SignIn, useUser } from '@clerk/clerk-react';
 import { useEffect } from 'react';
 import { Link, useLocation } from 'wouter';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import CookieConsentBanner from '@/components/legal/CookieConsentBanner';
 import { openCookieSettings } from '@/lib/cookie-consent';
+
+// Brand-matched appearance for the embedded sign-in widget so it sits inside the
+// ProbateSwift palette (navy / cream) instead of the default light-blue Clerk look.
+const signInAppearance = {
+  variables: {
+    colorPrimary: '#082D48',
+    colorText: '#1E2A33',
+    colorTextSecondary: '#5C6670',
+    colorBackground: '#FFFFFF',
+    colorInputBackground: '#FFFFFF',
+    colorInputText: '#1E2A33',
+    borderRadius: '12px',
+    fontFamily: 'inherit',
+  },
+  elements: {
+    rootBox: 'w-full',
+    card: 'shadow-none border-none bg-transparent p-0',
+    header: 'hidden',
+    formButtonPrimary:
+      'bg-[#082D48] hover:bg-[#06223A] text-[#F6F0E7] font-semibold normal-case text-[15px]',
+    socialButtonsBlockButton: 'border-[#E3D9C9] hover:bg-[#F6F0E7] text-[#1E2A33]',
+    footerActionLink: 'text-[#082D48] hover:text-[#06223A] font-semibold',
+    formFieldInput: 'border-[#E3D9C9] focus:border-[#082D48]',
+  },
+} as const;
+
+const reassurances = [
+  {
+    title: 'Free until you submit',
+    body: 'Fill everything in and see your completed forms before paying a penny. No card needed to start.',
+  },
+  {
+    title: 'One flat fee — £295, all in',
+    body: 'Your inheritance tax forms are included. No percentage of the estate, no hourly billing.',
+  },
+  {
+    title: 'Your data, protected',
+    body: 'Bank-level encryption, stored securely and never sold. Only strictly necessary cookies are active.',
+  },
+  {
+    title: 'A real human behind it',
+    body: 'Built by the founder, who went through probate himself — not a faceless firm.',
+  },
+];
 
 export default function AuthPage() {
   const [, setLocation] = useLocation();
@@ -16,73 +59,86 @@ export default function AuthPage() {
   }, [isLoaded, isSignedIn, setLocation]);
 
   return (
-    <div className="min-h-screen bg-slate-50 px-4 py-12 sm:px-6 lg:px-8">
-      <div className="mx-auto flex min-h-[calc(100vh-6rem)] max-w-6xl flex-col justify-center gap-10 lg:grid lg:grid-cols-[1.1fr_0.9fr] lg:items-center">
-        <div className="space-y-6">
-          <Link href="/" className="inline-flex text-sm font-medium text-teal-700 transition hover:text-teal-800">
-            Back to ProbateSwift
+    <div className="min-h-screen bg-[#F6F0E7] px-6 py-12 text-[#1E2A33] sm:px-8">
+      <div className="mx-auto flex min-h-[calc(100vh-6rem)] max-w-[1160px] flex-col justify-center gap-12 lg:grid lg:grid-cols-[1.05fr_0.95fr] lg:items-center lg:gap-[56px]">
+        {/* Left: brand + offer reassurances */}
+        <div className="space-y-8">
+          <Link
+            href="/"
+            className="inline-flex items-center gap-2.5 text-[#082D48] no-underline transition hover:opacity-80"
+          >
+            <img src="/assets/swift_navy.png" alt="" className="block h-[34px] w-[34px]" />
+            <span className="text-[20px] font-extrabold tracking-[-0.02em]">ProbateSwift</span>
           </Link>
+
           <div className="space-y-4">
-            <p className="text-sm font-semibold uppercase tracking-[0.18em] text-teal-700">
+            <div className="inline-flex items-center gap-2 rounded-full bg-[#E4EAF0] px-[14px] py-[7px] text-[13px] font-bold tracking-[0.02em] text-[#082D48]">
               Secure probate workspace
-            </p>
-            <h1 className="text-4xl font-semibold tracking-tight text-slate-950 sm:text-5xl">
-              Sign in to continue your probate application
+            </div>
+            <h1 className="m-0 max-w-[520px] text-[34px] font-extrabold leading-[1.06] tracking-[-0.025em] text-[#082D48] md:text-[44px]">
+              Pick up where you left off.
             </h1>
-            <p className="max-w-xl text-base leading-7 text-slate-600">
-              Use Clerk sign-in to access your dashboard, upload documents, and continue
-              through the ProbateSwift workflow.
+            <p className="m-0 max-w-[520px] text-[18px] leading-[1.55] text-[#5C6670]">
+              Create an account or sign in to access your dashboard, upload documents, and continue
+              through the ProbateSwift workflow. It only takes a moment.
             </p>
           </div>
-          <div className="grid gap-4 text-sm text-slate-600 sm:grid-cols-2">
-            <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
-              <p className="font-medium text-slate-900">Privacy-first launch</p>
-              <p>Only strictly necessary cookies are active while we finish consent-gated analytics.</p>
-            </div>
-            <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
-              <p className="font-medium text-slate-900">Clerk authentication</p>
-              <p>One secure sign-in flow for ProbateSwift accounts and sessions.</p>
-            </div>
+
+          <div className="grid gap-4 sm:grid-cols-2">
+            {reassurances.map((item) => (
+              <div
+                key={item.title}
+                className="rounded-[16px] border border-[#E3D9C9] bg-white p-[18px]"
+              >
+                <div className="mb-1.5 flex items-start gap-2.5">
+                  <span className="mt-0.5 font-extrabold text-[#082D48]">✓</span>
+                  <p className="m-0 text-[15px] font-bold text-[#1E2A33]">{item.title}</p>
+                </div>
+                <p className="m-0 pl-[26px] text-[14px] leading-[1.5] text-[#5C6670]">{item.body}</p>
+              </div>
+            ))}
           </div>
         </div>
 
-        <Card className="border-slate-200 shadow-lg shadow-slate-200/60">
-          <CardHeader>
-            <CardTitle>Authentication</CardTitle>
-            <CardDescription>
-              Sign in or create an account to continue
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
+        {/* Right: sign-in card */}
+        <div className="w-full">
+          <div className="mx-auto max-w-[440px] rounded-[22px] border border-[#E3D9C9] bg-white p-7 shadow-[0_30px_60px_-36px_rgba(8,45,72,0.4)] sm:p-9">
+            <div className="mb-6">
+              <h2 className="m-0 text-[24px] font-extrabold tracking-[-0.02em] text-[#082D48]">
+                Sign in to ProbateSwift
+              </h2>
+              <p className="m-0 mt-1.5 text-[15px] text-[#5C6670]">
+                Welcome back. Sign in or create an account to continue.
+              </p>
+            </div>
             <SignIn
+              appearance={signInAppearance}
               routing="path"
               path="/auth"
               fallbackRedirectUrl="/dashboard"
               signUpFallbackRedirectUrl="/dashboard"
               signUpUrl="/auth"
             />
-          </CardContent>
-        </Card>
+          </div>
 
-        <div className="text-center text-sm text-slate-500 lg:col-span-2">
-          <p>
-            By signing in, you agree to our{" "}
-            <Link href="/terms" className="font-medium text-slate-700 underline underline-offset-4">
+          <p className="mx-auto mt-6 max-w-[440px] text-center text-[14px] leading-[1.6] text-[#8A8278]">
+            By continuing, you agree to our{' '}
+            <Link href="/terms" className="font-semibold text-[#082D48] underline underline-offset-4">
               Terms of Service
             </Link>
-            ,{" "}
-            <Link href="/privacy" className="font-medium text-slate-700 underline underline-offset-4">
+            ,{' '}
+            <Link href="/privacy" className="font-semibold text-[#082D48] underline underline-offset-4">
               Privacy Policy
             </Link>
-            , and{" "}
-            <Link href="/cookies" className="font-medium text-slate-700 underline underline-offset-4">
+            , and{' '}
+            <Link href="/cookies" className="font-semibold text-[#082D48] underline underline-offset-4">
               Cookie Policy
             </Link>
-            .{" "}
+            .{' '}
             <button
               type="button"
               onClick={openCookieSettings}
-              className="font-medium text-slate-700 underline underline-offset-4"
+              className="cursor-pointer border-none bg-transparent p-0 font-semibold text-[#082D48] underline underline-offset-4"
             >
               Manage cookie settings
             </button>
