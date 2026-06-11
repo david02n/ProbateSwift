@@ -18,14 +18,27 @@ const signInAppearance = {
     fontFamily: 'inherit',
   },
   elements: {
+    // Flatten every Clerk wrapper so the widget has no card/box of its own —
+    // it should sit directly inside our white panel, not as a card-in-a-card.
     rootBox: 'w-full',
-    card: 'shadow-none border-none bg-transparent p-0',
+    cardBox: 'w-full shadow-none border-none bg-transparent',
+    card: 'shadow-none border-none bg-transparent p-0 gap-5',
     header: 'hidden',
+    socialButtons: 'gap-2',
+    socialButtonsBlockButton:
+      'border border-[#E3D9C9] bg-white hover:bg-[#F6F0E7] text-[#1E2A33] shadow-none',
+    socialButtonsBlockButtonText: 'font-medium text-[15px]',
+    dividerRow: 'my-1',
+    dividerLine: 'bg-[#E3D9C9]',
+    dividerText: 'text-[#8A8278] text-[13px]',
+    formFieldLabel: 'text-[#1E2A33] font-medium',
+    formFieldInput: 'border-[#E3D9C9] bg-white focus:border-[#082D48] focus:ring-0',
     formButtonPrimary:
-      'bg-[#082D48] hover:bg-[#06223A] text-[#F6F0E7] font-semibold normal-case text-[15px]',
-    socialButtonsBlockButton: 'border-[#E3D9C9] hover:bg-[#F6F0E7] text-[#1E2A33]',
+      'bg-[#082D48] hover:bg-[#06223A] text-[#F6F0E7] font-semibold normal-case text-[15px] shadow-none',
+    footer: 'bg-transparent border-none shadow-none',
+    footerAction: 'text-[#5C6670]',
+    footerActionText: 'text-[#5C6670]',
     footerActionLink: 'text-[#082D48] hover:text-[#06223A] font-semibold',
-    formFieldInput: 'border-[#E3D9C9] focus:border-[#082D48]',
   },
 } as const;
 
