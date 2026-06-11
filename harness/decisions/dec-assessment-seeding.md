@@ -14,7 +14,7 @@ links:
   relates_to: [opp-guided-triage]
 ---
 
-> **Superseded 2026-06-11 by [[dec-customer-journey-intake]].** David chose to merge the two models into one `intake` record, which removes seeding entirely (the anonymous assessment row is claimed, not copied). The drift risk flagged below is the reason. Kept for history.
+> **Superseded 2026-06-11 by [[dec-customer-journey-intake]] — now SHIPPED.** David chose to merge the two models into one `intake` record, which removes seeding entirely (the anonymous assessment row is claimed, not copied). The drift risk flagged below is the reason. As of the 2026-06-11 deploy this is implemented in production: the `/api/probate-cases/start` seeding route and the `assessment_results` + `evaluation_responses` tables are removed; the live code reads progress flags from the `intake` record via `/api/intake/*`. The description below is historical. Kept for history.
 
 ## Decision
 Two assessment models are kept — a lightweight landing-page `assessment_results` and the detailed in-app `evaluation_responses` — and when a case is created the most recent assessment is used to pre-seed the evaluation answers (fire-and-forget, never blocking the request).
