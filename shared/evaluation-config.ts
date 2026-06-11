@@ -1,7 +1,71 @@
 // Evaluation question configuration for both landing page and in-app flows
 
+// ── Canonical key dictionary ──────────────────────────────────────────────────
+// One vocabulary for the whole customer journey. Every question key — landing
+// and in-app — must be a member of this dictionary, and the flag engine reads
+// only these keys. This is what kills the historic drift (e.g. the former
+// `applicant_named_executor` vs `named_executor_in_will` split). A unit test
+// asserts every question key is a member here (the drift guard).
+//
+// The value is a short human description of what the key means; it has no
+// runtime behaviour beyond documenting intent.
+export const CANONICAL_KEYS = {
+  // ── Jurisdiction / eligibility ──
+  has_person_died: "Has someone died",
+  death_in_england_wales: "Death occurred in England or Wales",
+  deceased_domiciled_uk: "Deceased domiciled in the UK at death",
+  deceased_lived_england_wales: "Deceased lived permanently in England or Wales",
+
+  // ── Will / applicant role ──
+  has_will: "A valid will exists",
+  named_executor_in_will: "Applicant is named as an executor in the will",
+  next_of_kin: "Applicant is spouse/civil partner/child/parent of the deceased",
+  acting_under_poa: "Applicant acts under power of attorney for an executor",
+
+  // ── Grant-needed axis (PS-3) — how assets are HELD, not their value ──
+  owned_property: "Deceased owned property (house/flat/land)",
+  property_ownership: "How the property was owned (sole/joint_tenants/tenants_in_common/not_sure)",
+  nsandi_over_5k: "NS&I / Premium Bonds holdings over £5,000",
+  holds_direct_shares: "Directly-held shares (not via a fund/ISA platform)",
+  single_provider_over_50k: "Any single provider likely holding over £50,000",
+
+  // ── Complexity screen (PS-4) ──
+  estate_insolvent: "Estate may be insolvent (debts exceed assets)",
+  estate_disputed: "Dispute or contested will",
+  deceased_foreign_assets: "Deceased owned non-UK (foreign) assets",
+  trust_involvement: "Deceased created or benefited from a trust",
+  business_or_farm_assets: "Estate includes business or agricultural/farm assets",
+  will_missing_or_invalid: "Will is missing, unsigned, or possibly invalid",
+
+  // ── IHT axis — total VALUE lives here only ──
+  estate_value_estimate: "Estimated total estate value band (IHT framing)",
+  estate_excepted_from_iht: "Estate is excepted from Inheritance Tax",
+  iht400_completed: "IHT400 has been completed and submitted to HMRC",
+  gifts_last_7_years: "Deceased made gifts in the 7 years before death",
+  married_civil_partnership: "Deceased was married/in a civil partnership at death",
+  spouse_partner_deceased: "Spouse/civil partner had already died",
+  spouse_nrb_fully_used: "Spouse's nil rate band was fully used",
+  home_to_children_grandchildren: "Home left to children or grandchildren",
+  deceased_lived_uk_property: "Deceased lived in a UK property they owned",
+
+  // ── Deep-only detail (affects form content, not go/no-go) ──
+  deceased_settled_land: "Deceased owned land held as settled land",
+  deceased_other_names: "Deceased held assets under another name",
+  family_adoptions: "Relatives adopted in/out of the family",
+  will_date: "Date of the will",
+  married_after_will: "Deceased married after making the will",
+  will_codicils: "There are codicils to the will",
+  foreign_wills: "Wills made outside England and Wales",
+  all_executors_applying: "All named executors are applying",
+  non_applying_executor_reasons: "Reason each non-applying executor is not applying",
+  number_of_applicants: "How many people are applying",
+  under18_beneficiaries: "A beneficiary under 18 receives a gift in the will",
+} as const;
+
+export type CanonicalKey = keyof typeof CANONICAL_KEYS;
+
 export interface EvaluationQuestion {
-  key: string;
+  key: CanonicalKey;
   type: 'boolean' | 'number' | 'text' | 'select' | 'date' | 'object';
   title: string;
   description?: string;
@@ -70,7 +134,7 @@ export const landingPageQuestions: EvaluationQuestion[] = [
     }
   },
   {
-    key: 'applicant_named_executor',
+    key: 'named_executor_in_will',
     type: 'boolean',
     title: 'Are you named as an executor in the will?',
     description: 'Only executors can apply for probate when there is a will.',
@@ -325,9 +389,230 @@ export const detailedEvaluationSections: EvaluationSection[] = [
   }
 ];
 
-// Logic engine for deriving flags from answers
-// Uses the canonical question keys defined in landingPageQuestions and detailedEvaluationSections above.
-export function deriveEvaluationFlags(answers: Record<string, any>): Record<string, any> {
+// ── PS-4: two-tier specialist triage ─────────────────────────────────────────
+export type SpecialistSeverity = "none" | "amber" | "red";
+
+export interface SpecialistAssessment {
+  specialistSuggested: boolean;
+  specialistSeverity: SpecialistSeverity;
+  specialistReasons: string[];
+}
+
+// The complexity-screen flags and their tier. red = stop-and-advise candidates;
+// amber = soft "continue if you like". Deep-only detail (settled land, foreign
+// wills, adoptions, marriage-after-will) is intentionally NOT here — it affects
+// form content, not the go/no-go tier.
+const SPECIALIST_FLAGS: { key: CanonicalKey; severity: "amber" | "red"; reason: string }[] = [
+  { key: "estate_insolvent", severity: "red", reason: "The estate may be insolvent (debts could exceed assets)." },
+  { key: "estate_disputed", severity: "red", reason: "There is a dispute or a contested will." },
+  { key: "deceased_foreign_assets", severity: "amber", reason: "The estate includes assets held outside the UK." },
+  { key: "trust_involvement", severity: "amber", reason: "A trust is involved in the estate." },
+  { key: "business_or_farm_assets", severity: "amber", reason: "The estate includes business or agricultural assets." },
+  { key: "will_missing_or_invalid", severity: "amber", reason: "The will may be missing, unsigned, or invalid." },
+];
+
+export function deriveSpecialist(answers: Record<string, any>): SpecialistAssessment {
+  const reasons: string[] = [];
+  let hasRed = false;
+  let hasAmber = false;
+  for (const flag of SPECIALIST_FLAGS) {
+    if (answers[flag.key] === true) {
+      reasons.push(flag.reason);
+      if (flag.severity === "red") hasRed = true;
+      else hasAmber = true;
+    }
+  }
+  const specialistSeverity: SpecialistSeverity = hasRed ? "red" : hasAmber ? "amber" : "none";
+  return {
+    specialistSuggested: specialistSeverity !== "none",
+    specialistSeverity,
+    specialistReasons: reasons,
+  };
+}
+
+/** The amber complexity-flag keys currently raised — used for per-flag dismissal (PS-5). */
+export function amberFlagKeys(answers: Record<string, any>): CanonicalKey[] {
+  return SPECIALIST_FLAGS.filter((f) => f.severity === "amber" && answers[f.key] === true).map(
+    (f) => f.key,
+  );
+}
+
+// ── PS-3: is a grant needed (driven by how assets are HELD, not their value) ──
+export type GrantNeeded = "needed" | "probably_needed" | "probably_not_needed";
+
+export function deriveGrantNeeded(answers: Record<string, any>): GrantNeeded {
+  // Property in sole name or tenants-in-common almost always needs a grant.
+  const ownsTriggeringProperty =
+    answers.owned_property === true &&
+    (answers.property_ownership === "sole" || answers.property_ownership === "tenants_in_common");
+  if (ownsTriggeringProperty) return "needed";
+
+  const propertyUnclear =
+    answers.owned_property === true && answers.property_ownership === "not_sure";
+
+  // Low-threshold financial triggers: NS&I/Premium Bonds > £5k, directly-held
+  // shares, or any single provider likely over its (~£50k) threshold.
+  const lowThresholdTrigger =
+    answers.nsandi_over_5k === true ||
+    answers.holds_direct_shares === true ||
+    answers.single_provider_over_50k === true;
+  if (lowThresholdTrigger || propertyUnclear) return "probably_needed";
+
+  // No grant-triggering property and no low-threshold trigger. If the
+  // low-threshold questions were explicitly answered "no", lean to not needed.
+  const lowThresholdAnswered =
+    answers.nsandi_over_5k !== undefined &&
+    answers.holds_direct_shares !== undefined &&
+    answers.single_provider_over_50k !== undefined;
+  if (lowThresholdAnswered) return "probably_not_needed";
+
+  // Joint-tenant-only property (passes by survivorship) or no property, with the
+  // low-threshold branch not asked → probably not needed.
+  if (answers.owned_property === false || answers.property_ownership === "joint_tenants") {
+    return "probably_not_needed";
+  }
+  return "probably_needed";
+}
+
+// ── PS-2: three-outcome assessment contract ──────────────────────────────────
+export type AssessmentRoute = "not_needed" | "ineligible" | "proceed";
+
+export interface AssessmentOutcome {
+  route: AssessmentRoute;
+  reason: string;
+  probateType?: "grant_of_probate" | "letters_of_administration";
+  specialistSuggested: boolean;
+  specialistSeverity: SpecialistSeverity;
+  specialistReasons: string[];
+}
+
+export function deriveAssessmentOutcome(answers: Record<string, any>): AssessmentOutcome {
+  const specialist = deriveSpecialist(answers);
+  const grant = deriveGrantNeeded(answers);
+
+  const hasWill = answers.has_will === true;
+  const probateType: "grant_of_probate" | "letters_of_administration" =
+    hasWill && answers.named_executor_in_will === true
+      ? "grant_of_probate"
+      : "letters_of_administration";
+
+  const base = {
+    probateType,
+    specialistSuggested: specialist.specialistSuggested,
+    specialistSeverity: specialist.specialistSeverity,
+    specialistReasons: specialist.specialistReasons,
+  };
+
+  // 1) Probate probably not needed → stop and explain.
+  if (grant === "probably_not_needed") {
+    return {
+      ...base,
+      route: "not_needed",
+      probateType: undefined,
+      reason:
+        "From what you've told us, the estate can likely be settled without a grant of probate.",
+    };
+  }
+
+  // 2) Wrong applicant → helper handoff (never a dead end). Only when we
+  //    actually asked the entitlement question.
+  const entitled = hasWill
+    ? answers.named_executor_in_will === true || answers.acting_under_poa === true
+    : answers.next_of_kin === true;
+  const entitlementKnown = hasWill
+    ? answers.named_executor_in_will !== undefined || answers.acting_under_poa !== undefined
+    : answers.next_of_kin !== undefined;
+  if (entitlementKnown && !entitled) {
+    return {
+      ...base,
+      route: "ineligible",
+      reason:
+        "You can start the application, but only the person entitled to apply can sign and submit it. We'll help you hand it over when you're ready.",
+    };
+  }
+
+  // 3) Proceed (the specialist flag is advisory here and never blocks proceed).
+  return {
+    ...base,
+    route: "proceed",
+    reason: "This looks like an estate we can help you with.",
+  };
+}
+
+// ── PS-5: readiness gate router ───────────────────────────────────────────────
+export type ReadinessRoute = "ready" | "handoff" | "specialist" | "fix_required";
+
+export interface ReadinessContext {
+  applicantRole?: "applicant" | "helper";
+  applicantIsEntitled?: boolean;
+  amberAcknowledged?: boolean;
+  statementOfTruthSigned?: boolean;
+  structuralRequirementsMet?: boolean;
+}
+
+export interface ReadinessAssessment {
+  route: ReadinessRoute;
+  canPay: boolean;
+  canSubmit: boolean;
+  structuralBlockers: string[];
+  ihtTimingWarning: string | null;
+  reasons: string[];
+}
+
+// Pay vs submit split (PS-5): anyone may pay; only the entitled applicant may
+// submit. Only a jurisdiction block or a sticky red flag stop payment; amber
+// flags stop payment only until acknowledged; IHT is a timing warning, never a
+// payment block.
+export function deriveReadiness(
+  flags: Record<string, any>,
+  ctx: ReadinessContext = {},
+): ReadinessAssessment {
+  const severity: SpecialistSeverity = flags.specialist_severity ?? "none";
+  const applicationBlocked = flags.application_blocked === true;
+  const structuralBlockers: string[] = flags.structural_blockers ?? [];
+  const ihtTimingWarning: string | null = flags.iht_timing_warning ?? null;
+
+  const amberAcknowledged = ctx.amberAcknowledged === true;
+  const applicantIsEntitled = ctx.applicantIsEntitled ?? ctx.applicantRole !== "helper";
+  const structuralRequirementsMet =
+    ctx.structuralRequirementsMet ?? structuralBlockers.length === 0;
+  const statementOfTruthSigned = ctx.statementOfTruthSigned === true;
+
+  const canPay =
+    !applicationBlocked &&
+    severity !== "red" &&
+    (severity !== "amber" || amberAcknowledged);
+
+  const canSubmit =
+    canPay && applicantIsEntitled && statementOfTruthSigned && structuralRequirementsMet;
+
+  const reasons: string[] = [];
+  let route: ReadinessRoute;
+  if (applicationBlocked) {
+    route = "specialist";
+    reasons.push(flags.blocker_reason ?? "This estate falls outside our jurisdiction.");
+  } else if (severity === "red") {
+    route = "specialist";
+    reasons.push(...(flags.specialist_reasons ?? []));
+  } else if (structuralBlockers.length > 0) {
+    route = "fix_required";
+    reasons.push(...structuralBlockers);
+  } else if (!applicantIsEntitled) {
+    route = "handoff";
+    reasons.push("Only the person entitled to apply can sign and submit the application.");
+  } else {
+    route = "ready";
+  }
+
+  return { route, canPay, canSubmit, structuralBlockers, ihtTimingWarning, reasons };
+}
+
+// Single logic engine for deriving flags from answers (PS-1).
+// Replaces the former deriveEvaluationFlags + deriveLandingPageResult pair.
+// Reads only canonical keys (see CANONICAL_KEYS) and computes whatever the
+// present keys allow: a landing-stage answer set yields a partial flag map; a
+// full evaluation yields the complete one.
+export function deriveFlags(answers: Record<string, any>): Record<string, any> {
   const flags: Record<string, any> = {};
 
   // ── Jurisdiction ─────────────────────────────────────────────────────────
@@ -338,10 +623,7 @@ export function deriveEvaluationFlags(answers: Record<string, any>): Record<stri
   // ── Will / probate type ───────────────────────────────────────────────────
   flags.has_will = answers.has_will === true;
 
-  // Accept named-executor signal from either the landing page or the detailed section
-  const applicantIsExecutor =
-    answers.named_executor_in_will === true ||
-    answers.applicant_named_executor === true;
+  const applicantIsExecutor = answers.named_executor_in_will === true;
 
   flags.probate_type = flags.has_will
     ? applicantIsExecutor
@@ -402,6 +684,7 @@ export function deriveEvaluationFlags(answers: Record<string, any>): Record<stri
   };
 
   // ── Specialist advice needed ───────────────────────────────────────────────
+  // Legacy union (includes deep-only detail) — kept for in-app task generation.
   flags.needs_specialist_advice = [
     flags.has_foreign_assets,
     flags.has_settled_land,
@@ -411,6 +694,15 @@ export function deriveEvaluationFlags(answers: Record<string, any>): Record<stri
     flags.married_after_will,
   ].some(Boolean);
 
+  // Two-tier triage (PS-4) — complexity-screen flags only, with severity.
+  const specialist = deriveSpecialist(answers);
+  flags.specialist_suggested = specialist.specialistSuggested;
+  flags.specialist_severity  = specialist.specialistSeverity;
+  flags.specialist_reasons   = specialist.specialistReasons;
+
+  // Grant needed on asset holding (PS-3).
+  flags.grant_needed = deriveGrantNeeded(answers);
+
   // ── Application blockers ──────────────────────────────────────────────────
   flags.application_blocked = !flags.jurisdiction_supported;
   flags.blocker_reason = flags.application_blocked
@@ -419,83 +711,28 @@ export function deriveEvaluationFlags(answers: Record<string, any>): Record<stri
 
   // ── Readiness ─────────────────────────────────────────────────────────────
   const numApplicants = Number(answers.number_of_applicants ?? 1);
-  const missingRequirements: string[] = [];
 
-  if (flags.iht400_required) {
-    missingRequirements.push("IHT400 must be completed and submitted to HMRC first");
-  }
+  // Structural blockers invalidate the form itself → they gate generation (a
+  // paid, un-fileable form would mean a refund). IHT is NOT here: the product
+  // fills the IHT400, so the real IHT constraint is HMRC sequencing — surfaced
+  // as a timing warning, not a block (PS-5; reconciles dec-iht-form-strategy).
+  const structuralBlockers: string[] = [];
   if (numApplicants > 4) {
-    missingRequirements.push("Maximum of 4 applicants allowed");
+    structuralBlockers.push("Maximum of 4 applicants allowed");
   }
   if (hasUnder18Beneficiaries && numApplicants < 2) {
-    missingRequirements.push("At least 2 applicants required when under-18 beneficiaries receive gifts");
+    structuralBlockers.push("At least 2 applicants required when under-18 beneficiaries receive gifts");
   }
+  flags.structural_blockers = structuralBlockers;
 
-  flags.missing_requirements = missingRequirements;
+  flags.iht_timing_warning = flags.iht400_required
+    ? "Once your IHT400 is submitted, HMRC must process it before the probate application can be filed."
+    : null;
+
   flags.application_ready =
-    !flags.application_blocked && missingRequirements.length === 0;
+    !flags.application_blocked &&
+    structuralBlockers.length === 0 &&
+    flags.specialist_severity !== "red";
 
   return flags;
-}
-
-// Landing page eligibility logic
-export function deriveLandingPageResult(answers: Record<string, any>): {
-  eligible: boolean;
-  probateRequired: boolean;
-  nextSteps: string[];
-  warnings: string[];
-} {
-  const result = {
-    eligible: true,
-    probateRequired: true,
-    nextSteps: [] as string[],
-    warnings: [] as string[]
-  };
-  
-  // Basic eligibility checks
-  if (!answers.has_person_died) {
-    result.eligible = false;
-    result.probateRequired = false;
-    result.nextSteps.push('Probate can only be applied for after someone has died.');
-    return result;
-  }
-  
-  if (!answers.death_in_england_wales) {
-    result.eligible = false;
-    result.nextSteps.push('For deaths outside England and Wales, contact the relevant jurisdiction.');
-    return result;
-  }
-  
-  // Estate value checks
-  if (answers.estate_value_estimate === 'Under £5,000') {
-    result.probateRequired = false;
-    result.nextSteps.push('Probate may not be required for estates under £5,000.');
-    result.nextSteps.push('Check with individual institutions about their requirements.');
-    return result;
-  }
-  
-  // Applicant eligibility
-  if (answers.has_will && !answers.applicant_named_executor) {
-    result.eligible = false;
-    result.nextSteps.push('Only named executors can apply when there is a will.');
-    result.warnings.push('You may need to contact the named executors.');
-    return result;
-  }
-  
-  if (!answers.has_will && !answers.next_of_kin) {
-    result.eligible = false;
-    result.nextSteps.push('Priority rules apply - spouse, children, or parents typically apply first.');
-    result.warnings.push('Other relatives may be able to apply if closer relatives renounce.');
-    return result;
-  }
-  
-  // Success case
-  result.nextSteps.push('You appear eligible to apply for probate.');
-  result.nextSteps.push('Continue to ProbateSwift to complete your detailed application.');
-  
-  if (answers.estate_value_estimate === 'Over £325,000') {
-    result.warnings.push('Inheritance tax may be due on estates over £325,000.');
-  }
-  
-  return result;
 }

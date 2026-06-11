@@ -10,7 +10,7 @@ import { Badge } from '@/components/ui/badge';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { apiRequest } from '@/lib/queryClient';
 import { useToast } from '@/hooks/use-toast';
-import { detailedEvaluationSections, deriveEvaluationFlags } from '@shared/evaluation-config';
+import { detailedEvaluationSections, deriveFlags } from '@shared/evaluation-config';
 import type { EvaluationQuestion } from '@shared/evaluation-config';
 import { EvaluationResults } from './EvaluationResults';
 
@@ -111,7 +111,7 @@ export const EvaluationFlow: React.FC<EvaluationFlowProps> = ({ caseId, onComple
   // Auto-save on answer changes
   useEffect(() => {
     if (Object.keys(answers).length > 0) {
-      const flags = deriveEvaluationFlags(answers);
+      const flags = deriveFlags(answers);
       setDerivedFlags(flags);
       
       const saveData = {
@@ -434,8 +434,11 @@ export const EvaluationFlow: React.FC<EvaluationFlowProps> = ({ caseId, onComple
   if ((isComplete && derivedFlags) || showResults) {
     return (
       <div className="w-full max-w-4xl mx-auto">
-        <EvaluationResults 
+        <EvaluationResults
           answers={answers}
+          caseId={caseId}
+          applicantRole={(existingEvaluation as any)?.applicantRole}
+          amberAcknowledgements={(existingEvaluation as any)?.amberAcknowledgements}
           onContinue={() => window.location.href = `/dashboard`}
           onRetakeEvaluation={() => {
             setIsComplete(false);

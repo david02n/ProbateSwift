@@ -1,6 +1,13 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { apiRequest } from "@/lib/queryClient";
-import { questions, computeResult, resultCopy } from "./data";
+import { getBrowserSessionId } from "@/lib/browserSession";
+import {
+  visibleQuestions,
+  computeOutcome,
+  displayStateFor,
+  leadResultType,
+  resultCopy,
+} from "./data";
 
 interface AssessmentViewProps {
   onGoLanding: () => void;
@@ -9,25 +16,51 @@ interface AssessmentViewProps {
 
 const AssessmentView: React.FC<AssessmentViewProps> = ({ onGoLanding, onHandoffToAuth }) => {
   const [step, setStep] = useState(0);
-  const [answers, setAnswers] = useState<Record<string, string>>({});
+  const [answers, setAnswers] = useState<Record<string, any>>({});
   const [email, setEmail] = useState("");
   const [sent, setSent] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const atResult = step >= questions.length;
-  const currentQuestion = atResult ? null : questions[step];
+  // Conditional stepper: the visible set is recomputed from the current answers
+  // so showIf branches (e.g. skip low-threshold assets when there's sole-name
+  // property) are honoured.
+  const visible = visibleQuestions(answers);
+  const atResult = step >= visible.length;
+  const currentQuestion = atResult ? null : visible[step];
   const progressPct =
-    Math.round((Math.min(step, questions.length) / questions.length) * 100) + "%";
+    Math.round((Math.min(step, visible.length) / Math.max(visible.length, 1)) * 100) + "%";
 
-  function pick(id: string, v: string) {
-    setAnswers((prev) => ({ ...prev, [id]: v }));
+  const outcome = computeOutcome(answers);
+  const displayState = displayStateFor(outcome);
+  const result = resultCopy[displayState];
+  // The wrong-applicant route is a helper handoff, not a dead end.
+  const applicantRole = displayState === "ineligible" ? "helper" : "applicant";
+
+  function pick(option: { set: Record<string, any> }) {
+    if (!currentQuestion) return;
+    // Clear any keys this question can set before applying the chosen option,
+    // so re-answering doesn't leave a stale value behind.
+    const ownedKeys = new Set(currentQuestion.options.flatMap((o) => Object.keys(o.set)));
+    setAnswers((prev) => {
+      const next: Record<string, any> = {};
+      for (const [k, v] of Object.entries(prev)) {
+        if (!ownedKeys.has(k)) next[k] = v;
+      }
+      return { ...next, ...option.set };
+    });
     setStep((s) => s + 1);
     try {
       window.scrollTo(0, 0);
     } catch {
       /* noop */
     }
+  }
+
+  function optionSelected(option: { set: Record<string, any> }) {
+    const keys = Object.keys(option.set);
+    if (keys.length === 0) return false;
+    return keys.every((k) => answers[k] === option.set[k]);
   }
 
   function back() {
@@ -47,8 +80,30 @@ const AssessmentView: React.FC<AssessmentViewProps> = ({ onGoLanding, onHandoffT
     }
   }
 
-  const resultType = computeResult(answers);
-  const result = resultCopy[resultType];
+  // When the user reaches the result, persist their canonical answers as an
+  // anonymous intake row keyed by browserSessionId (claimed on signup, PS-1).
+  // applicantRole is carried so the helper path survives the handoff (PS-2).
+  useEffect(() => {
+    if (!atResult) return;
+    apiRequest("POST", "/api/intake/anon", {
+      browserSessionId: getBrowserSessionId(),
+      answers,
+      applicantRole,
+    }).catch(() => {
+      /* best-effort; re-written on signup if this fails */
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [atResult]);
+
+  function handoff() {
+    // Make sure the latest role is saved before we leave for /auth.
+    apiRequest("POST", "/api/intake/anon", {
+      browserSessionId: getBrowserSessionId(),
+      answers,
+      applicantRole,
+    }).catch(() => {});
+    onHandoffToAuth();
+  }
 
   async function submitEmail() {
     if (!email || email.indexOf("@") <= 0) {
@@ -60,10 +115,17 @@ const AssessmentView: React.FC<AssessmentViewProps> = ({ onGoLanding, onHandoffT
     try {
       await apiRequest("POST", "/api/leads", {
         email,
-        resultType,
+        resultType: leadResultType(displayState),
         assessmentData: answers,
         source: "landing_assessment",
       });
+      // Save the email onto the anonymous intake row for cross-device resume.
+      apiRequest("POST", "/api/intake/anon", {
+        browserSessionId: getBrowserSessionId(),
+        answers,
+        email,
+        applicantRole,
+      }).catch(() => {});
       setSent(true);
     } catch {
       setError("Something went wrong. Please try again.");
@@ -100,7 +162,7 @@ const AssessmentView: React.FC<AssessmentViewProps> = ({ onGoLanding, onHandoffT
         {currentQuestion && (
           <div className="animate-ps-pop">
             <div className="mb-[14px] text-[14px] font-bold tracking-[0.04em] text-[#8A8278]">
-              Question {step + 1} of {questions.length}
+              Question {step + 1} of {visible.length}
             </div>
             <h1 className="m-0 mb-2.5 text-[28px] font-extrabold leading-[1.14] tracking-[-0.02em] md:text-[34px]">
               {currentQuestion.title}
@@ -108,11 +170,11 @@ const AssessmentView: React.FC<AssessmentViewProps> = ({ onGoLanding, onHandoffT
             <p className="m-0 mb-[30px] text-[17px] text-[#5C6670]">{currentQuestion.sub}</p>
             <div className="flex flex-col gap-3">
               {currentQuestion.options.map((opt) => {
-                const selected = answers[currentQuestion.id] === opt.v;
+                const selected = optionSelected(opt);
                 return (
                   <button
-                    key={opt.v}
-                    onClick={() => pick(currentQuestion.id, opt.v)}
+                    key={opt.label}
+                    onClick={() => pick(opt)}
                     className={`flex w-full cursor-pointer items-center justify-between gap-[14px] rounded-[14px] border-[1.5px] px-[22px] py-5 text-left text-[18px] font-semibold text-[#1E2A33] transition-colors hover:border-[#082D48] hover:bg-[#FBF7EF] ${
                       selected
                         ? "border-[#082D48] bg-[#E4EAF0]"
@@ -151,14 +213,14 @@ const AssessmentView: React.FC<AssessmentViewProps> = ({ onGoLanding, onHandoffT
 
             <div className="rounded-[22px] border border-[#E3D9C9] bg-white p-[34px]">
               {result.mode === "handoff" ? (
-                // Good-fit: hand off to the real sign-up / evaluation flow.
+                // Good-fit / amber / helper: hand off to the real sign-up flow.
                 <div>
                   <div className="mb-2 text-[13px] font-bold uppercase tracking-[0.04em] text-[#8A8278]">
                     {result.captionLabel}
                   </div>
                   <div className="mb-[18px] text-[17px] text-[#5C6670]">{result.note}</div>
                   <button
-                    onClick={onHandoffToAuth}
+                    onClick={handoff}
                     className="inline-flex cursor-pointer items-center gap-2.5 whitespace-nowrap rounded-[12px] border-none bg-[#082D48] px-7 py-4 text-[17px] font-bold text-[#F6F0E7] transition-colors hover:bg-[#06223A]"
                   >
                     {result.ctaLabel} <span className="text-[19px]">→</span>
@@ -171,8 +233,7 @@ const AssessmentView: React.FC<AssessmentViewProps> = ({ onGoLanding, onHandoffT
                   </div>
                   <div className="mb-2 text-[22px] font-extrabold">You’re on the list.</div>
                   <p className="m-0 text-[16px] text-[#5C6670]">
-                    Thank you. We’ll email you the moment your place is ready, no spam, no card
-                    needed.
+                    Thank you. We’ll be in touch, no spam, no card needed.
                   </p>
                 </div>
               ) : (
@@ -201,6 +262,15 @@ const AssessmentView: React.FC<AssessmentViewProps> = ({ onGoLanding, onHandoffT
                     </button>
                   </div>
                   {error && <div className="mt-3 text-[14px] text-[#B5613C]">{error}</div>}
+                  {/* Red flag is advisory at this stage — let people continue if they wish. */}
+                  {displayState === "proceed_red" && (
+                    <button
+                      onClick={handoff}
+                      className="mt-5 cursor-pointer border-none bg-transparent p-0 text-[15px] font-semibold text-[#082D48] underline"
+                    >
+                      Or continue with ProbateSwift anyway →
+                    </button>
+                  )}
                 </div>
               )}
             </div>

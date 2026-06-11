@@ -27,6 +27,7 @@ const heroCopy: Record<HeroVariant, { eyebrow: string; titleEl: React.ReactNode;
 interface LandingViewProps {
   onStartAssessment: () => void;
   onGoSecurity: () => void;
+  onLogin: () => void;
 }
 
 const navyBtn =
@@ -34,7 +35,7 @@ const navyBtn =
 const creamBtn =
   "inline-flex items-center justify-center gap-2.5 rounded-full bg-[#F6F0E7] text-[#082D48] cursor-pointer border-none transition-colors hover:bg-white";
 
-const LandingView: React.FC<LandingViewProps> = ({ onStartAssessment, onGoSecurity }) => {
+const LandingView: React.FC<LandingViewProps> = ({ onStartAssessment, onGoSecurity, onLogin }) => {
   const hero = heroCopy[HERO_VARIANT];
   const [openFaq, setOpenFaq] = useState(0);
 
@@ -62,6 +63,12 @@ const LandingView: React.FC<LandingViewProps> = ({ onStartAssessment, onGoSecuri
             <a href="#faq" className="hidden text-[15px] font-medium text-[#5C6670] no-underline md:inline">
               FAQ
             </a>
+            <button
+              onClick={onLogin}
+              className="cursor-pointer border-none bg-transparent p-0 text-[15px] font-semibold text-[#082D48] hover:underline"
+            >
+              Log in
+            </button>
             <button
               onClick={onStartAssessment}
               className={`${navyBtn} px-[22px] py-3 text-[15px] font-semibold`}
@@ -103,7 +110,7 @@ const LandingView: React.FC<LandingViewProps> = ({ onStartAssessment, onGoSecuri
                 <span className="text-[#082D48]">✓</span> Built in the UK
               </span>
               <span className="inline-flex items-center gap-[7px]">
-                <span className="text-[#082D48]">✓</span> Bank-level encryption
+                <span className="text-[#082D48]">✓</span> Kept as secure as your bank details
               </span>
               <span className="inline-flex items-center gap-[7px]">
                 <span className="text-[#082D48]">✓</span> No solicitor, no percentage
@@ -122,7 +129,7 @@ const LandingView: React.FC<LandingViewProps> = ({ onStartAssessment, onGoSecuri
               <div className="mb-1 text-[13px] font-semibold text-[#8A8278]">One flat fee</div>
               <div className="text-[30px] font-extrabold tracking-[-0.02em] text-[#082D48]">£295</div>
               <div className="text-[13px] text-[#5C6670]">
-                IHT forms included. Paid only when you submit.
+                Inheritance tax forms included. Paid only when you submit.
               </div>
             </div>
           </div>
@@ -139,7 +146,7 @@ const LandingView: React.FC<LandingViewProps> = ({ onStartAssessment, onGoSecuri
               className="block h-16 w-16 flex-shrink-0 rounded-full border border-[#E3D9C9] object-cover object-[50%_30%]"
             />
             <div>
-              <div className="text-[16px] font-bold">A named human behind the form logic</div>
+              <div className="text-[16px] font-bold">A real person behind it</div>
               <div className="text-[14px] text-[#5C6670]">
                 Built by the founder, who went through probate himself, not a faceless firm.
               </div>
@@ -195,7 +202,7 @@ const LandingView: React.FC<LandingViewProps> = ({ onStartAssessment, onGoSecuri
               Start the free assessment <span className="text-[20px]">→</span>
             </button>
             <span className="text-[14px] text-[#9FB4C8]">
-              Ungated result · honest answer · turns away the hard cases
+              A straight answer, free — even if it means telling you we’re not the right fit
             </span>
           </div>
         </div>
@@ -216,7 +223,7 @@ const LandingView: React.FC<LandingViewProps> = ({ onStartAssessment, onGoSecuri
             {
               n: "1",
               h: "Tell us about the estate",
-              p: "A few questions about the will, the property and the accounts. Around five minutes.",
+              p: "A few questions about the estate — everything they owned, like the home, money and accounts. Around five minutes.",
             },
             {
               n: "2",
@@ -226,7 +233,7 @@ const LandingView: React.FC<LandingViewProps> = ({ onStartAssessment, onGoSecuri
             {
               n: "3",
               h: "We do the heavy lifting",
-              p: "We fill your probate and IHT forms from your answers. You check and submit. Pay one fixed fee only when you’re ready.",
+              p: "We fill your probate and inheritance tax forms from your answers. You check and submit. Pay one fixed fee only when you’re ready.",
             },
           ].map((s) => (
             <div key={s.n} className="rounded-[20px] border border-[#E3D9C9] bg-white p-[30px]">
@@ -249,7 +256,7 @@ const LandingView: React.FC<LandingViewProps> = ({ onStartAssessment, onGoSecuri
                 Inheritance tax
               </div>
               <h2 className="m-0 mb-[18px] text-[32px] font-extrabold leading-[1.06] tracking-[-0.025em] md:text-[42px]">
-                Your IHT forms, completed and included.
+                Your inheritance tax forms, completed and included.
               </h2>
               <p className="m-0 mb-6 text-[19px] leading-[1.55] text-[#5C6670]">
                 A solicitor charges around <strong className="text-[#1E2A33]">£1,290</strong> just for
@@ -268,20 +275,20 @@ const LandingView: React.FC<LandingViewProps> = ({ onStartAssessment, onGoSecuri
               <div className="flex flex-col gap-4">
                 {[
                   {
-                    h: "The excepted-estate route",
-                    p: "For most estates under the £325,000 threshold, where no tax is due and the lighter reporting applies.",
+                    h: "The shorter tax form",
+                    p: "For most estates under £325,000, where there’s no tax to pay, we fill in the shorter form for you.",
                   },
                   {
-                    h: "The full IHT400 and its schedules",
-                    p: "When the estate is larger or more involved, we complete the IHT400 plus the relevant schedules from your figures.",
+                    h: "The longer tax form",
+                    p: "When the estate is larger, we complete the longer form and its extra pages from your figures.",
                   },
                   {
-                    h: "Transferable nil-rate band",
-                    p: "If a spouse died first, we claim their unused allowance so you don’t overpay, often lifting the threshold to £650,000.",
+                    h: "A late husband or wife’s allowance",
+                    p: "If your husband or wife died first, we use their unused tax-free allowance too, so you don’t pay tax you don’t owe — often up to £650,000 tax-free.",
                   },
                   {
-                    h: "Residence nil-rate band",
-                    p: "Where a home passes to children or grandchildren, we apply the extra allowance you’re entitled to.",
+                    h: "Extra allowance for the family home",
+                    p: "If the home passes to children or grandchildren, there’s an extra tax-free allowance, and we claim it for you.",
                   },
                 ].map((it) => (
                   <div key={it.h} className="flex gap-[13px]">
@@ -350,7 +357,7 @@ const LandingView: React.FC<LandingViewProps> = ({ onStartAssessment, onGoSecuri
           <div className="grid grid-cols-[1.4fr_1.4fr_1fr] items-center bg-[#E4EAF0] px-[28px] py-6">
             <div className="text-[15px] font-extrabold text-[#082D48] md:text-[16px]">ProbateSwift</div>
             <div className="text-[14px] font-semibold text-[#082D48] md:text-[16px]">
-              Guided self-serve + IHT forms included
+              You fill it in with our help, tax forms included
             </div>
             <div className="text-right text-[22px] font-extrabold text-[#082D48] md:text-[24px]">
               £295
@@ -383,9 +390,9 @@ const LandingView: React.FC<LandingViewProps> = ({ onStartAssessment, onGoSecuri
               Get it right, without a solicitor
             </h3>
             <p className="m-0 text-[17px] leading-[1.55] text-[#5C6670]">
-              Every figure is checked before you submit. We validate your forms against HMRC and
-              Probate Registry requirements and flag anything that looks wrong, so you apply with
-              confidence, not guesswork.
+              Every figure is checked before you submit. We check your forms against what HMRC (the
+              tax office) and the government probate office require, and flag anything that looks
+              wrong, so you apply with confidence, not guesswork.
             </p>
           </div>
           <div className="rounded-[22px] border border-[#E3D9C9] bg-white p-[38px]">
@@ -413,10 +420,10 @@ const LandingView: React.FC<LandingViewProps> = ({ onStartAssessment, onGoSecuri
                 {[
                   "The free “do I need probate?” assessment",
                   "Guided, step-by-step questions",
-                  "Completed PA1 probate form",
+                  "The main probate application form, completed",
                   "Completed inheritance tax forms",
-                  "Pre-submission validation checks",
-                  "Submission support",
+                  "We double-check everything before you send it",
+                  "Help when you send the application off",
                 ].map((t) => (
                   <div key={t} className="flex gap-2.5">
                     <span className="text-[#082D48]">✓</span> {t}
@@ -428,9 +435,9 @@ const LandingView: React.FC<LandingViewProps> = ({ onStartAssessment, onGoSecuri
               <h3 className="m-0 mb-4 text-[19px] font-extrabold text-[#8A8278]">What’s not included</h3>
               <div className="flex flex-col gap-[11px] text-[15px] text-[#5C6670]">
                 {[
-                  "The Probate Registry fee (£300)",
-                  "Extra copies of the grant (£16 each)",
-                  "Property sale or conveyancing",
+                  "The government probate office fee (£300)",
+                  "Extra copies of the official document (£16 each)",
+                  "Selling a home (the legal work to sell it)",
                   "Stockbroker or third-party costs",
                 ].map((t) => (
                   <div key={t} className="flex gap-2.5">
@@ -444,14 +451,14 @@ const LandingView: React.FC<LandingViewProps> = ({ onStartAssessment, onGoSecuri
                 When you’d still need a solicitor
               </h3>
               <p className="m-0 mb-[14px] text-[14px] text-[#8A8278]">
-                Naming the boundary makes the promise believable. We’ll tell you in the assessment.
+                If any of these apply, we’ll tell you in the assessment and point you to a solicitor.
               </p>
               <div className="flex flex-col gap-[11px] text-[15px] text-[#5C6670]">
                 {[
-                  "Disputed or contested wills",
-                  "Complex trusts",
-                  "Overseas assets",
-                  "Insolvent estates",
+                  "A disputed or contested will",
+                  "Trusts (where someone holds assets for others)",
+                  "Money or property abroad",
+                  "An estate that owes more than it’s worth",
                 ].map((t) => (
                   <div key={t} className="flex gap-2.5">
                     <span className="text-[#B5613C]">·</span> {t}
@@ -485,23 +492,23 @@ const LandingView: React.FC<LandingViewProps> = ({ onStartAssessment, onGoSecuri
             },
             {
               n: "2",
-              h: "Forms auto-filled & reviewed",
+              h: "We fill the forms, you check them",
               when: "Same day",
-              p: "We fill the PA1 and IHT forms. You check every figure.",
+              p: "We fill the probate and inheritance tax forms. You check every figure.",
               clay: false,
             },
             {
               n: "3",
               h: "Submit",
               when: "Pay £295 here",
-              p: "You apply to HMRC and the Probate Registry with confidence.",
+              p: "You apply to HMRC and the government probate office with confidence.",
               clay: false,
             },
             {
               n: "4",
-              h: "Grant arrives",
+              h: "The document arrives",
               when: "~8–12 weeks",
-              p: "Current Probate Registry processing time, not us.",
+              p: "Current government processing time, not us.",
               clay: true,
             },
           ].map((s) => (

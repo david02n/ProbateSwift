@@ -21,7 +21,7 @@ import {
 import { Progress } from "@/components/ui/progress";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { getQueryFn, apiRequest, queryClient } from "@/lib/queryClient";
-import { EstateAsset, EstateLiability, ProbateCase, EvaluationResponse } from "@shared/schema";
+import { EstateAsset, EstateLiability, ProbateCase, Intake } from "@shared/schema";
 import { useToast } from "@/hooks/use-toast";
 import {
   Dialog,
@@ -85,16 +85,16 @@ const EstatePage: React.FC = () => {
     enabled: !!activeCaseId,
   });
 
-  // Get evaluation responses for the active case
-  const { 
-    data: evaluationResponses = [],
-    isLoading: isLoadingEvaluation 
-  } = useQuery<EvaluationResponse[]>({
+  // Get the intake record for the active case
+  const {
+    data: intakeRecord = null,
+    isLoading: isLoadingEvaluation
+  } = useQuery<Intake | null>({
     queryKey: ["/api/evaluation-responses", activeCaseId],
     queryFn: activeCaseId ? (() => fetch(`/api/evaluation-responses/${activeCaseId}`).then(res => {
-      if (!res.ok) throw new Error('Failed to fetch evaluation responses');
+      if (!res.ok) throw new Error('Failed to fetch intake record');
       return res.json();
-    })) : () => Promise.resolve([]),
+    })) : () => Promise.resolve(null),
     enabled: !!activeCaseId,
   });
   
@@ -265,11 +265,11 @@ const EstatePage: React.FC = () => {
   
   // Calculate IHT threshold based on evaluation responses
   const calculateIHTThreshold = () => {
-    if (!evaluationResponses.length) {
+    if (!intakeRecord) {
       return 325000; // Default nil rate band if no evaluation data
     }
 
-    const answers = evaluationResponses[0]?.answers || {};
+    const answers = (intakeRecord.answers as Record<string, any>) || {};
     
     // Base nil rate band
     let nilRateBand = 325000;

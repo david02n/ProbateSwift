@@ -7,8 +7,8 @@ interface SecurityViewProps {
 
 const cards = [
   {
-    h: "Encrypted, end to end",
-    p: "Your documents and answers are encrypted in transit and at rest using bank-level standards. Only you and the form logic that prepares your application can access them.",
+    h: "Kept private and secure",
+    p: "Your details are kept private and secure, the same way banks protect yours. Only you and the tool that prepares your application can see them.",
   },
   {
     h: "Never sold, never shared for marketing",

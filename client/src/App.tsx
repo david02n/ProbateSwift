@@ -13,7 +13,6 @@ import PrivacyPage from "@/pages/PrivacyPage";
 import CookiesPage from "@/pages/CookiesPage";
 
 // New redesigned pages
-import NewDashboardPage from "@/pages/new-dashboard";
 import DashboardPage from "@/pages/dashboard-page";
 import PeoplePage from "@/pages/people-page";
 import EstatePage from "@/pages/estate-page";
@@ -65,7 +64,6 @@ function Router() {
     <Switch>
       <Route path="/sso-callback" component={ClerkCallbackPage} />
       <Route path="/dashboard" component={DashboardPage} />
-      <Route path="/new-dashboard" component={NewDashboardPage} />
       <Route path="/people" component={PeoplePage} />
       <Route path="/estate" component={EstatePage} />
       <Route path="/documents" component={DocumentsPage} />

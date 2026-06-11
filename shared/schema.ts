@@ -30,32 +30,37 @@ export const users = pgTable("users", {
   photoURL: text("photo_url"),
 });
 
-// Assessment results model 
-export const assessmentResults = pgTable("assessment_results", {
-  id: serial("id").primaryKey(),
-  userId: varchar("user_id").references(() => users.id),
-  browserSessionId: text("browser_session_id"), // For anonymous assessments
-  isProbateRequired: boolean("is_probate_required"),
-  probateType: text("probate_type"), // "grant_of_probate", "letters_of_administration", etc.
-  hasWill: boolean("has_will"),
-  isInsolvent: boolean("is_insolvent"),
-  hasDispute: boolean("has_dispute"),
-  assessmentData: text("assessment_data"), // JSON string of all answers
-  createdAt: timestamp("created_at").defaultNow(),
-  updatedAt: timestamp("updated_at").defaultNow(),
-});
-
-// Evaluation responses model - for detailed in-app evaluation flow
-export const evaluationResponses = pgTable("evaluation_responses", {
-  id: uuid("id").primaryKey().defaultRandom(),
-  userId: varchar("user_id").references(() => users.id).notNull(),
-  caseId: integer("case_id").references(() => probateCases.id).notNull(),
-  answers: jsonb("answers").$type<Record<string, any>>().notNull().default({}),
-  derivedFlags: jsonb("derived_flags").$type<Record<string, any>>().notNull().default({}),
-  completedAt: timestamp("completed_at"),
-  createdAt: timestamp("created_at").defaultNow(),
-  updatedAt: timestamp("updated_at").defaultNow(),
-});
+// Intake model — the single canonical record for the whole customer journey.
+// Replaces the former assessment_results + evaluation_responses split (PS-1).
+//
+// One row is created anonymously at the landing assessment (keyed by
+// browserSessionId, with userId/caseId null). On signup it is *claimed*:
+// userId/caseId are attached exactly once and are then immutable — never
+// detached, never re-seeded (the claim-once invariant, enforced in storage).
+export const intake = pgTable(
+  "intake",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    browserSessionId: text("browser_session_id"), // anonymous identity, pre-auth
+    userId: varchar("user_id").references(() => users.id), // nullable until claimed
+    caseId: integer("case_id").references(() => probateCases.id), // nullable until claimed
+    applicantRole: text("applicant_role").notNull().default("applicant"), // 'applicant' | 'helper'
+    answers: jsonb("answers").$type<Record<string, any>>().notNull().default({}),
+    derivedFlags: jsonb("derived_flags").$type<Record<string, any>>().notNull().default({}),
+    email: text("email"), // optional resume/lead capture
+    amberAcknowledgements: jsonb("amber_acknowledgements") // PS-5: { flagKey: { by, at } }
+      .$type<Record<string, { by: string; at: string }>>()
+      .notNull()
+      .default({}),
+    completedAt: timestamp("completed_at"),
+    createdAt: timestamp("created_at").defaultNow(),
+    updatedAt: timestamp("updated_at").defaultNow(),
+  },
+  (table) => [
+    index("IDX_intake_browser_session").on(table.browserSessionId),
+    index("IDX_intake_case").on(table.caseId),
+  ],
+);
 
 // Relationships will be manually handled in queries
 
@@ -74,7 +79,6 @@ export const leads = pgTable("leads", {
 export const probateCases = pgTable("probate_cases", {
   id: serial("id").primaryKey(),
   userId: varchar("user_id").references(() => users.id).notNull(),
-  assessmentId: integer("assessment_id").references(() => assessmentResults.id),
   referenceNumber: text("reference_number").unique(), // Unique reference for the case
   status: text("status").notNull().default("draft"), // draft, submitted, approved, etc.
   deceasedFirstName: text("deceased_first_name"),
@@ -202,6 +206,19 @@ export const tasks = pgTable("tasks", {
 
 // Relationships will be manually handled in queries
 
+// Referral events (PS-5) — a logged warm-handoff to a partner solicitor.
+// Created only after explicit user consent on a red specialist flag; carries a
+// structured case summary for attribution (the opp-guided-triage revenue path).
+export const referralEvents = pgTable("referral_events", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  caseId: integer("case_id").references(() => probateCases.id).notNull(),
+  userId: varchar("user_id").references(() => users.id),
+  reasons: jsonb("reasons").$type<string[]>().notNull().default([]),
+  summary: jsonb("summary").$type<Record<string, any>>(),
+  consentedAt: timestamp("consented_at").notNull(),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
 // Insert schemas
 export const insertUserSchema = createInsertSchema(users)
   .pick({
@@ -225,15 +242,17 @@ export const upsertUserSchema = createInsertSchema(users)
     profileImageUrl: true,
   });
 
-export const insertAssessmentResultSchema = createInsertSchema(assessmentResults)
+export const insertIntakeSchema = createInsertSchema(intake)
   .pick({
+    browserSessionId: true,
     userId: true,
-    isProbateRequired: true,
-    probateType: true,
-    hasWill: true,
-    isInsolvent: true,
-    hasDispute: true,
-    assessmentData: true,
+    caseId: true,
+    applicantRole: true,
+    answers: true,
+    derivedFlags: true,
+    email: true,
+    amberAcknowledgements: true,
+    completedAt: true,
   });
 
 export const insertLeadSchema = createInsertSchema(leads)
@@ -247,10 +266,18 @@ export const insertLeadSchema = createInsertSchema(leads)
     email: z.string().email(),
   });
 
+export const insertReferralEventSchema = createInsertSchema(referralEvents)
+  .pick({
+    caseId: true,
+    userId: true,
+    reasons: true,
+    summary: true,
+    consentedAt: true,
+  });
+
 export const insertProbateCaseSchema = createInsertSchema(probateCases)
   .pick({
     userId: true,
-    assessmentId: true,
     deceasedFirstName: true,
     deceasedLastName: true,
     deceasedDateOfBirth: true,
@@ -330,15 +357,6 @@ export const insertDocumentSchema = createInsertSchema(documents)
     metadata: true,
   });
 
-export const insertEvaluationResponseSchema = createInsertSchema(evaluationResponses)
-  .pick({
-    userId: true,
-    caseId: true,
-    answers: true,
-    derivedFlags: true,
-    completedAt: true,
-  });
-
 export const insertTaskSchema = createInsertSchema(tasks)
   .pick({
     caseId: true,
@@ -357,11 +375,14 @@ export type InsertUser = z.infer<typeof insertUserSchema>;
 export type UpsertUser = z.infer<typeof upsertUserSchema>;
 export type User = typeof users.$inferSelect;
 
-export type InsertAssessmentResult = z.infer<typeof insertAssessmentResultSchema>;
-export type AssessmentResult = typeof assessmentResults.$inferSelect;
+export type InsertIntake = z.infer<typeof insertIntakeSchema>;
+export type Intake = typeof intake.$inferSelect;
 
 export type InsertLead = z.infer<typeof insertLeadSchema>;
 export type Lead = typeof leads.$inferSelect;
+
+export type InsertReferralEvent = z.infer<typeof insertReferralEventSchema>;
+export type ReferralEvent = typeof referralEvents.$inferSelect;
 
 export type InsertProbateCase = z.infer<typeof insertProbateCaseSchema>;
 export type ProbateCase = typeof probateCases.$inferSelect;
@@ -377,9 +398,6 @@ export type EstateLiability = typeof estateLiabilities.$inferSelect;
 
 export type InsertDocument = z.infer<typeof insertDocumentSchema>;
 export type Document = typeof documents.$inferSelect;
-
-export type InsertEvaluationResponse = z.infer<typeof insertEvaluationResponseSchema>;
-export type EvaluationResponse = typeof evaluationResponses.$inferSelect;
 
 export type InsertTask = z.infer<typeof insertTaskSchema>;
 export type Task = typeof tasks.$inferSelect;

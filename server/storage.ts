@@ -1,7 +1,7 @@
 import {
   users,
   sessions,
-  assessmentResults,
+  intake,
   probateCases,
   executors,
   estateAssets,
@@ -9,14 +9,16 @@ import {
   documents,
   tasks,
   deceasedFormFields,
-  evaluationResponses,
   type User,
   type UpsertUser,
-  type AssessmentResult,
-  type InsertAssessmentResult,
+  type Intake,
+  type InsertIntake,
   leads,
   type Lead,
   type InsertLead,
+  referralEvents,
+  type ReferralEvent,
+  type InsertReferralEvent,
   type ProbateCase,
   type InsertProbateCase,
   type Executor,
@@ -30,21 +32,14 @@ import {
   type Task,
   type InsertTask,
   type DeceasedFormFields,
-  type InsertDeceasedFormFields,
-  type EvaluationResponse,
-  type InsertEvaluationResponse
+  type InsertDeceasedFormFields
 } from "@shared/schema";
 import { db, hasDatabase } from "./db";
-import { eq } from "drizzle-orm";
+import { eq, and, isNull } from "drizzle-orm";
 
 export interface IStorage {
   getUser(id: string): Promise<User | undefined>;
   upsertUser(user: UpsertUser): Promise<User>;
-
-  getAssessmentResult(id: number): Promise<AssessmentResult | undefined>;
-  getAssessmentResultsByUserId(userId: string): Promise<AssessmentResult[]>;
-  createAssessmentResult(assessment: InsertAssessmentResult): Promise<AssessmentResult>;
-  updateAssessmentResult(id: number, assessment: Partial<InsertAssessmentResult>): Promise<AssessmentResult | undefined>;
 
   createLead(lead: InsertLead): Promise<Lead>;
 
@@ -89,9 +84,17 @@ export interface IStorage {
   isDeceasedFormFieldsComplete(personId: number): Promise<boolean>;
   getDeceasedFormFieldsCompletionStatus(personId: number): Promise<{ complete: boolean; missingFields: string[] }>;
 
-  getEvaluationResponse(caseId: number): Promise<EvaluationResponse | undefined>;
-  createEvaluationResponse(data: InsertEvaluationResponse): Promise<EvaluationResponse>;
-  updateEvaluationResponse(caseId: number, data: Partial<InsertEvaluationResponse>): Promise<EvaluationResponse | undefined>;
+  // Intake (PS-1) — single canonical record; replaces assessment + evaluation stores.
+  getIntakeByCaseId(caseId: number): Promise<Intake | undefined>;
+  getIntakeByBrowserSession(browserSessionId: string): Promise<Intake | undefined>;
+  createIntake(data: InsertIntake): Promise<Intake>;
+  updateIntake(id: string, data: Partial<InsertIntake>): Promise<Intake | undefined>;
+  /** Claim-once: attach userId/caseId to an anonymous row, only if currently unclaimed. */
+  claimIntake(browserSessionId: string, userId: string, caseId: number): Promise<Intake | undefined>;
+
+  // Referral events (PS-5)
+  createReferralEvent(data: InsertReferralEvent): Promise<ReferralEvent>;
+  getReferralEventsByCaseId(caseId: number): Promise<ReferralEvent[]>;
 }
 
 class MemoryStorage implements IStorage {
@@ -121,10 +124,6 @@ class MemoryStorage implements IStorage {
     return user;
   }
 
-  async getAssessmentResult(): Promise<AssessmentResult | undefined> { return undefined; }
-  async getAssessmentResultsByUserId(): Promise<AssessmentResult[]> { return []; }
-  async createAssessmentResult(): Promise<AssessmentResult> { throw new Error("Database is not configured"); }
-  async updateAssessmentResult(): Promise<AssessmentResult | undefined> { throw new Error("Database is not configured"); }
   async createLead(): Promise<Lead> { throw new Error("Database is not configured"); }
   async getProbateCase(): Promise<ProbateCase | undefined> { return undefined; }
   async getProbateCasesByUserId(): Promise<ProbateCase[]> { return []; }
@@ -162,9 +161,13 @@ class MemoryStorage implements IStorage {
   async getDeceasedFormFieldsCompletionStatus(): Promise<{ complete: boolean; missingFields: string[] }> {
     return { complete: false, missingFields: ["Database is not configured"] };
   }
-  async getEvaluationResponse(): Promise<EvaluationResponse | undefined> { return undefined; }
-  async createEvaluationResponse(): Promise<EvaluationResponse> { throw new Error("Database is not configured"); }
-  async updateEvaluationResponse(): Promise<EvaluationResponse | undefined> { throw new Error("Database is not configured"); }
+  async getIntakeByCaseId(): Promise<Intake | undefined> { return undefined; }
+  async getIntakeByBrowserSession(): Promise<Intake | undefined> { return undefined; }
+  async createIntake(): Promise<Intake> { throw new Error("Database is not configured"); }
+  async updateIntake(): Promise<Intake | undefined> { throw new Error("Database is not configured"); }
+  async claimIntake(): Promise<Intake | undefined> { throw new Error("Database is not configured"); }
+  async createReferralEvent(): Promise<ReferralEvent> { throw new Error("Database is not configured"); }
+  async getReferralEventsByCaseId(): Promise<ReferralEvent[]> { return []; }
 }
 
 export class DatabaseStorage implements IStorage {
@@ -190,32 +193,6 @@ export class DatabaseStorage implements IStorage {
       })
       .returning();
     return user;
-  }
-
-  async getAssessmentResult(id: number): Promise<AssessmentResult | undefined> {
-    const [result] = await db!.select().from(assessmentResults).where(eq(assessmentResults.id, id));
-    return result;
-  }
-
-  async getAssessmentResultsByUserId(userId: string): Promise<AssessmentResult[]> {
-    return await db!.select().from(assessmentResults).where(eq(assessmentResults.userId, userId));
-  }
-
-  async createAssessmentResult(assessment: InsertAssessmentResult): Promise<AssessmentResult> {
-    const [result] = await db!
-      .insert(assessmentResults)
-      .values(assessment)
-      .returning();
-    return result;
-  }
-
-  async updateAssessmentResult(id: number, assessment: Partial<InsertAssessmentResult>): Promise<AssessmentResult | undefined> {
-    const [result] = await db!
-      .update(assessmentResults)
-      .set({ ...assessment, updatedAt: new Date() })
-      .where(eq(assessmentResults.id, id))
-      .returning();
-    return result;
   }
 
   async createLead(lead: InsertLead): Promise<Lead> {
@@ -464,27 +441,64 @@ export class DatabaseStorage implements IStorage {
     return { complete: missingFields.length === 0, missingFields };
   }
 
-  // Evaluation Response methods
-  async getEvaluationResponse(caseId: number): Promise<EvaluationResponse | undefined> {
-    const [response] = await db!.select().from(evaluationResponses).where(eq(evaluationResponses.caseId, caseId));
-    return response;
+  // Intake methods (PS-1) — single canonical record.
+  async getIntakeByCaseId(caseId: number): Promise<Intake | undefined> {
+    const [row] = await db!.select().from(intake).where(eq(intake.caseId, caseId));
+    return row;
   }
 
-  async createEvaluationResponse(data: InsertEvaluationResponse): Promise<EvaluationResponse> {
-    const [response] = await db!
-      .insert(evaluationResponses)
-      .values(data)
-      .returning();
-    return response;
+  async getIntakeByBrowserSession(browserSessionId: string): Promise<Intake | undefined> {
+    const [row] = await db!
+      .select()
+      .from(intake)
+      .where(eq(intake.browserSessionId, browserSessionId));
+    return row;
   }
 
-  async updateEvaluationResponse(caseId: number, data: Partial<InsertEvaluationResponse>): Promise<EvaluationResponse | undefined> {
-    const [response] = await db!
-      .update(evaluationResponses)
+  async createIntake(data: InsertIntake): Promise<Intake> {
+    const [row] = await db!.insert(intake).values(data).returning();
+    return row;
+  }
+
+  async updateIntake(id: string, data: Partial<InsertIntake>): Promise<Intake | undefined> {
+    const [row] = await db!
+      .update(intake)
       .set({ ...data, updatedAt: new Date() })
-      .where(eq(evaluationResponses.caseId, caseId))
+      .where(eq(intake.id, id))
       .returning();
-    return response;
+    return row;
+  }
+
+  // Claim-once invariant: only attach ownership to a row that is still anonymous
+  // (userId IS NULL). Once claimed the WHERE no longer matches, so a second claim
+  // is a no-op (returns undefined) — userId/caseId are never overwritten.
+  async claimIntake(
+    browserSessionId: string,
+    userId: string,
+    caseId: number,
+  ): Promise<Intake | undefined> {
+    const [row] = await db!
+      .update(intake)
+      .set({ userId, caseId, updatedAt: new Date() })
+      .where(and(eq(intake.browserSessionId, browserSessionId), isNull(intake.userId)))
+      .returning();
+    return row;
+  }
+
+  // Referral events (PS-5)
+  async createReferralEvent(data: InsertReferralEvent): Promise<ReferralEvent> {
+    // Cast at the drizzle boundary: drizzle-zod infers the jsonb `reasons`/`summary`
+    // columns with a structurally-different array type than drizzle's .values()
+    // expects (the same friction the documents/deceased inserts hit in this repo).
+    const [row] = await db!
+      .insert(referralEvents)
+      .values(data as unknown as typeof referralEvents.$inferInsert)
+      .returning();
+    return row;
+  }
+
+  async getReferralEventsByCaseId(caseId: number): Promise<ReferralEvent[]> {
+    return await db!.select().from(referralEvents).where(eq(referralEvents.caseId, caseId));
   }
 }
 

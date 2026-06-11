@@ -1,61 +1,103 @@
-// Content for the relaunch landing page (Hero B — calm / grief-sensitive).
-// Copy is the approved launch copy from the design handoff. The assessment
-// questions, result logic and FAQ are reproduced verbatim from the spec.
+// Content + logic for the relaunch landing assessment (Hero B — calm /
+// grief-sensitive). PS-2/3/4: the questions now emit CANONICAL intake keys and
+// the result is computed by the shared engine (deriveAssessmentOutcome), so the
+// landing and the in-app evaluation speak one vocabulary.
 
-export type ResultType = "good" | "complex" | "none";
+import {
+  deriveAssessmentOutcome,
+  type AssessmentOutcome,
+} from "@shared/evaluation-config";
 
 export interface AssessmentOption {
   label: string;
-  v: string;
+  /** Canonical answer keys this option sets when chosen. */
+  set: Record<string, any>;
 }
 
 export interface AssessmentQuestion {
-  id: "will" | "value" | "property" | "accounts" | "complex";
+  /** Stable id (also the progress key). */
+  id: string;
   title: string;
   sub: string;
   options: AssessmentOption[];
+  /** Optional predicate — the question is shown only when it returns true. */
+  showIf?: (answers: Record<string, any>) => boolean;
 }
 
 export const questions: AssessmentQuestion[] = [
   {
-    id: "will",
+    id: "has_will",
     title: "Did the person who died leave a valid will?",
     sub: "It names who deals with the estate. It’s fine if you’re not certain.",
     options: [
-      { label: "Yes, there is a will", v: "yes" },
-      { label: "No, there is no will", v: "no" },
-      { label: "I’m not sure", v: "unsure" },
+      { label: "Yes, there is a will", set: { has_will: true } },
+      { label: "No, there is no will", set: { has_will: false } },
+      { label: "I’m not sure", set: { has_will: false } },
     ],
   },
   {
-    id: "value",
-    title: "Roughly, what is the estate worth in total?",
-    sub: "Property, savings, investments and belongings, before any debts.",
+    id: "named_executor_in_will",
+    title: "Are you named as an executor in the will?",
+    sub: "Only the named executor can sign and submit when there’s a will.",
+    showIf: (a) => a.has_will === true,
     options: [
-      { label: "Under £5,000", v: "under5k" },
-      { label: "£5,000 to £325,000", v: "mid" },
-      { label: "£325,000 to £2 million", v: "high" },
-      { label: "Over £2 million", v: "over2m" },
+      { label: "Yes, I’m an executor", set: { named_executor_in_will: true } },
+      { label: "No, someone else is", set: { named_executor_in_will: false } },
+      {
+        label: "I’m acting for the executor",
+        set: { named_executor_in_will: false, acting_under_poa: true },
+      },
     ],
   },
   {
-    id: "property",
+    id: "next_of_kin",
+    title: "Are you the closest living relative?",
+    sub: "With no will, the closest relative usually applies — a spouse, child or parent.",
+    showIf: (a) => a.has_will === false,
+    options: [
+      { label: "Yes, I’m the next of kin", set: { next_of_kin: true } },
+      { label: "No, someone closer is", set: { next_of_kin: false } },
+    ],
+  },
+  {
+    id: "owned_property",
     title: "Did they own a home or other property?",
     sub: "How a property was owned changes whether probate is needed.",
     options: [
-      { label: "Yes, in their name alone", v: "sole" },
-      { label: "Yes, jointly with someone", v: "joint" },
-      { label: "No property", v: "none" },
+      {
+        label: "Yes, in their name alone",
+        set: { owned_property: true, property_ownership: "sole" },
+      },
+      {
+        label: "Yes, jointly with someone",
+        set: { owned_property: true, property_ownership: "joint_tenants" },
+      },
+      { label: "No property", set: { owned_property: false } },
     ],
   },
   {
-    id: "accounts",
-    title: "How many bank or investment accounts were there?",
-    sub: "A rough count is absolutely fine.",
+    id: "low_threshold_assets",
+    title: "Did they hold any of these?",
+    sub: "These can need a grant even when there’s no property to transfer.",
+    // Skip when there’s already grant-triggering (sole-name) property.
+    showIf: (a) => a.property_ownership !== "sole",
     options: [
-      { label: "1 to 3", v: "few" },
-      { label: "4 to 8", v: "some" },
-      { label: "More than 8", v: "many" },
+      {
+        label: "National Savings (NS&I) or Premium Bonds over £5,000",
+        set: { nsandi_over_5k: true, holds_direct_shares: false, single_provider_over_50k: false },
+      },
+      {
+        label: "Shares they held directly",
+        set: { holds_direct_shares: true, nsandi_over_5k: false, single_provider_over_50k: false },
+      },
+      {
+        label: "Over £50,000 with one bank or provider",
+        set: { single_provider_over_50k: true, nsandi_over_5k: false, holds_direct_shares: false },
+      },
+      {
+        label: "None of these",
+        set: { nsandi_over_5k: false, holds_direct_shares: false, single_provider_over_50k: false },
+      },
     ],
   },
   {
@@ -63,19 +105,47 @@ export const questions: AssessmentQuestion[] = [
     title: "Do any of these apply to the estate?",
     sub: "These usually need a solicitor. It’s completely fine if none do.",
     options: [
-      { label: "A dispute or contested will", v: "dispute" },
-      { label: "Trusts are involved", v: "trust" },
-      { label: "There are assets overseas", v: "overseas" },
-      { label: "The estate may be insolvent", v: "insolvent" },
-      { label: "None of these", v: "none" },
+      { label: "A dispute or contested will", set: { estate_disputed: true } },
+      { label: "A trust is involved", set: { trust_involvement: true } },
+      { label: "There are assets overseas", set: { deceased_foreign_assets: true } },
+      { label: "The estate may be insolvent", set: { estate_insolvent: true } },
+      { label: "A business or farm is involved", set: { business_or_farm_assets: true } },
+      { label: "None of these", set: {} },
     ],
   },
 ];
 
-export function computeResult(answers: Record<string, string>): ResultType {
-  if (answers.complex && answers.complex !== "none") return "complex";
-  if (answers.value === "over2m") return "complex";
-  if (answers.value === "under5k" && answers.property === "none") return "none";
+/** Questions visible given the current answers (applies showIf predicates). */
+export function visibleQuestions(answers: Record<string, any>): AssessmentQuestion[] {
+  return questions.filter((q) => !q.showIf || q.showIf(answers));
+}
+
+// ── Result display ────────────────────────────────────────────────────────────
+// The shared engine returns route + specialistSeverity; the landing maps that to
+// one of five display states (PS-2 three outcomes, split by PS-4 severity).
+export type DisplayState =
+  | "not_needed"
+  | "proceed_clear"
+  | "proceed_amber"
+  | "proceed_red"
+  | "ineligible";
+
+export function computeOutcome(answers: Record<string, any>): AssessmentOutcome {
+  return deriveAssessmentOutcome(answers);
+}
+
+export function displayStateFor(outcome: AssessmentOutcome): DisplayState {
+  if (outcome.route === "not_needed") return "not_needed";
+  if (outcome.route === "ineligible") return "ineligible";
+  if (outcome.specialistSeverity === "red") return "proceed_red";
+  if (outcome.specialistSeverity === "amber") return "proceed_amber";
+  return "proceed_clear";
+}
+
+/** Coarse lead bucket kept for /api/leads (legacy "good|complex|none"). */
+export function leadResultType(state: DisplayState): "good" | "complex" | "none" {
+  if (state === "not_needed") return "none";
+  if (state === "proceed_red") return "complex";
   return "good";
 }
 
@@ -85,16 +155,16 @@ export interface ResultCopy {
   body: string;
   accent: string;
   chip: string;
-  // "handoff" results route into the real /auth flow; "capture" results show
-  // the email capture form (which posts to /api/leads).
+  // "handoff" routes into the real /auth flow; "capture" shows the email form
+  // (posts to /api/leads).
   mode: "handoff" | "capture";
   captionLabel: string;
   note: string;
   ctaLabel: string;
 }
 
-export const resultCopy: Record<ResultType, ResultCopy> = {
-  good: {
+export const resultCopy: Record<DisplayState, ResultCopy> = {
+  proceed_clear: {
     badge: "You look like a good fit",
     heading: "Good news, this is exactly what we’re built for.",
     body:
@@ -106,23 +176,47 @@ export const resultCopy: Record<ResultType, ResultCopy> = {
     note: "Set up your account to start. It’s free to use, and you only pay £295 when you’re ready to submit.",
     ctaLabel: "Get started free",
   },
-  complex: {
-    badge: "Worth a closer look",
-    heading: "This estate may need a solicitor.",
+  proceed_amber: {
+    badge: "Worth a quick check",
+    heading: "We can help, with one thing to keep an eye on.",
     body:
-      "Your answers point to something more complex, like a dispute, a trust, overseas assets or a very large estate. We’d rather tell you honestly now than get it wrong. For cases like this, a solicitor is the safer route. If you’d like, we’ll let you know as we expand to cover more situations.",
+      "Your answers point to a detail that sometimes needs extra care, like a trust, overseas assets or a business. It usually doesn’t stop you proceeding, and we’ll flag it clearly as you go. You can carry on with us, or pause for advice, it’s your call.",
+    accent: "#9A6B1E",
+    chip: "#F3E8D2",
+    mode: "handoff",
+    captionLabel: "Continue if you’d like",
+    note: "It’s free to use and you only pay £295 when you’re ready to submit. We’ll point out anything worth a closer look.",
+    ctaLabel: "Continue with ProbateSwift",
+  },
+  proceed_red: {
+    badge: "A solicitor is the safer route",
+    heading: "This estate looks like it needs a solicitor.",
+    body:
+      "Your answers point to something more serious, like a dispute or possible insolvency. We’d rather be honest now than get it wrong. For cases like this a solicitor is the safer route, and we can introduce you to one. You can still start with us if you prefer.",
     accent: "#B5613C",
     chip: "#F2E2D8",
     mode: "capture",
-    captionLabel: "Get notified as we expand",
-    note: "No obligation. We’ll only email you if we can genuinely help with a case like yours.",
-    ctaLabel: "Keep me posted",
+    captionLabel: "Talk to a specialist",
+    note: "Leave your email and we’ll connect you with a probate solicitor suited to your situation.",
+    ctaLabel: "Get specialist help",
   },
-  none: {
+  ineligible: {
+    badge: "You can still get this moving",
+    heading: "You can start it, someone else signs it.",
+    body:
+      "It looks like you may not be the person entitled to sign the final application, but that’s not a dead end. You can gather everything and prepare the application as a helper, then hand it to the entitled person to sign and submit. Most families find this far easier than starting cold.",
+    accent: "#082D48",
+    chip: "#E4EAF0",
+    mode: "handoff",
+    captionLabel: "Start as a helper",
+    note: "Set up a free account to begin. You can do all the work; only the entitled applicant signs and submits.",
+    ctaLabel: "Start as a helper",
+  },
+  not_needed: {
     badge: "You may not need probate",
     heading: "You might not need probate at all.",
     body:
-      "When an estate is small and there’s no property to transfer, many banks and institutions will release funds without a grant of probate. It’s worth checking the threshold with each one first. If that changes, we’re here, and the assessment stays free.",
+      "When an estate is small and there’s no property to transfer, many banks and institutions will release funds without the official probate document. It’s worth checking the limit with each one first. If that changes, we’re here, and the assessment stays free.",
     accent: "#082D48",
     chip: "#E4EAF0",
     mode: "capture",
@@ -140,23 +234,23 @@ export interface FaqItem {
 export const faqData: FaqItem[] = [
   {
     q: "When is probate actually required?",
-    a: "Probate is usually needed when the estate includes property held in the deceased’s sole name, or when a bank or institution holds more than its own threshold (often between £5,000 and £50,000). If everything was jointly owned and passes automatically to the survivor, you may not need probate at all. The free assessment tells you which side of the line you’re on.",
+    a: "Probate is usually needed when the estate (everything the person owned) includes a home in their sole name, or when a bank or institution holds more than its own limit (often between £5,000 and £50,000). If everything was owned together and passes straight to the other person, you may not need probate at all. The free assessment tells you which side of the line you’re on.",
   },
   {
-    q: "What are the bank and institution thresholds?",
-    a: "Each bank sets its own limit for releasing funds without a grant of probate, typically somewhere between £5,000 and £50,000. Below the limit they often release the money on sight of a death certificate; above it they ask for the grant. It’s worth asking each institution directly, and we help you keep track of who needs what.",
+    q: "What are the bank and institution limits?",
+    a: "Each bank sets its own limit for releasing money without the official probate document, typically somewhere between £5,000 and £50,000. Below the limit they often release the money on sight of a death certificate; above it they ask for the document. It’s worth asking each one directly, and we help you keep track of who needs what.",
   },
   {
-    q: "What about jointly owned property or accounts?",
-    a: "Assets held as joint tenants usually pass automatically to the surviving owner by survivorship and fall outside probate. Assets held as tenants in common, or in the deceased’s sole name, normally form part of the estate. We ask about this in the assessment because it changes the answer significantly.",
+    q: "What about property or accounts owned together?",
+    a: "Things owned together usually pass straight to the other owner and stay outside probate. Things owned in separate shares, or in the person’s sole name, normally form part of the estate. We ask about this in the assessment because it changes the answer a lot.",
   },
   {
-    q: "Who can apply, an executor or an administrator?",
-    a: "If there’s a valid will, the executor named in it applies for a grant of probate. If there’s no will, the closest relative applies for letters of administration. Certain things, like bankruptcy or lacking mental capacity, can affect who is eligible. We guide you through who should apply in your situation.",
+    q: "Who’s allowed to deal with the estate?",
+    a: "If there’s a valid will, the person named in it to sort things out (the executor) applies for the official document. If there’s no will, the closest relative applies for permission to deal with the estate. Some things, like bankruptcy or lacking mental capacity, can affect who’s allowed. We guide you through who should apply in your situation.",
   },
   {
     q: "Which inheritance tax forms will apply to me?",
-    a: "Most estates under the £325,000 threshold (or up to £650,000 with a transferred allowance) use the lighter excepted-estate reporting. Larger or more involved estates need the full IHT400 and its schedules. We work out which route applies from your figures and complete the right forms either way, included in the £295.",
+    a: "Most estates under £325,000 (or up to £650,000 if a husband or wife died first without using their tax-free allowance) only need the shorter tax form. Larger estates need the longer form and its extra pages. We work out which one applies from your figures and complete the right forms either way, included in the £295.",
   },
   {
     q: "What happens if my estate turns out to be too complex?",

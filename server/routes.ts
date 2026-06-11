@@ -2,7 +2,9 @@ import type { Express, Request, Response, NextFunction } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
 import { requireClerkAuth, setupClerkAuth } from "./clerk";
-import { insertAssessmentResultSchema, insertProbateCaseSchema, insertLeadSchema } from "@shared/schema";
+import { insertIntakeSchema, insertProbateCaseSchema, insertLeadSchema } from "@shared/schema";
+import { deriveFlags } from "@shared/evaluation-config";
+import { assertCaseOwnership } from "./helpers";
 import { strictLimiter } from "./middleware/security";
 import { WebSocketServer, WebSocket } from "ws";
 import { getAuth } from "@clerk/express";
@@ -96,27 +98,82 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // ── Assessment ─────────────────────────────────────────────────────────────
+  // ── Intake — anonymous assessment (public) ─────────────────────────────────
+  // The landing assessment writes a single anonymous intake row keyed by a
+  // client-generated browserSessionId. On signup this row is claimed (below),
+  // not copied — so the assessment answers ARE the start of the evaluation.
 
-  app.get("/api/assessment", requireAuth, async (req: Request, res: Response, next: NextFunction) => {
+  // GET /api/intake/anon/:browserSessionId — fetch an anonymous intake (resume)
+  app.get("/api/intake/anon/:browserSessionId", strictLimiter, async (req: Request, res: Response, next: NextFunction) => {
     try {
-      const user = (req as any).user;
-      const results = await storage.getAssessmentResultsByUserId(user.id);
-      res.json(results.at(-1) ?? null);
+      const row = await storage.getIntakeByBrowserSession(req.params.browserSessionId);
+      res.json(row ?? null);
     } catch (error) {
       next(error);
     }
   });
 
-  app.post("/api/assessment", requireAuth, async (req: Request, res: Response, next: NextFunction) => {
+  // POST /api/intake/anon — upsert an anonymous intake by browserSessionId
+  app.post("/api/intake/anon", strictLimiter, async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const browserSessionId: string | undefined = req.body.browserSessionId;
+      if (!browserSessionId) {
+        return res.status(400).json({ error: "browserSessionId is required" });
+      }
+      const answers: Record<string, any> = req.body.answers ?? {};
+      const email: string | undefined = req.body.email;
+      const applicantRole: "applicant" | "helper" =
+        req.body.applicantRole === "helper" ? "helper" : "applicant";
+      const derivedFlags = deriveFlags(answers);
+
+      const existing = await storage.getIntakeByBrowserSession(browserSessionId);
+      let result;
+      if (existing) {
+        result = await storage.updateIntake(existing.id, {
+          answers,
+          derivedFlags,
+          email,
+          applicantRole,
+        });
+      } else {
+        const parsed = insertIntakeSchema.parse({
+          browserSessionId,
+          answers,
+          derivedFlags,
+          email,
+          applicantRole,
+        });
+        result = await storage.createIntake(parsed);
+      }
+      res.status(201).json(result);
+    } catch (error) {
+      next(error);
+    }
+  });
+
+  // POST /api/intake/claim — attach the anonymous intake to the signed-in user + case
+  app.post("/api/intake/claim", requireAuth, async (req: Request, res: Response, next: NextFunction) => {
     try {
       const user = (req as any).user;
-      const parsed = insertAssessmentResultSchema.parse({
-        ...req.body,
-        userId: user.id,
-      });
-      const created = await storage.createAssessmentResult(parsed);
-      res.status(201).json(created);
+      const caseId = parseInt(req.body.caseId, 10);
+      if (isNaN(caseId)) return res.status(400).json({ error: "Invalid caseId" });
+      await assertCaseOwnership(user.id, caseId);
+
+      const browserSessionId: string | undefined = req.body.browserSessionId;
+      let claimed = browserSessionId
+        ? await storage.claimIntake(browserSessionId, user.id, caseId)
+        : undefined;
+
+      // No anonymous row to claim (or it was already claimed) — make sure the
+      // case still has an intake record to work against.
+      if (!claimed) {
+        claimed =
+          (await storage.getIntakeByCaseId(caseId)) ??
+          (await storage.createIntake(
+            insertIntakeSchema.parse({ userId: user.id, caseId }),
+          ));
+      }
+      res.json(claimed);
     } catch (error) {
       next(error);
     }

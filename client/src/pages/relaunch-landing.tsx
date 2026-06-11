@@ -40,6 +40,7 @@ const RelaunchLanding: React.FC = () => {
         <LandingView
           onStartAssessment={() => go("assessment")}
           onGoSecurity={() => go("security")}
+          onLogin={() => navigate("/auth")}
         />
       )}
       {screen === "assessment" && (
