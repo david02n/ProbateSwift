@@ -6,16 +6,20 @@ status: ready_for_review
 evidence: supported
 created_by: agent
 created: 2026-06-03
-updated: 2026-06-03
-source: https://farewill.com/articles/how-to-compare-probate-services-and-prices; coolcuration Farewill review 2026
+updated: 2026-06-11
+source: https://farewill.com/probate/complete-probate (refreshed 2026-06-11); coolcuration Farewill review 2026
 links:
   relates_to: [market]
 ---
 
 ## Positioning
 The leading consumer online-probate brand. Fixed fees, explicitly positioned against percentage
-charging: "Essential Probate" from **£595 (+£273 registry fee)**; "Complete Probate" from **£1,500**.
-Strong brand, will-writing funnel feeding probate.
+charging. Strong brand, will-writing funnel feeding probate.
+
+## Pricing (2026)
+**Essential / grant-only from ~£595–£895** (+ the £300 registry fee). **Complete (full estate
+administration) from £1,500**, quoted upfront by complexity. No upfront payment; payable from the
+estate. Note Octopus Legacy's £585 grant service now undercuts Essential.
 
 ## Strengths
 Trusted brand; transparent fixed pricing; clear cheaper-than-banks narrative; full-service option.

@@ -6,8 +6,8 @@ status: ready_for_review
 evidence: supported
 created_by: agent
 created: 2026-06-03
-updated: 2026-06-03
-source: Farewill price comparison; wuhld probate fees 2026; NPS Law solicitor fees 2026
+updated: 2026-06-11
+source: Farewill price comparison; wuhld probate fees 2026; NPS Law solicitor fees 2026 (confirmed 2026-06-11)
 links:
   relates_to: [market]
 ---

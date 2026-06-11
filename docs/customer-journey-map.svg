@@ -1,0 +1,102 @@
+<svg viewBox="0 0 680 740" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="t d">
+<title id="t">ProbateSwift customer journey</title>
+<desc id="d">Vertical flow: land, then a public assessment that qualifies the user with three outcomes (not needed, see a specialist as a soft flag, or proceed). Proceeding creates a free account and runs a free evaluation on the same record. If the user is not the entitled applicant they take a helper path: gather data, prepare a partial application, and hand off to the entitled person who submits. A firm triage readiness gate sits before a pay-to-generate paywall and form generation.</desc>
+<defs>
+<marker id="arrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M2 1L8 5L2 9" fill="none" stroke="context-stroke" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></marker>
+<style>
+.title{font:700 18px ui-sans-serif,system-ui,sans-serif;fill:#26215C}
+.sub{font:400 12.5px ui-sans-serif,system-ui,sans-serif;fill:#5F5E5A}
+.th{font:600 14px ui-sans-serif,system-ui,sans-serif;fill:#2C2C2A}
+.t{font:500 13px ui-sans-serif,system-ui,sans-serif;fill:#2C2C2A}
+.ts{font:400 11.5px ui-sans-serif,system-ui,sans-serif;fill:#5F5E5A}
+.tag{font:700 10px ui-sans-serif,system-ui,sans-serif;letter-spacing:.05em;fill:#534AB7}
+.arr{stroke:#7c7b74;stroke-width:1.7;fill:none}
+.leader{stroke:#BA7517;stroke-width:1.2;stroke-dasharray:3 3;fill:none}
+</style>
+</defs>
+<rect x="0" y="0" width="680" height="740" rx="12" fill="#FBFAF8"/>
+<text class="title" x="28" y="36">ProbateSwift — customer journey</text>
+<text class="sub" x="28" y="55">Three outcomes: not needed · see a specialist · proceed   ·   one merged record</text>
+
+<line class="arr" x1="320" y1="112" x2="320" y2="131" marker-end="url(#arrow)"/>
+<line class="arr" x1="320" y1="216" x2="320" y2="245" marker-end="url(#arrow)"/>
+<line class="arr" x1="320" y1="294" x2="320" y2="313" marker-end="url(#arrow)"/>
+<line class="arr" x1="320" y1="398" x2="320" y2="427" marker-end="url(#arrow)"/>
+<line class="arr" x1="320" y1="488" x2="320" y2="523" marker-end="url(#arrow)"/>
+<line class="arr" x1="320" y1="572" x2="320" y2="601" marker-end="url(#arrow)"/>
+
+<rect x="195" y="70" width="250" height="42" rx="10" fill="#F1EFE8" stroke="#B4B2A9" stroke-width="1.5"/>
+<text class="th" x="320" y="96" text-anchor="middle">Lands on site</text>
+
+<text class="tag" x="197" y="126">JOB 1 — QUALIFY (decide what to do)</text>
+<rect x="195" y="132" width="250" height="84" rx="10" fill="#EEEDFE" stroke="#7F77DD" stroke-width="1.5"/>
+<text class="th" x="320" y="159" text-anchor="middle">Assessment / triage</text>
+<text class="ts" x="320" y="178" text-anchor="middle">Public · no account · save by email</text>
+<text class="ts" x="320" y="196" text-anchor="middle">need probate? · in scope? · eligible?</text>
+
+<rect x="24" y="146" width="150" height="56" rx="9" fill="#FAEEDA" stroke="#EF9F27" stroke-width="1.4"/>
+<text class="t" x="99" y="170" text-anchor="middle" fill="#854F0B">Soft complexity flag</text>
+<text class="ts" x="99" y="188" text-anchor="middle">you can still proceed</text>
+<line class="leader" x1="174" y1="174" x2="194" y2="174"/>
+
+<rect x="520" y="148" width="150" height="56" rx="9" fill="#F1EFE8" stroke="#B4B2A9" stroke-width="1.4"/>
+<text class="th" x="595" y="172" text-anchor="middle">Not needed</text>
+<text class="ts" x="595" y="190" text-anchor="middle">Stop + explain</text>
+<line class="arr" x1="445" y1="177" x2="519" y2="177" marker-end="url(#arrow)"/>
+<text class="ts" x="460" y="169" fill="#5F5E5A">no / under £5k</text>
+
+<rect x="195" y="246" width="250" height="48" rx="10" fill="#EEEDFE" stroke="#7F77DD" stroke-width="1.5"/>
+<text class="th" x="320" y="275" text-anchor="middle">Create account — free</text>
+<text class="ts" x="455" y="263" fill="#534AB7">↳ same record —</text>
+<text class="ts" x="455" y="278" fill="#534AB7">no re-entry</text>
+
+<text class="tag" x="197" y="308">JOB 2 — GATHER (produce the forms)</text>
+<rect x="195" y="314" width="250" height="84" rx="10" fill="#EEEDFE" stroke="#7F77DD" stroke-width="1.5"/>
+<text class="th" x="320" y="341" text-anchor="middle">Evaluation — 5 sections</text>
+<text class="ts" x="320" y="360" text-anchor="middle">Branching: will / no-will · IHT</text>
+<text class="ts" x="320" y="378" text-anchor="middle">foreign assets · trusts · executors</text>
+
+<!-- helper path (wrong applicant) -->
+<text class="tag" x="26" y="290" fill="#854F0B">HELPER PATH — wrong applicant</text>
+<rect x="24" y="296" width="154" height="40" rx="9" fill="#F1EFE8" stroke="#B4B2A9" stroke-width="1.4"/>
+<text class="t" x="101" y="321" text-anchor="middle">Not entitled to apply</text>
+<line class="arr" x1="101" y1="336" x2="101" y2="354" marker-end="url(#arrow)"/>
+<rect x="24" y="354" width="154" height="46" rx="9" fill="#FAEEDA" stroke="#EF9F27" stroke-width="1.4"/>
+<text class="t" x="101" y="375" text-anchor="middle" fill="#854F0B">Gather, then hand off</text>
+<text class="ts" x="101" y="392" text-anchor="middle">partial application</text>
+<line class="arr" x1="101" y1="400" x2="101" y2="418" marker-end="url(#arrow)"/>
+<rect x="24" y="418" width="154" height="48" rx="9" fill="#E1F5EE" stroke="#1D9E75" stroke-width="1.4"/>
+<text class="t" x="101" y="439" text-anchor="middle">Entitled person</text>
+<text class="ts" x="101" y="456" text-anchor="middle">takes over + submits</text>
+<text class="ts" x="101" y="482" text-anchor="middle" fill="#993C1D">submit = applicant only</text>
+<line class="arr" x1="194" y1="350" x2="179" y2="322" marker-end="url(#arrow)"/>
+<text class="ts" x="186" y="360" text-anchor="end" fill="#854F0B">if helper</text>
+
+<rect x="195" y="428" width="250" height="60" rx="10" fill="#E1F5EE" stroke="#1D9E75" stroke-width="1.5"/>
+<text class="th" x="320" y="454" text-anchor="middle">Readiness gate</text>
+<text class="ts" x="320" y="472" text-anchor="middle">Firm triage · last free check</text>
+
+<rect x="520" y="430" width="150" height="58" rx="9" fill="#FAEEDA" stroke="#EF9F27" stroke-width="1.4"/>
+<text class="th" x="595" y="454" text-anchor="middle" fill="#854F0B">See a specialist</text>
+<text class="ts" x="595" y="472" text-anchor="middle">Referral partner (£)</text>
+<line class="arr" x1="445" y1="458" x2="519" y2="458" marker-end="url(#arrow)"/>
+<text class="ts" x="452" y="450" fill="#854F0B">complex confirmed</text>
+
+<line x1="40" y1="512" x2="640" y2="512" stroke="#D85A30" stroke-width="1.6" stroke-dasharray="6 4"/>
+<text class="tag" x="48" y="508" fill="#993C1D">PAYWALL</text>
+<text class="ts" x="632" y="508" text-anchor="end" fill="#993C1D">free ↑   paid ↓</text>
+
+<rect x="195" y="524" width="250" height="48" rx="10" fill="#FAECE7" stroke="#D85A30" stroke-width="1.5"/>
+<text class="th" x="320" y="553" text-anchor="middle" fill="#4A1B0C">Pay to generate (£295)</text>
+
+<rect x="195" y="602" width="250" height="76" rx="10" fill="#E1F5EE" stroke="#1D9E75" stroke-width="1.5"/>
+<text class="th" x="320" y="629" text-anchor="middle">Generate forms</text>
+<text class="ts" x="320" y="648" text-anchor="middle">PA1P / PA1A · IHT route</text>
+<text class="ts" x="320" y="666" text-anchor="middle">document checklist</text>
+
+<rect x="28" y="704" width="12" height="12" rx="3" fill="#EEEDFE" stroke="#7F77DD"/><text class="ts" x="46" y="714">Journey step</text>
+<rect x="142" y="704" width="12" height="12" rx="3" fill="#E1F5EE" stroke="#1D9E75"/><text class="ts" x="160" y="714">Paid output</text>
+<rect x="250" y="704" width="12" height="12" rx="3" fill="#FAEEDA" stroke="#EF9F27"/><text class="ts" x="268" y="714">Triage / exit</text>
+<rect x="360" y="704" width="12" height="12" rx="3" fill="#FAECE7" stroke="#D85A30"/><text class="ts" x="378" y="714">Payment</text>
+<rect x="452" y="704" width="12" height="12" rx="3" fill="#F1EFE8" stroke="#B4B2A9"/><text class="ts" x="470" y="714">Stop</text>
+</svg>
