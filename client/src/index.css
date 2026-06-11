@@ -176,3 +176,7 @@
 
 .animate-ps-fade { animation: psFade 0.4s ease; }
 .animate-ps-pop { animation: psPop 0.32s ease; }
+
+/* Warm scrollbar for in-card scroll areas (dashboard chat thread) */
+.ps-scroll::-webkit-scrollbar { width: 8px; }
+.ps-scroll::-webkit-scrollbar-thumb { background: #D8CDBA; border-radius: 99px; }
