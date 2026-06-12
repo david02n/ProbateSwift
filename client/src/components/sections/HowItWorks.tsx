@@ -118,7 +118,7 @@ const HowItWorks: React.FC = () => {
           <ProcessStep 
             number={3} 
             title="Submit—and pay" 
-            description="Kick off the government process today. Only then is the £297 fee due."
+            description="Kick off the government process today. Only then is the £295 fee due."
           >
             <div className="space-y-3">
               <div className="flex items-center p-3 rounded-lg bg-white shadow-sm">
@@ -133,7 +133,7 @@ const HowItWorks: React.FC = () => {
                 <Clock className="text-primary mr-3 h-5 w-5" />
                 <div>
                   <p className="text-sm font-medium">Pay only when you submit</p>
-                  <p className="text-xs text-charcoal/70">Use the full service for free—pay £297 only when you're ready to submit</p>
+                  <p className="text-xs text-charcoal/70">Use the full service for free—pay £295 only when you're ready to submit</p>
                 </div>
               </div>
               

@@ -19,7 +19,7 @@ const Pricing: React.FC = () => {
               <div className="flex-1 mb-8 md:mb-0 md:border-r md:pr-8">
                 <h3 className="text-primary font-semibold text-lg mb-2">One-time fee</h3>
                 <div className="flex items-baseline mb-1">
-                  <span className="text-5xl font-bold text-primary">£297</span>
+                  <span className="text-5xl font-bold text-primary">£295</span>
                   <span className="text-gray-500 text-sm ml-2">one-time payment</span>
                 </div>
                 <p className="text-gray-600 text-sm mb-8">Pay when you're ready to submit</p>

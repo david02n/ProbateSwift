@@ -12,14 +12,12 @@ import TermsPage from "@/pages/TermsPage";
 import PrivacyPage from "@/pages/PrivacyPage";
 import CookiesPage from "@/pages/CookiesPage";
 
-// New redesigned pages
+// The dashboard is the single canonical authenticated surface. The former
+// standalone pages (people/estate/documents/evaluation/deceased-details) are
+// legacy: orphaned, on an older design system, and superseded by dashboard
+// tabs. Their routes redirect to /dashboard; the files are retained for
+// salvage as estate/people management is folded into the dashboard (Phase B).
 import DashboardPage from "@/pages/dashboard-page";
-import PeoplePage from "@/pages/people-page";
-import EstatePage from "@/pages/estate-page";
-import DocumentsPage from "@/pages/documents-page";
-import DocumentUploadPage from "@/pages/document-upload-page";
-import DeceasedDetailsPage from "@/pages/deceased-details-page";
-import EvaluationPage from "@/pages/evaluation-page";
 
 import { useEffect } from "react";
 
@@ -64,12 +62,13 @@ function Router() {
     <Switch>
       <Route path="/sso-callback" component={ClerkCallbackPage} />
       <Route path="/dashboard" component={DashboardPage} />
-      <Route path="/people" component={PeoplePage} />
-      <Route path="/estate" component={EstatePage} />
-      <Route path="/documents" component={DocumentsPage} />
-      <Route path="/documents/upload" component={DocumentUploadPage} />
-      <Route path="/deceased-details/:personId?" component={DeceasedDetailsPage} />
-      <Route path="/evaluation" component={EvaluationPage} />
+      {/* Legacy routes → consolidated into the dashboard */}
+      <Route path="/people"><Redirect to="/dashboard" /></Route>
+      <Route path="/estate"><Redirect to="/dashboard" /></Route>
+      <Route path="/documents"><Redirect to="/dashboard" /></Route>
+      <Route path="/documents/upload"><Redirect to="/dashboard" /></Route>
+      <Route path="/deceased-details/:personId?"><Redirect to="/dashboard" /></Route>
+      <Route path="/evaluation"><Redirect to="/dashboard" /></Route>
       <Route path="/auth/*">
         <Redirect to="/dashboard" />
       </Route>
