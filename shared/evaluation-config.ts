@@ -620,16 +620,26 @@ export function deriveFlags(answers: Record<string, any>): Record<string, any> {
   const flags: Record<string, any> = {};
 
   // ── Jurisdiction ─────────────────────────────────────────────────────────
-  // jurisdiction_supported is a *positive* confirmation (both questions answered
-  // yes) — used to gate payment/submission. It is deliberately NOT the inverse of
-  // "blocked": an unanswered question is "not yet confirmed", not "out of scope".
+  // jurisdiction_supported is a *positive* confirmation (E&W + UK domicile) — used
+  // to gate payment/submission. It is deliberately NOT the inverse of "blocked":
+  // an unanswered question is "not yet confirmed", not "out of scope".
+  //
+  // The England-&-Wales signal has two canonical keys for the same concept: the
+  // landing-page `death_in_england_wales` and the detailed-evaluation
+  // `deceased_lived_england_wales`. Accept either, so a case confirmed in the
+  // in-app evaluation isn't treated as unconfirmed (which previously blocked it).
+  const englandWalesYes =
+    answers.death_in_england_wales === true ||
+    answers.deceased_lived_england_wales === true;
+  const englandWalesNo =
+    answers.death_in_england_wales === false ||
+    answers.deceased_lived_england_wales === false;
+
   flags.jurisdiction_supported =
-    answers.death_in_england_wales === true &&
-    answers.deceased_domiciled_uk === true;
+    englandWalesYes && answers.deceased_domiciled_uk === true;
   // Only an explicit out-of-scope answer excludes the case (→ refer to solicitor).
   flags.jurisdiction_excluded =
-    answers.death_in_england_wales === false ||
-    answers.deceased_domiciled_uk === false;
+    englandWalesNo || answers.deceased_domiciled_uk === false;
 
   // ── Will / probate type ───────────────────────────────────────────────────
   flags.has_will = answers.has_will === true;

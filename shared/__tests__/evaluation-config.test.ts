@@ -249,4 +249,22 @@ describe("jurisdiction gating (does not refer happy-path cases)", () => {
     });
     expect(deriveReadiness(flags, { applicantIsEntitled: true }).canPay).toBe(true);
   });
+
+  it("confirms jurisdiction from the DETAILED-evaluation keys, not just the landing key", () => {
+    // The in-app evaluation asks deceased_lived_england_wales (+ deceased_domiciled_uk),
+    // never death_in_england_wales. Answering those must confirm jurisdiction.
+    const flags = deriveFlags({
+      deceased_lived_england_wales: true,
+      deceased_domiciled_uk: true,
+      has_will: true,
+      named_executor_in_will: true,
+    });
+    expect(flags.jurisdiction_supported).toBe(true);
+    expect(flags.application_blocked).toBe(false);
+    expect(deriveReadiness(flags, { applicantIsEntitled: true }).canPay).toBe(true);
+  });
+
+  it("excludes when the deceased explicitly did NOT live in England or Wales", () => {
+    expect(deriveFlags({ deceased_lived_england_wales: false }).application_blocked).toBe(true);
+  });
 });
