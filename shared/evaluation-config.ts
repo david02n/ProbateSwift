@@ -578,8 +578,12 @@ export function deriveReadiness(
     ctx.structuralRequirementsMet ?? structuralBlockers.length === 0;
   const statementOfTruthSigned = ctx.statementOfTruthSigned === true;
 
+  // Payment opens only once jurisdiction is positively confirmed (E&W + UK
+  // domicile, answered in the detailed evaluation) — so the £295 CTA never
+  // appears off the back of the short landing assessment alone.
   const canPay =
     !applicationBlocked &&
+    flags.jurisdiction_supported === true &&
     severity !== "red" &&
     (severity !== "amber" || amberAcknowledged);
 
@@ -616,9 +620,26 @@ export function deriveFlags(answers: Record<string, any>): Record<string, any> {
   const flags: Record<string, any> = {};
 
   // ── Jurisdiction ─────────────────────────────────────────────────────────
+  // jurisdiction_supported is a *positive* confirmation (E&W + UK domicile) — used
+  // to gate payment/submission. It is deliberately NOT the inverse of "blocked":
+  // an unanswered question is "not yet confirmed", not "out of scope".
+  //
+  // The England-&-Wales signal has two canonical keys for the same concept: the
+  // landing-page `death_in_england_wales` and the detailed-evaluation
+  // `deceased_lived_england_wales`. Accept either, so a case confirmed in the
+  // in-app evaluation isn't treated as unconfirmed (which previously blocked it).
+  const englandWalesYes =
+    answers.death_in_england_wales === true ||
+    answers.deceased_lived_england_wales === true;
+  const englandWalesNo =
+    answers.death_in_england_wales === false ||
+    answers.deceased_lived_england_wales === false;
+
   flags.jurisdiction_supported =
-    answers.death_in_england_wales === true &&
-    answers.deceased_domiciled_uk === true;
+    englandWalesYes && answers.deceased_domiciled_uk === true;
+  // Only an explicit out-of-scope answer excludes the case (→ refer to solicitor).
+  flags.jurisdiction_excluded =
+    englandWalesNo || answers.deceased_domiciled_uk === false;
 
   // ── Will / probate type ───────────────────────────────────────────────────
   flags.has_will = answers.has_will === true;
@@ -704,7 +725,10 @@ export function deriveFlags(answers: Record<string, any>): Record<string, any> {
   flags.grant_needed = deriveGrantNeeded(answers);
 
   // ── Application blockers ──────────────────────────────────────────────────
-  flags.application_blocked = !flags.jurisdiction_supported;
+  // Block only on an EXPLICIT out-of-jurisdiction answer — never merely because
+  // the short landing assessment didn't collect it (that previously referred
+  // every happy-path case to a solicitor and paused payment).
+  flags.application_blocked = flags.jurisdiction_excluded === true;
   flags.blocker_reason = flags.application_blocked
     ? "Probate not handled for this jurisdiction"
     : null;

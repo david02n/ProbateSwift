@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ProbateSwift — guided task list mockup</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@3/dist/tabler-icons.min.css">
+<style>
+:root{
+  --color-text-primary:#2C2C2A;--color-text-secondary:#5F5E5A;--color-text-tertiary:#888780;
+  --color-text-info:#185FA5;--color-text-success:#0F6E56;--color-text-warning:#854F0B;
+  --color-background-primary:#FFFFFF;--color-background-secondary:#F4F2EC;
+  --color-background-info:#E6F1FB;--color-background-success:#E1F5EE;--color-background-warning:#FAEEDA;
+  --color-border-tertiary:rgba(0,0,0,.12);--color-border-info:#85B7EB;
+  --border-radius-md:8px;--border-radius-lg:12px;
+}
+body{font-family:ui-sans-serif,system-ui,-apple-system,sans-serif;color:var(--color-text-primary);background:#FBFAF8;margin:0;padding:2rem 1rem;line-height:1.5}
+.wrap{max-width:720px;margin:0 auto}
+button{font-family:inherit;background:transparent;border:0.5px solid rgba(0,0,0,.3);border-radius:var(--border-radius-md);padding:6px 12px;cursor:pointer}
+button:hover{background:var(--color-background-secondary)}
+.ph{display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:var(--border-radius-md);font-size:14px}
+.dot{width:22px;height:22px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:14px;flex:0 0 auto}
+.pill{font-size:12px;padding:2px 9px;border-radius:var(--border-radius-md);white-space:nowrap}
+.row{display:flex;align-items:center;gap:10px;padding:11px 0;border-top:0.5px solid var(--color-border-tertiary)}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<div style="display:flex;align-items:baseline;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-bottom:4px">
+  <h3 style="margin:0;font-size:18px;font-weight:500">Margaret Hale's estate</h3>
+  <span style="font-size:13px;color:var(--color-text-secondary)">Phase 2 of 7 · about 18% through</span>
+</div>
+<div style="height:6px;border-radius:var(--border-radius-md);background:var(--color-background-secondary);overflow:hidden;margin-bottom:1.25rem">
+  <div style="width:18%;height:100%;background:var(--color-text-info)"></div>
+</div>
+
+<div style="display:flex;gap:16px;flex-wrap:wrap;align-items:flex-start">
+
+  <div style="flex:1 1 230px;min-width:210px">
+    <div class="ph" style="background:var(--color-background-success)"><span class="dot" style="background:var(--color-text-success);color:#fff"><i class="ti ti-check" aria-hidden="true"></i></span><span style="flex:1">1 · Qualify</span><span style="font-size:12px;color:var(--color-text-success)">Done</span></div>
+    <div class="ph" style="background:var(--color-background-info);border:0.5px solid var(--color-border-info)"><span class="dot" style="background:var(--color-text-info);color:#fff"><i class="ti ti-pencil" aria-hidden="true"></i></span><span style="flex:1;font-weight:500">2 · Value the estate</span><span style="font-size:12px;color:var(--color-text-info)">Now</span></div>
+    <div class="ph"><span class="dot" style="background:var(--color-background-secondary);color:var(--color-text-tertiary)">3</span><span style="flex:1;color:var(--color-text-secondary)">Prepare the IHT return</span></div>
+    <div class="ph"><span class="dot" style="background:var(--color-background-secondary);color:var(--color-text-tertiary)">4</span><span style="flex:1;color:var(--color-text-secondary)">Pay &amp; submit IHT</span></div>
+    <div class="ph"><span class="dot" style="background:var(--color-background-secondary);color:var(--color-text-tertiary)">5</span><span style="flex:1;color:var(--color-text-secondary)">Apply for probate</span></div>
+    <div class="ph"><span class="dot" style="background:var(--color-background-secondary);color:var(--color-text-tertiary)">6</span><span style="flex:1;color:var(--color-text-secondary)">Grant issued</span></div>
+    <div class="ph"><span class="dot" style="background:var(--color-background-secondary);color:var(--color-text-tertiary)">7</span><span style="flex:1;color:var(--color-text-secondary)">Administer &amp; distribute</span></div>
+  </div>
+
+  <div style="flex:2 1 320px;min-width:280px">
+    <div style="background:var(--color-background-primary);border:0.5px solid var(--color-border-tertiary);border-radius:var(--border-radius-lg);padding:1rem 1.25rem">
+      <div style="display:flex;align-items:baseline;justify-content:space-between;gap:8px">
+        <h3 style="margin:0;font-size:16px;font-weight:500">Value the estate</h3>
+        <span style="font-size:13px;color:var(--color-text-secondary)">3 of 6 done</span>
+      </div>
+      <p style="margin:4px 0 14px;font-size:13px;color:var(--color-text-secondary)">Find out what everything was worth on the date of death.</p>
+
+      <div style="background:var(--color-background-info);border-radius:var(--border-radius-md);padding:12px 14px;display:flex;align-items:center;gap:12px;margin-bottom:14px">
+        <i class="ti ti-arrow-right" style="font-size:20px;color:var(--color-text-info)" aria-hidden="true"></i>
+        <div style="flex:1">
+          <div style="font-size:12px;color:var(--color-text-info)">Your next step</div>
+          <div style="font-size:14px;font-weight:500">Book a valuation for the house</div>
+        </div>
+        <button style="font-size:13px">Start</button>
+      </div>
+
+      <div class="row" style="border-top:none"><i class="ti ti-building-bank" style="font-size:18px;color:var(--color-text-secondary)" aria-hidden="true"></i><span style="flex:1;font-size:14px">Barclays current account</span><span class="pill" style="background:var(--color-background-success);color:var(--color-text-success)">£42,300</span></div>
+      <div class="row"><i class="ti ti-chart-line" style="font-size:18px;color:var(--color-text-secondary)" aria-hidden="true"></i><span style="flex:1;font-size:14px">Aviva ISA</span><span class="pill" style="background:var(--color-background-success);color:var(--color-text-success)">£18,100</span></div>
+      <div class="row"><i class="ti ti-ticket" style="font-size:18px;color:var(--color-text-secondary)" aria-hidden="true"></i><span style="flex:1;font-size:14px">Premium Bonds (NS&amp;I)</span><span class="pill" style="background:var(--color-background-success);color:var(--color-text-success)">£20,000</span></div>
+      <div class="row"><i class="ti ti-clock" style="font-size:18px;color:var(--color-text-warning)" aria-hidden="true"></i><span style="flex:1;font-size:14px">Nationwide savings</span><span class="pill" style="background:var(--color-background-warning);color:var(--color-text-warning)">Awaiting reply · 4d</span></div>
+      <div class="row"><i class="ti ti-home" style="font-size:18px;color:var(--color-text-info)" aria-hidden="true"></i><span style="flex:1;font-size:14px">The house</span><span class="pill" style="background:var(--color-background-info);color:var(--color-text-info)">Your move</span></div>
+      <div class="row"><i class="ti ti-receipt" style="font-size:18px;color:var(--color-text-info)" aria-hidden="true"></i><span style="flex:1;font-size:14px">Funeral account (debt)</span><span class="pill" style="background:var(--color-background-info);color:var(--color-text-info)">Your move</span></div>
+    </div>
+
+    <div style="background:var(--color-background-secondary);border-radius:var(--border-radius-lg);padding:1rem 1.25rem;margin-top:14px">
+      <div style="font-size:14px;font-weight:500;margin-bottom:2px"><i class="ti ti-hourglass-high" style="font-size:16px;vertical-align:-2px;margin-right:6px;color:var(--color-text-secondary)" aria-hidden="true"></i>While you wait, get a head start</div>
+      <p style="margin:2px 0 12px;font-size:12.5px;color:var(--color-text-secondary)">1 reply outstanding (banks usually take 1–2 weeks). Nothing else is holding you up, so you could already:</p>
+      <div style="display:flex;gap:8px;flex-wrap:wrap">
+        <button style="font-size:13px">List who inherits</button>
+        <button style="font-size:13px">Find the original will</button>
+      </div>
+    </div>
+  </div>
+
+</div>
+</div>
+</body>
+</html>

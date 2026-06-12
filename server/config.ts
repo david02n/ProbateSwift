@@ -47,6 +47,14 @@ const envSchema = z.object({
 
   // Document processing
   GEMINI_API_KEY: z.string().optional(),
+
+  // Stripe payments (Phase C) — £295 flat fee charged at submission.
+  // Checkout uses a hosted Stripe Payment Link (no secret API key needed); only
+  // STRIPE_WEBHOOK_SECRET is required, so paying flips the case to 'paid'.
+  STRIPE_PAYMENT_LINK: z.string().url().optional().default('https://buy.stripe.com/7sY00lcs0b6c2M12oW8og03'),
+  STRIPE_SECRET_KEY: z.string().optional(),
+  STRIPE_WEBHOOK_SECRET: z.string().optional(),
+  PROBATE_FEE_PENCE: z.string().transform(Number).default('29500'),
 });
 
 // Parse and validate environment variables

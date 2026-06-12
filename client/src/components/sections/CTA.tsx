@@ -37,7 +37,7 @@ const CTA: React.FC = () => {
           <div className="text-left">
             <h3 className="text-xl font-semibold mb-4 border-b border-white/20 pb-2">Pricing & Guarantee</h3>
             <div className="bg-white/10 p-6 rounded-xl mb-4">
-              <p className="text-lg font-medium mb-2">One-time fee of £297</p>
+              <p className="text-lg font-medium mb-2">One-time fee of £295</p>
               <p className="text-white/80 mb-4">Pay when you're ready to submit</p>
               <div className="flex items-start">
                 <CheckCircle className="h-5 w-5 text-accent mr-3 mt-0.5 flex-shrink-0" />

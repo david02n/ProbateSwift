@@ -2,6 +2,7 @@ import type { Express, RequestHandler, Request, Response, NextFunction } from "e
 import { storage } from "../storage";
 import { assertCaseOwnership } from "../helpers";
 import { insertProbateCaseSchema } from "@shared/schema";
+import { deriveFlags } from "@shared/evaluation-config";
 
 export function registerCaseRoutes(app: Express, requireAuth: RequestHandler): void {
 
@@ -96,8 +97,61 @@ export function registerCaseRoutes(app: Express, requireAuth: RequestHandler): v
           documents:   documents.filter(d => d.status !== "deleted").length,
         },
         evaluationStarted: intakeRecord !== undefined,
-        evaluationFlags:   intakeRecord?.derivedFlags ?? null,
+        // Recompute from answers so the dashboard reflects current rules (the
+        // stored derivedFlags cache can be stale after a logic change).
+        evaluationFlags:   intakeRecord ? deriveFlags(answers) : null,
       });
+    } catch (error) {
+      next(error);
+    }
+  });
+
+  // GET /api/probate-cases/:caseId/tasks — persisted guided-task overlay state.
+  // Must be before /:caseId so "tasks" isn't parsed as an id.
+  app.get("/api/probate-cases/:caseId/tasks", requireAuth, async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const user = (req as any).user;
+      const caseId = parseInt(req.params.caseId, 10);
+      if (isNaN(caseId)) return res.status(400).json({ error: "Invalid ID" });
+      await assertCaseOwnership(user.id, caseId);
+      const tasks = await storage.getCaseTasksByCaseId(caseId);
+      res.json(tasks);
+    } catch (error) {
+      next(error);
+    }
+  });
+
+  // PATCH /api/probate-cases/:caseId/tasks — upsert one task's state.
+  // Body: { taskKey, status, note? }. awaiting_since is managed server-side.
+  app.patch("/api/probate-cases/:caseId/tasks", requireAuth, async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const user = (req as any).user;
+      const caseId = parseInt(req.params.caseId, 10);
+      if (isNaN(caseId)) return res.status(400).json({ error: "Invalid ID" });
+      await assertCaseOwnership(user.id, caseId);
+
+      const taskKey: string | undefined = req.body.taskKey;
+      const status: string | undefined = req.body.status;
+      const VALID = ["your_move", "awaiting", "done", "skipped"];
+      if (!taskKey || !status || !VALID.includes(status)) {
+        return res.status(400).json({ error: "taskKey and a valid status are required" });
+      }
+
+      // Stamp awaiting_since when a task first enters "awaiting"; preserve it on
+      // re-saves; clear it once the task leaves "awaiting".
+      const existing = (await storage.getCaseTasksByCaseId(caseId)).find((t) => t.taskKey === taskKey);
+      let awaitingSince: Date | null = null;
+      if (status === "awaiting") {
+        awaitingSince =
+          existing?.status === "awaiting" && existing.awaitingSince ? existing.awaitingSince : new Date();
+      }
+
+      const updated = await storage.upsertCaseTask(caseId, taskKey, {
+        status,
+        awaitingSince,
+        note: typeof req.body.note === "string" ? req.body.note : undefined,
+      });
+      res.json(updated);
     } catch (error) {
       next(error);
     }

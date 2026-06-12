@@ -1,15 +1,20 @@
 import React, { useEffect, useRef, useState } from "react";
 import { useAuth } from "@/hooks/use-auth";
 import {
+  AlertCircle,
   ArrowRight,
+  CheckCircle2,
   Contact,
+  Download,
   FileCheck,
   FileText,
   HelpCircle,
   Home,
+  Loader2,
   LogOut,
   MessageSquare,
   PenLine,
+  Trash2,
   Trophy,
   Upload,
   User,
@@ -17,9 +22,16 @@ import {
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { apiRequest, getQueryFn } from "@/lib/queryClient";
 import { peekBrowserSessionId } from "@/lib/browserSession";
-import { ProbateCase } from "@shared/schema";
+import { ProbateCase, Document } from "@shared/schema";
+import { uploadDocument, deleteDocument } from "@/lib/documentService";
+import { useToast } from "@/hooks/use-toast";
 import { EvaluationFlow } from "@/components/evaluation/EvaluationFlow";
-import { MilestoneProgress } from "@/components/milestones/MilestoneProgress";
+import { GuidedTaskList } from "@/components/milestones/GuidedTaskList";
+import { PaymentCta } from "@/components/payment/PaymentCta";
+
+// Dashboard tabs that a task can deep-link to; anything else (legacy "people"/
+// "assets") routes to Documents, where uploads populate those records.
+const DASHBOARD_TABS = ["overview", "evaluation", "documents", "tasks", "help", "profile"];
 
 // ── Shared style tokens (cream / navy design system, matches the auth screen) ──
 const cardCls = "rounded-[22px] border border-[#E3D9C9] bg-white p-7 sm:p-[38px]";
@@ -33,7 +45,7 @@ const TABS = [
   { id: "evaluation", label: "Evaluation" },
   { id: "documents", label: "Documents" },
   { id: "tasks", label: "Tasks" },
-  { id: "chat", label: "Help & Chat" },
+  { id: "help", label: "Help" },
   { id: "profile", label: "Profile" },
 ] as const;
 
@@ -55,13 +67,6 @@ const EmptyState: React.FC<{
     {children ? <div className="mt-[26px]">{children}</div> : null}
   </div>
 );
-
-function nowTime(): string {
-  const d = new Date();
-  return `${String(d.getHours()).padStart(2, "0")}:${String(d.getMinutes()).padStart(2, "0")}`;
-}
-
-type ChatMessage = { isBot: boolean; text: string; time: string };
 
 const DashboardPage: React.FC = () => {
   const { user, logoutMutation } = useAuth();
@@ -120,59 +125,163 @@ const DashboardPage: React.FC = () => {
   // The case's intake-derived flags (replaces the former /api/assessment record).
   const flags = progress?.evaluationFlags ?? null;
 
+  const { toast } = useToast();
+
+  // ── Documents: real upload pipeline (S3 → Gemini extraction) ──
+  // Poll while anything is still processing so extracted people/assets surface
+  // without the user refreshing.
+  const {
+    data: documents = [],
+    refetch: refetchDocuments,
+  } = useQuery<Document[]>({
+    queryKey: ["/api/documents", currentCase?.id],
+    queryFn: getQueryFn({ on401: "returnNull" }),
+    enabled: !!currentCase,
+    refetchInterval: (query) =>
+      (query.state.data as Document[] | undefined)?.some((d) => d.status === "processing")
+        ? 4000
+        : false,
+  });
+  const visibleDocuments = documents.filter((d) => d.status !== "deleted");
+
+  const [uploading, setUploading] = useState(false);
+  const [uploadMsg, setUploadMsg] = useState("");
+  const docInputRef = useRef<HTMLInputElement>(null);
+  const pendingCategoryRef = useRef<string>("general");
+
+  // Open the hidden file picker, remembering which category was clicked.
+  const openDocPicker = (category = "general") => {
+    pendingCategoryRef.current = category;
+    docInputRef.current?.click();
+  };
+
+  const handleFiles = async (fileList: FileList | null) => {
+    if (!fileList || fileList.length === 0) return;
+    if (!currentCase) {
+      toast({
+        title: "Setting up your case…",
+        description: "Please try again in a moment.",
+        variant: "destructive",
+      });
+      return;
+    }
+    const category = pendingCategoryRef.current || "general";
+    setUploading(true);
+    try {
+      for (const file of Array.from(fileList)) {
+        setUploadMsg(`Uploading ${file.name}…`);
+        const result = await uploadDocument(file, currentCase.id, category);
+        if (!result.success) throw new Error(result.error || "Upload failed");
+      }
+      toast({
+        title: "Upload complete",
+        description: "We're reading your document to pull out names, assets and debts.",
+      });
+      await refetchDocuments();
+    } catch (err) {
+      toast({
+        title: "Upload failed",
+        description: err instanceof Error ? err.message : "Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setUploading(false);
+      setUploadMsg("");
+    }
+  };
+
+  const handleDeleteDocument = async (id: number) => {
+    try {
+      await deleteDocument(id);
+      await refetchDocuments();
+    } catch {
+      toast({ title: "Couldn't delete", description: "Please try again.", variant: "destructive" });
+    }
+  };
+
+  const handleDownloadDocument = async (id: number) => {
+    try {
+      const res = await apiRequest("GET", `/api/documents/${id}/download`);
+      const { url } = await res.json();
+      window.open(url, "_blank");
+    } catch {
+      toast({ title: "Couldn't open document", description: "Please try again.", variant: "destructive" });
+    }
+  };
+
+  // Handle the return from Stripe Checkout (?payment=success|cancelled).
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const payment = params.get("payment");
+    if (!payment) return;
+    if (payment === "success") {
+      toast({
+        title: "Payment received",
+        description: "Thank you — your application is unlocked for submission.",
+      });
+      queryClient.invalidateQueries({ queryKey: ["/api/payments"] });
+    } else if (payment === "cancelled") {
+      toast({
+        title: "Checkout cancelled",
+        description: "No payment was taken. You can pay whenever you're ready.",
+      });
+    }
+    // Strip the query so a refresh doesn't re-trigger the toast.
+    window.history.replaceState({}, document.title, window.location.pathname);
+  }, [queryClient, toast]);
+
   const handleLogout = () => {
     logoutMutation.mutate();
   };
 
-  // ── Help & Chat: working thread (appends a canned support reply) ──
-  const [chatInput, setChatInput] = useState("");
-  const [messages, setMessages] = useState<ChatMessage[]>([
-    {
-      isBot: true,
-      text: "Welcome to ProbateSwift! How can I assist you with your probate application today?",
-      time: "22:08",
-    },
-    {
-      isBot: false,
-      text: "I need help understanding what documents I need for probate.",
-      time: "22:08",
-    },
-    {
-      isBot: true,
-      text: "For probate applications in England and Wales, you'll typically need:\n\n1. Death certificate\n2. The original will (if one exists)\n3. Completed probate application form\n4. Property and asset valuations\n5. Details of any debts",
-      time: "22:08",
-    },
-  ]);
-  const chatScrollRef = useRef<HTMLDivElement>(null);
+  const navigateToTab = (tab: string) =>
+    setActiveTab(DASHBOARD_TABS.includes(tab) ? tab : "documents");
 
-  useEffect(() => {
-    const el = chatScrollRef.current;
-    if (el) el.scrollTop = el.scrollHeight;
-  }, [messages, activeTab]);
-
-  const sendChat = () => {
-    const t = chatInput.trim();
-    if (!t) return;
-    const reply = `Thanks, ${firstName}. I've noted that. A probate advisor will follow up, and in the meantime you can start the free assessment from the Overview tab to get a tailored answer.`;
-    setMessages((m) => [
-      ...m,
-      { isBot: false, text: t, time: nowTime() },
-      { isBot: true, text: reply, time: nowTime() },
-    ]);
-    setChatInput("");
-  };
+  // A friendly title for the guided plan, e.g. "Margaret Hale's estate".
+  const deceasedName = [
+    (currentCase as any)?.deceasedFirstName,
+    (currentCase as any)?.deceasedLastName,
+  ]
+    .filter(Boolean)
+    .join(" ")
+    .trim();
+  const caseTitle = deceasedName ? `${deceasedName}'s estate` : "Your estate";
 
   const docCategories = [
-    { icon: <Contact className="h-[19px] w-[19px]" />, title: "Identification", sub: "ID, passport, etc." },
-    { icon: <FileCheck className="h-[19px] w-[19px]" />, title: "Death Certificate", sub: "Official certificate" },
-    { icon: <PenLine className="h-[19px] w-[19px]" />, title: "Will & Codicils", sub: "Original will" },
-    { icon: <Home className="h-[19px] w-[19px]" />, title: "Property Valuations", sub: "Home, land, etc." },
+    { id: "identification", icon: <Contact className="h-[19px] w-[19px]" />, title: "Identification", sub: "ID, passport, etc." },
+    { id: "death_certificate", icon: <FileCheck className="h-[19px] w-[19px]" />, title: "Death Certificate", sub: "Official certificate" },
+    { id: "will", icon: <PenLine className="h-[19px] w-[19px]" />, title: "Will & Codicils", sub: "Original will" },
+    { id: "property", icon: <Home className="h-[19px] w-[19px]" />, title: "Property Valuations", sub: "Home, land, etc." },
   ];
 
+  // Friendly label + badge styling for a document's processing status.
+  const docStatusMeta = (status: string): { label: string; cls: string } => {
+    switch (status) {
+      case "processing":
+        return { label: "Reading…", cls: "bg-[#E4EAF0] text-[#082D48]" };
+      case "processed":
+      case "verified":
+        return { label: "Read", cls: "bg-[#DDEAD9] text-[#3F6B36]" };
+      case "error":
+        return { label: "Couldn't read", cls: "bg-[#F2E2D8] text-[#B5613C]" };
+      default:
+        return { label: status, cls: "bg-[#EFE7DA] text-[#8A8278]" };
+    }
+  };
+
   const resources = [
-    { title: "Probate Glossary", desc: "Key terms explained in simple language.", cta: "View Guide" },
-    { title: "Document Checklist", desc: "Complete list of required paperwork.", cta: "Download PDF" },
-    { title: "Probate Timeline", desc: "Understand each step of the process.", cta: "View Guide" },
+    {
+      title: "How long does probate take?",
+      desc: "Once submitted, the Probate Registry currently takes around 8–12 weeks to issue a grant. Valuing the estate beforehand often takes longer, as banks and other institutions can be slow to reply.",
+    },
+    {
+      title: "What documents will I need?",
+      desc: "Usually the death certificate, the original will (if there is one), and valuations or statements for the estate's assets and debts. We'll tell you exactly which apply to your case.",
+    },
+    {
+      title: "When do I pay?",
+      desc: "ProbateSwift is free to use while you prepare everything. You only pay the £295 fee at the point you're ready to submit.",
+    },
   ];
 
   return (
@@ -224,7 +333,11 @@ const DashboardPage: React.FC = () => {
         <div key={activeTab} className="animate-ps-fade">
           {/* OVERVIEW */}
           {activeTab === "overview" && (
-            <div className="grid grid-cols-1 items-start gap-6 lg:grid-cols-[1.55fr_1fr]">
+            <div className="flex flex-col gap-6">
+              {/* Pay £295 once the case is ready to submit (self-hides otherwise) */}
+              {currentCase && <PaymentCta caseId={currentCase.id} />}
+
+              <div className="grid grid-cols-1 items-start gap-6 lg:grid-cols-[1.55fr_1fr]">
               {/* Assessment Status */}
               <div className={cardCls}>
                 <h2 className={cardTitleCls}>Assessment Status</h2>
@@ -321,6 +434,7 @@ const DashboardPage: React.FC = () => {
                   </div>
                 </div>
               </div>
+              </div>
             </div>
           )}
 
@@ -354,23 +468,44 @@ const DashboardPage: React.FC = () => {
           {/* DOCUMENTS */}
           {activeTab === "documents" && (
             <div className="grid grid-cols-1 items-start gap-6 lg:grid-cols-[1.55fr_1fr]">
+              {/* Shared hidden input — drives both the dropzone and the category cards */}
+              <input
+                ref={docInputRef}
+                type="file"
+                className="hidden"
+                multiple
+                accept=".pdf,.jpg,.jpeg,.png,.webp,.tiff"
+                onChange={(e) => {
+                  handleFiles(e.target.files);
+                  e.target.value = ""; // allow re-selecting the same file
+                }}
+              />
+
               <div className={cardCls}>
                 <h2 className={cardTitleCls}>Upload Documents</h2>
                 <p className={cardSubCls}>Add important files related to your probate application</p>
 
-                <div className="mt-6 flex flex-col items-center rounded-[18px] border-2 border-dashed border-[#D8CDBA] bg-[#FBF7EF] p-10 text-center">
+                <div
+                  onDragOver={(e) => e.preventDefault()}
+                  onDrop={(e) => {
+                    e.preventDefault();
+                    pendingCategoryRef.current = "general";
+                    handleFiles(e.dataTransfer.files);
+                  }}
+                  className="mt-6 flex flex-col items-center rounded-[18px] border-2 border-dashed border-[#D8CDBA] bg-[#FBF7EF] p-10 text-center"
+                >
                   <div className="mb-[18px] flex h-[60px] w-[60px] items-center justify-center rounded-full bg-[#E4EAF0] text-[#082D48]">
-                    <Upload className="h-[26px] w-[26px]" />
+                    {uploading ? <Loader2 className="h-[26px] w-[26px] animate-spin" /> : <Upload className="h-[26px] w-[26px]" />}
                   </div>
-                  <div className="text-[19px] font-bold">Drag &amp; Drop Files</div>
+                  <div className="text-[19px] font-bold">{uploading ? "Uploading…" : "Drag & Drop Files"}</div>
                   <p className="mb-5 mt-1.5 text-[15px] text-[#5C6670]">
-                    Upload PDFs, images, or document files (max 10MB)
+                    {uploading ? uploadMsg || "Please wait…" : "PDF, JPG, PNG, WebP or TIFF (max 20MB)"}
                   </p>
-                  <input type="file" className="hidden" id="document-upload" multiple />
                   <button
                     type="button"
-                    onClick={() => document.getElementById("document-upload")?.click()}
-                    className={navyPillCls}
+                    disabled={uploading}
+                    onClick={() => openDocPicker("general")}
+                    className={`${navyPillCls} disabled:cursor-not-allowed disabled:opacity-60`}
                   >
                     Browse Files
                   </button>
@@ -391,8 +526,9 @@ const DashboardPage: React.FC = () => {
                       </div>
                       <button
                         type="button"
-                        onClick={() => document.getElementById("document-upload")?.click()}
-                        className="w-full cursor-pointer rounded-[10px] border border-[#E3D9C9] bg-[#FBF7EF] py-2.5 text-[14px] font-semibold text-[#082D48] transition hover:bg-[#E4EAF0]"
+                        disabled={uploading}
+                        onClick={() => openDocPicker(cat.id)}
+                        className="w-full cursor-pointer rounded-[10px] border border-[#E3D9C9] bg-[#FBF7EF] py-2.5 text-[14px] font-semibold text-[#082D48] transition hover:bg-[#E4EAF0] disabled:cursor-not-allowed disabled:opacity-60"
                       >
                         Upload
                       </button>
@@ -404,11 +540,57 @@ const DashboardPage: React.FC = () => {
               <div className={cardCls}>
                 <h2 className={cardTitleCls}>Your Documents</h2>
                 <p className={cardSubCls}>Recently uploaded files</p>
-                <EmptyState
-                  icon={<FileText className="h-7 w-7 text-[#082D48]" strokeWidth={2} />}
-                  title="No Documents Yet"
-                  body="Documents you upload will appear here."
-                />
+                {visibleDocuments.length === 0 ? (
+                  <EmptyState
+                    icon={<FileText className="h-7 w-7 text-[#082D48]" strokeWidth={2} />}
+                    title="No Documents Yet"
+                    body="Documents you upload will appear here, and we'll read them to pull out names, assets and debts."
+                  />
+                ) : (
+                  <div className="mt-6 flex flex-col gap-3">
+                    {visibleDocuments.map((doc) => {
+                      const meta = docStatusMeta(doc.status ?? "processing");
+                      return (
+                        <div
+                          key={doc.id}
+                          className="flex items-center gap-3 rounded-[14px] border border-[#E3D9C9] bg-[#FBF7EF] p-4"
+                        >
+                          <div className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-[10px] bg-[#E4EAF0] text-[#082D48]">
+                            {doc.status === "processing" ? (
+                              <Loader2 className="h-[18px] w-[18px] animate-spin" />
+                            ) : doc.status === "error" ? (
+                              <AlertCircle className="h-[18px] w-[18px]" />
+                            ) : (
+                              <CheckCircle2 className="h-[18px] w-[18px]" />
+                            )}
+                          </div>
+                          <div className="min-w-0 flex-1">
+                            <div className="truncate text-[15px] font-bold">{doc.filename}</div>
+                            <span className={`mt-0.5 inline-block rounded-[6px] px-2 py-0.5 text-[12px] font-semibold ${meta.cls}`}>
+                              {meta.label}
+                            </span>
+                          </div>
+                          <button
+                            type="button"
+                            onClick={() => handleDownloadDocument(doc.id)}
+                            aria-label="Download"
+                            className="flex h-8 w-8 items-center justify-center rounded-full text-[#5C6670] transition hover:bg-[#E4EAF0] hover:text-[#082D48]"
+                          >
+                            <Download className="h-[17px] w-[17px]" />
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => handleDeleteDocument(doc.id)}
+                            aria-label="Delete"
+                            className="flex h-8 w-8 items-center justify-center rounded-full text-[#5C6670] transition hover:bg-[#F2E2D8] hover:text-[#B5613C]"
+                          >
+                            <Trash2 className="h-[17px] w-[17px]" />
+                          </button>
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
               </div>
             </div>
           )}
@@ -420,11 +602,12 @@ const DashboardPage: React.FC = () => {
                 <div className="h-8 w-8 animate-spin rounded-full border-b-2 border-[#082D48]" />
               </div>
             ) : currentCase ? (
-              <MilestoneProgress
-                completedSections={completedSections}
+              <GuidedTaskList
+                caseId={currentCase.id}
+                caseTitle={caseTitle}
                 evaluationFlags={progress?.evaluationFlags}
                 onStartEvaluation={() => setActiveTab("evaluation")}
-                onNavigateToTab={setActiveTab}
+                onNavigateToTab={navigateToTab}
               />
             ) : (
               <div className={cardCls}>
@@ -440,101 +623,47 @@ const DashboardPage: React.FC = () => {
               </div>
             ))}
 
-          {/* HELP & CHAT */}
-          {activeTab === "chat" && (
+          {/* HELP */}
+          {activeTab === "help" && (
             <div className="grid grid-cols-1 items-start gap-6 lg:grid-cols-[1.55fr_1fr]">
               <div className="flex flex-col rounded-[22px] border border-[#E3D9C9] bg-white p-7 sm:p-8">
                 <div className="flex items-center gap-2.5">
                   <MessageSquare className="h-[22px] w-[22px] text-[#082D48]" />
-                  <h2 className="m-0 text-[24px] font-extrabold tracking-[-0.015em]">Chat Support</h2>
+                  <h2 className="m-0 text-[24px] font-extrabold tracking-[-0.015em]">Get help</h2>
                 </div>
                 <p className="m-0 mb-[22px] mt-1.5 text-[15px] text-[#8A8278]">
-                  Speak with our probate advisors
+                  We're a small team and we read every message.
                 </p>
 
-                <div
-                  ref={chatScrollRef}
-                  className="ps-scroll flex h-[360px] flex-col gap-[18px] overflow-y-auto pr-2"
-                >
-                  {messages.map((m, i) => (
-                    <div
-                      key={i}
-                      className={`flex items-start gap-3 ${m.isBot ? "" : "flex-row-reverse"}`}
-                    >
-                      {m.isBot && (
-                        <div className="flex h-[34px] w-[34px] flex-shrink-0 items-center justify-center rounded-full bg-[#082D48]">
-                          <MessageSquare className="h-4 w-4 text-[#F6F0E7]" />
-                        </div>
-                      )}
-                      <div
-                        className="max-w-[78%] rounded-[14px] border px-4 py-3.5"
-                        style={{
-                          background: m.isBot ? "#FBF7EF" : "#E4EAF0",
-                          borderColor: m.isBot ? "#EFE7DA" : "#D4DEEA",
-                        }}
-                      >
-                        {m.isBot && (
-                          <div className="mb-1.5 text-[13px] font-bold text-[#082D48]">
-                            ProbateSwift Support
-                          </div>
-                        )}
-                        <div className="whitespace-pre-line text-[15px] leading-[1.5] text-[#1E2A33]">
-                          {m.text}
-                        </div>
-                        <div className="mt-[7px] text-[12px] text-[#8A8278]">{m.time}</div>
-                      </div>
-                    </div>
-                  ))}
-                </div>
+                <p className="mb-6 text-[16px] leading-[1.6] text-[#5C6670]">
+                  Stuck on a step, unsure what a question means, or want a human to look over your
+                  case before you submit? Email us and a real person will get back to you — usually
+                  within one working day.
+                </p>
 
-                <div className="mt-5 flex gap-3">
-                  <input
-                    value={chatInput}
-                    onChange={(e) => setChatInput(e.target.value)}
-                    onKeyDown={(e) => {
-                      if (e.key === "Enter") {
-                        e.preventDefault();
-                        sendChat();
-                      }
-                    }}
-                    placeholder="Type your message here..."
-                    className="flex-1 rounded-[12px] border-[1.5px] border-[#E3D9C9] bg-[#FBF7EF] px-4 py-3.5 text-[15px] font-medium text-[#1E2A33] outline-none focus:border-[#082D48]"
-                  />
-                  <button
-                    type="button"
-                    onClick={sendChat}
-                    className="cursor-pointer rounded-[12px] border-none bg-[#082D48] px-[26px] text-[15px] font-bold text-[#F6F0E7] transition hover:bg-[#06223A]"
-                  >
-                    Send
-                  </button>
-                </div>
+                <a
+                  href="mailto:support@02n.ltd?subject=Help%20with%20my%20probate%20case"
+                  className={`${navyPillCls} self-start no-underline`}
+                >
+                  <MessageSquare className="h-[18px] w-[18px]" /> Email support@02n.ltd
+                </a>
               </div>
 
               <div className="rounded-[22px] border border-[#E3D9C9] bg-white p-7 sm:p-8">
-                <h2 className="m-0 text-[24px] font-extrabold tracking-[-0.015em]">Help Resources</h2>
-                <p className="m-0 mb-[22px] mt-1 text-[15px] text-[#8A8278]">Useful guides and FAQs</p>
+                <h2 className="m-0 text-[24px] font-extrabold tracking-[-0.015em]">Quick answers</h2>
+                <p className="m-0 mb-[22px] mt-1 text-[15px] text-[#8A8278]">
+                  The questions we hear most
+                </p>
                 <div className="flex flex-col gap-[18px]">
                   {resources.map((res) => (
-                    <div key={res.title} className="border-b border-[#EFE7DA] pb-[18px]">
+                    <div key={res.title} className="border-b border-[#EFE7DA] pb-[18px] last:border-b-0">
                       <div className="mb-1.5 flex items-center gap-2.5">
                         <FileText className="h-[17px] w-[17px] text-[#082D48]" />
                         <span className="text-[17px] font-bold">{res.title}</span>
                       </div>
-                      <p className="m-0 mb-1.5 text-[14px] text-[#5C6670]">{res.desc}</p>
-                      <button
-                        type="button"
-                        className="cursor-pointer border-none bg-transparent p-0 text-[14px] font-bold text-[#082D48] underline"
-                      >
-                        {res.cta}
-                      </button>
+                      <p className="m-0 text-[14px] leading-[1.5] text-[#5C6670]">{res.desc}</p>
                     </div>
                   ))}
-                  <button
-                    type="button"
-                    className="w-full cursor-pointer rounded-[12px] border border-[#E3D9C9] bg-[#FBF7EF] py-3 text-[15px] font-semibold text-[#082D48] transition hover:bg-[#E4EAF0]"
-                  >
-                    View All Resources
-                  </button>
                 </div>
               </div>
             </div>

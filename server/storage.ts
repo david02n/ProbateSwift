@@ -19,6 +19,12 @@ import {
   referralEvents,
   type ReferralEvent,
   type InsertReferralEvent,
+  payments,
+  type Payment,
+  type InsertPayment,
+  caseTasks,
+  type CaseTask,
+  type InsertCaseTask,
   type ProbateCase,
   type InsertProbateCase,
   type Executor,
@@ -95,6 +101,16 @@ export interface IStorage {
   // Referral events (PS-5)
   createReferralEvent(data: InsertReferralEvent): Promise<ReferralEvent>;
   getReferralEventsByCaseId(caseId: number): Promise<ReferralEvent[]>;
+
+  // Payments (Phase C) — £295 flat fee, charged at submission.
+  createPayment(data: InsertPayment): Promise<Payment>;
+  updatePayment(id: string, data: Partial<InsertPayment>): Promise<Payment | undefined>;
+  getPaymentsByCaseId(caseId: number): Promise<Payment[]>;
+  getPaymentByCheckoutSessionId(sessionId: string): Promise<Payment | undefined>;
+
+  // Case task state (Phase B) — guided task list overlay.
+  getCaseTasksByCaseId(caseId: number): Promise<CaseTask[]>;
+  upsertCaseTask(caseId: number, taskKey: string, data: Partial<InsertCaseTask>): Promise<CaseTask>;
 }
 
 class MemoryStorage implements IStorage {
@@ -168,6 +184,12 @@ class MemoryStorage implements IStorage {
   async claimIntake(): Promise<Intake | undefined> { throw new Error("Database is not configured"); }
   async createReferralEvent(): Promise<ReferralEvent> { throw new Error("Database is not configured"); }
   async getReferralEventsByCaseId(): Promise<ReferralEvent[]> { return []; }
+  async createPayment(): Promise<Payment> { throw new Error("Database is not configured"); }
+  async updatePayment(): Promise<Payment | undefined> { throw new Error("Database is not configured"); }
+  async getPaymentsByCaseId(): Promise<Payment[]> { return []; }
+  async getPaymentByCheckoutSessionId(): Promise<Payment | undefined> { return undefined; }
+  async getCaseTasksByCaseId(): Promise<CaseTask[]> { return []; }
+  async upsertCaseTask(): Promise<CaseTask> { throw new Error("Database is not configured"); }
 }
 
 export class DatabaseStorage implements IStorage {
@@ -499,6 +521,64 @@ export class DatabaseStorage implements IStorage {
 
   async getReferralEventsByCaseId(caseId: number): Promise<ReferralEvent[]> {
     return await db!.select().from(referralEvents).where(eq(referralEvents.caseId, caseId));
+  }
+
+  // Payment methods (Phase C)
+  async createPayment(data: InsertPayment): Promise<Payment> {
+    const [row] = await db!.insert(payments).values(data).returning();
+    return row;
+  }
+
+  async updatePayment(id: string, data: Partial<InsertPayment>): Promise<Payment | undefined> {
+    const [row] = await db!
+      .update(payments)
+      .set({ ...data, updatedAt: new Date() })
+      .where(eq(payments.id, id))
+      .returning();
+    return row;
+  }
+
+  async getPaymentsByCaseId(caseId: number): Promise<Payment[]> {
+    return await db!.select().from(payments).where(eq(payments.caseId, caseId));
+  }
+
+  async getPaymentByCheckoutSessionId(sessionId: string): Promise<Payment | undefined> {
+    const [row] = await db!
+      .select()
+      .from(payments)
+      .where(eq(payments.stripeCheckoutSessionId, sessionId));
+    return row;
+  }
+
+  // Case task state (Phase B)
+  async getCaseTasksByCaseId(caseId: number): Promise<CaseTask[]> {
+    return await db!.select().from(caseTasks).where(eq(caseTasks.caseId, caseId));
+  }
+
+  async upsertCaseTask(
+    caseId: number,
+    taskKey: string,
+    data: Partial<InsertCaseTask>,
+  ): Promise<CaseTask> {
+    const [existing] = await db!
+      .select()
+      .from(caseTasks)
+      .where(and(eq(caseTasks.caseId, caseId), eq(caseTasks.taskKey, taskKey)));
+
+    if (existing) {
+      const [row] = await db!
+        .update(caseTasks)
+        .set({ ...data, updatedAt: new Date() })
+        .where(eq(caseTasks.id, existing.id))
+        .returning();
+      return row;
+    }
+
+    const [row] = await db!
+      .insert(caseTasks)
+      .values({ caseId, taskKey, ...data })
+      .returning();
+    return row;
   }
 }
 
