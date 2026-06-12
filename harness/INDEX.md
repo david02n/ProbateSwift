@@ -124,6 +124,27 @@ IHT forms / full admin £2,730+ — primary threat), `comp-farewill` (Essential 
 - Sequence the PA1P route: paper-PDF first vs browser-extension as a fast-route upgrade.
 - Decide print-and-post: v1 or later upsell. Legal/liability review of generating signable form content.
 
+## Launch hardening backlog (recorded 2026-06-12, post self-serve build)
+> Full detail + rationale in the project memory `launch-build-status.md`. Branch `feat/self-serve-launch` (PR #2) — merge must be paired with `db:push`.
+
+**P0 — before real paying users:**
+- `db:push` paired with the deploy (creates `payments`, `case_tasks`) — without it the authed routes 500.
+- End-to-end payment test on staging (test mode → then live): pay → webhook 200 → case flips to paid → PA1P downloads.
+- **Legal/liability review of the generated PA1P** before users rely on it (we now output signable form content).
+- Verify the logged-in funnel: assessment→account carry-over, upload→extraction, every dashboard tab renders.
+
+**P1 — soon after first users:**
+- Post-payment polling (avoid a "still says Pay" flash if the webhook lands just after redirect).
+- Webhook-miss fallback (reconcile via Stripe `session_id`, or a manual mark-paid path).
+- Expand the PA1P field map beyond the ~14 high-confidence fields; verify against a real submission.
+- Build IHT400 (439-field) + PA1A mappings — the core differentiator (`sol-guided-iht400`); inventories ready.
+- Error monitoring (Sentry) on the logged-in app — the earlier `/estate` white-screen was invisible.
+
+**P2 — later:**
+- Delete the now-orphaned legacy pages (estate/people/documents/evaluation/deceased pages, MilestoneProgress, NewHeader) — clears most pre-existing `tsc` errors; `npm run build` is the real gate and is green.
+- Full per-institution valuation tracker (letterSent/replyReceived correspondence model) vs the current lighter status-overlay cut.
+- Stricter rate limits on checkout/forms; payment-confirmation email; mobile/tablet QA of the guided list + pay flow.
+
 ## `assumption`-level nodes (not yet grounded in code — validate before relying on)
 - `sol-llm-triage` (alternative not built), `sol-flat-fee-checkout` (price number untested),
   `sol-pa1p-browser-autofill` (idea, not built), `dec-pricing-model` (price number untested).
