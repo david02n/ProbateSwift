@@ -212,3 +212,41 @@ describe("deriveReadiness (PS-5)", () => {
     expect(r.canPay).toBe(true);
   });
 });
+
+// Regression: a happy-path case whose short landing assessment never asked the
+// jurisdiction questions must NOT be referred to a solicitor or have payment
+// paused — but must also not be payable until jurisdiction is confirmed.
+describe("jurisdiction gating (does not refer happy-path cases)", () => {
+  it("does NOT block when the jurisdiction questions are unanswered", () => {
+    const flags = deriveFlags({ has_will: true, named_executor_in_will: true });
+    expect(flags.application_blocked).toBe(false);
+    expect(flags.jurisdiction_supported).toBe(false); // unconfirmed, not excluded
+  });
+
+  it("blocks only on an explicit out-of-jurisdiction answer", () => {
+    expect(deriveFlags({ death_in_england_wales: false }).application_blocked).toBe(true);
+    expect(deriveFlags({ deceased_domiciled_uk: false }).application_blocked).toBe(true);
+  });
+
+  it("readiness: unanswered jurisdiction is not a specialist referral and is not yet payable", () => {
+    const r = deriveReadiness(deriveFlags({ has_will: true, named_executor_in_will: true }), {});
+    expect(r.route).not.toBe("specialist");
+    expect(r.canPay).toBe(false);
+  });
+
+  it("readiness: explicit out-of-jurisdiction IS a specialist referral", () => {
+    const r = deriveReadiness(deriveFlags({ death_in_england_wales: false }), {});
+    expect(r.route).toBe("specialist");
+    expect(r.canPay).toBe(false);
+  });
+
+  it("readiness: confirmed jurisdiction (no other flags) can pay", () => {
+    const flags = deriveFlags({
+      death_in_england_wales: true,
+      deceased_domiciled_uk: true,
+      has_will: true,
+      named_executor_in_will: true,
+    });
+    expect(deriveReadiness(flags, { applicantIsEntitled: true }).canPay).toBe(true);
+  });
+});

@@ -23,7 +23,9 @@ const stripe =
 async function computeCanPay(caseId: number): Promise<boolean> {
   const intake = await storage.getIntakeByCaseId(caseId);
   const answers: Record<string, any> = (intake?.answers as Record<string, any>) ?? {};
-  const flags = (intake?.derivedFlags as Record<string, any>) ?? deriveFlags(answers);
+  // Recompute from answers (not the stored cache) so the canPay gate reflects the
+  // current rules.
+  const flags = deriveFlags(answers);
 
   const amberKeys = amberFlagKeys(answers);
   const acks = (intake?.amberAcknowledgements as Record<string, any>) ?? {};

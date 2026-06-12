@@ -2,6 +2,7 @@ import type { Express, RequestHandler, Request, Response, NextFunction } from "e
 import { storage } from "../storage";
 import { assertCaseOwnership } from "../helpers";
 import { insertProbateCaseSchema } from "@shared/schema";
+import { deriveFlags } from "@shared/evaluation-config";
 
 export function registerCaseRoutes(app: Express, requireAuth: RequestHandler): void {
 
@@ -96,7 +97,9 @@ export function registerCaseRoutes(app: Express, requireAuth: RequestHandler): v
           documents:   documents.filter(d => d.status !== "deleted").length,
         },
         evaluationStarted: intakeRecord !== undefined,
-        evaluationFlags:   intakeRecord?.derivedFlags ?? null,
+        // Recompute from answers so the dashboard reflects current rules (the
+        // stored derivedFlags cache can be stale after a logic change).
+        evaluationFlags:   intakeRecord ? deriveFlags(answers) : null,
       });
     } catch (error) {
       next(error);

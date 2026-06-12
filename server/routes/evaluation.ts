@@ -81,7 +81,10 @@ export function registerEvaluationRoutes(app: Express, requireAuth: RequestHandl
 
       const intake = await storage.getIntakeByCaseId(caseId);
       const answers: Record<string, any> = (intake?.answers as Record<string, any>) ?? {};
-      const flags = (intake?.derivedFlags as Record<string, any>) ?? deriveFlags(answers);
+      // Always recompute from answers: derivedFlags is a pure function of answers
+      // and the stored copy can be stale after a rules change (a stale copy was
+      // referring happy-path cases to a solicitor). Storage stays a cache only.
+      const flags = deriveFlags(answers);
 
       const amberKeys = amberFlagKeys(answers);
       const acks = (intake?.amberAcknowledgements as Record<string, any>) ?? {};
@@ -145,7 +148,10 @@ export function registerEvaluationRoutes(app: Express, requireAuth: RequestHandl
 
       const intake = await storage.getIntakeByCaseId(caseId);
       const answers: Record<string, any> = (intake?.answers as Record<string, any>) ?? {};
-      const flags = (intake?.derivedFlags as Record<string, any>) ?? deriveFlags(answers);
+      // Always recompute from answers: derivedFlags is a pure function of answers
+      // and the stored copy can be stale after a rules change (a stale copy was
+      // referring happy-path cases to a solicitor). Storage stays a cache only.
+      const flags = deriveFlags(answers);
       const specialist = deriveSpecialist(answers);
 
       const summary = {
