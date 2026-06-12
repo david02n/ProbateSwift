@@ -120,8 +120,12 @@ const LandingView: React.FC<LandingViewProps> = ({ onStartAssessment, onGoSecuri
           <div className="relative">
             <div className="aspect-[4/5] overflow-hidden rounded-[24px] border border-[#E3D9C9] shadow-[0_30px_60px_-36px_rgba(8,45,72,0.4)]">
               <img
-                src="/assets/hero.png"
+                src="/assets/hero.webp"
                 alt="A woman sorting estate paperwork at her kitchen table"
+                width={880}
+                height={660}
+                fetchPriority="high"
+                decoding="async"
                 className="block h-full w-full object-cover object-[50%_28%]"
               />
             </div>
@@ -141,8 +145,12 @@ const LandingView: React.FC<LandingViewProps> = ({ onStartAssessment, onGoSecuri
         <div className="grid items-center gap-7 rounded-[22px] border border-[#E3D9C9] bg-white px-[30px] py-7 md:grid-cols-[1.3fr_1fr_1fr]">
           <div className="flex items-center gap-4">
             <img
-              src="/assets/founder.png"
+              src="/assets/founder.webp"
               alt="David, founder"
+              width={64}
+              height={64}
+              loading="lazy"
+              decoding="async"
               className="block h-16 w-16 flex-shrink-0 rounded-full border border-[#E3D9C9] object-cover object-[50%_30%]"
             />
             <div>
@@ -533,8 +541,12 @@ const LandingView: React.FC<LandingViewProps> = ({ onStartAssessment, onGoSecuri
         <div className="grid items-center gap-11 rounded-[26px] border border-[#E3D9C9] bg-white p-8 md:grid-cols-[0.8fr_1.2fr] md:p-12">
           <div className="aspect-square overflow-hidden rounded-[20px] border border-[#E3D9C9]">
             <img
-              src="/assets/founder.png"
+              src="/assets/founder.webp"
               alt="David, founder of ProbateSwift"
+              width={720}
+              height={900}
+              loading="lazy"
+              decoding="async"
               className="block h-full w-full object-cover object-[50%_30%]"
             />
           </div>
