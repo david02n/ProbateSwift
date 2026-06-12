@@ -43,59 +43,28 @@ export const EvaluationFlow: React.FC<EvaluationFlowProps> = ({ caseId, onComple
     },
   });
 
-  // Initialize answers from existing evaluation and skip to first unanswered question (only on initial load)
+  // Initialize answers from the existing record (the landing-assessment answers
+  // are claimed onto the case, so they arrive here). Anything already answered is
+  // hidden from the flow — we never re-ask it.
   const [hasInitialized, setHasInitialized] = useState(false);
   const [blockerMessage, setBlockerMessage] = useState<string | null>(null);
-  
+  // Keys answered BEFORE this session (landing assessment or a prior visit). These
+  // are never re-asked. Captured once at load so fields the user fills in THIS
+  // session don't disappear from under them as they type.
+  const [preAnsweredKeys, setPreAnsweredKeys] = useState<Set<string>>(new Set());
+
   useEffect(() => {
     if (existingEvaluation && typeof existingEvaluation === 'object' && 'answers' in existingEvaluation && !hasInitialized) {
       const evaluation = existingEvaluation as any;
       if (evaluation.answers) {
         setAnswers(evaluation.answers);
-        
-        // Find first unanswered question, prioritizing current section completion
-        let firstUnansweredQuestion = null;
-        
-        // First, check each section in order for unanswered questions
-        for (let sectionIndex = 0; sectionIndex < detailedEvaluationSections.length; sectionIndex++) {
-          const section = detailedEvaluationSections[sectionIndex];
-          
-          // Filter visible questions in this section
-          const visibleQuestionsInSection = section.questions.filter(question => {
-            if (!question.conditionalLogic?.showIf) return true;
-            
-            return Object.entries(question.conditionalLogic.showIf).every(([key, expectedValue]) => {
-              const actualValue = evaluation.answers[key];
-              if (Array.isArray(expectedValue)) {
-                return expectedValue.includes(actualValue);
-              }
-              return actualValue === expectedValue;
-            });
-          });
-          
-          // Look for first unanswered question in this section
-          const unansweredInSection = visibleQuestionsInSection.find(question => {
-            return evaluation.answers[question.key] === undefined;
-          });
-          
-          if (unansweredInSection) {
-            firstUnansweredQuestion = {
-              ...unansweredInSection,
-              sectionId: section.id,
-              sectionIndex
-            };
-            break; // Stop at first section with unanswered questions
-          }
-        }
-        
-        if (firstUnansweredQuestion) {
-          setCurrentSectionIndex(firstUnansweredQuestion.sectionIndex);
-          setCurrentQuestionIndex(
-            detailedEvaluationSections[firstUnansweredQuestion.sectionIndex].questions.findIndex(
-              q => q.key === firstUnansweredQuestion.key
-            )
-          );
-        }
+        setPreAnsweredKeys(
+          new Set(
+            Object.keys(evaluation.answers).filter(
+              (k) => evaluation.answers[k] !== undefined && evaluation.answers[k] !== null,
+            ),
+          ),
+        );
       }
       if ('derivedFlags' in evaluation && evaluation.derivedFlags) {
         setDerivedFlags(evaluation.derivedFlags);
@@ -103,7 +72,7 @@ export const EvaluationFlow: React.FC<EvaluationFlowProps> = ({ caseId, onComple
       if ('completedAt' in evaluation && evaluation.completedAt) {
         setIsComplete(true);
       }
-      
+
       setHasInitialized(true);
     }
   }, [existingEvaluation, hasInitialized]);
@@ -138,14 +107,14 @@ export const EvaluationFlow: React.FC<EvaluationFlowProps> = ({ caseId, onComple
     return true;
   });
 
-  // Filter visible questions based on conditional logic
-  const visibleQuestions = allQuestions.filter(question => {
+  // All questions visible given conditional logic (used for progress + section nav).
+  const allVisibleQuestions = allQuestions.filter(question => {
     // First check if the section should be visible
     const sectionVisible = visibleSections.some(section => section.id === question.sectionId);
     if (!sectionVisible) return false;
 
     if (!question.conditionalLogic?.showIf) return true;
-    
+
     return Object.entries(question.conditionalLogic.showIf).every(([key, expectedValue]) => {
       const actualValue = answers[key];
       if (Array.isArray(expectedValue)) {
@@ -154,6 +123,11 @@ export const EvaluationFlow: React.FC<EvaluationFlowProps> = ({ caseId, onComple
       return actualValue === expectedValue;
     });
   });
+
+  // The questions we actually ASK: everything visible, minus what was already
+  // answered before this session (e.g. in the landing assessment). This is what
+  // implements "don't make them answer the same thing twice".
+  const visibleQuestions = allVisibleQuestions.filter(q => !preAnsweredKeys.has(q.key));
 
   const currentQuestion = visibleQuestions[currentQuestionIndex];
   
@@ -445,6 +419,9 @@ export const EvaluationFlow: React.FC<EvaluationFlowProps> = ({ caseId, onComple
             setShowResults(false);
             setCurrentSectionIndex(0);
             setCurrentQuestionIndex(0);
+            // Retake = review everything again, so un-hide the previously-answered
+            // questions (their saved values stay as pre-filled defaults).
+            setPreAnsweredKeys(new Set());
           }}
         />
       </div>
@@ -496,7 +473,7 @@ export const EvaluationFlow: React.FC<EvaluationFlowProps> = ({ caseId, onComple
       {/* Section Navigation */}
       <div className="flex flex-wrap gap-2">
         {visibleSections.map((section, index) => {
-          const sectionQuestions = visibleQuestions.filter(q => q.sectionId === section.id);
+          const sectionQuestions = allVisibleQuestions.filter(q => q.sectionId === section.id);
           const answeredInSection = sectionQuestions.filter(q => answers[q.key] !== undefined).length;
           const isCurrentSection = section.id === currentQuestion.sectionId;
           const isComplete = answeredInSection === sectionQuestions.length;
