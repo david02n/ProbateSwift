@@ -1,0 +1,21 @@
+{
+  "form": "PA1P_0124_citizen.pdf",
+  "title": "PA1P — Apply for probate (where there is a will)",
+  "_note": "Conservative, high-confidence field map. Keys are exact AcroForm field names (see forms/field-inventories/PA1P_0124_citizen.json); values are dotted paths into the form context built by server/services/formFiller.ts. Extend by adding entries — unmapped fields are simply left blank for the applicant to complete.",
+  "text": {
+    "Title": "applicant.title",
+    "First names": "applicant.firstName",
+    "Middle names": "applicant.middleNames",
+    "Last name": "applicant.lastName",
+    "Building and street": "applicant.addressLine1",
+    "Second line of address": "applicant.addressLine2",
+    "Town or city": "applicant.city",
+    "County optional": "applicant.county",
+    "Postcode": "applicant.postCode",
+    "Your home telephone number": "applicant.phoneHome",
+    "Your mobilework telephone number": "applicant.phoneMobile",
+    "Your email address": "applicant.email",
+    "Death Certificate": "deceased.forenames",
+    "Surname as it appears on the Death Certificate": "deceased.lastName"
+  }
+}

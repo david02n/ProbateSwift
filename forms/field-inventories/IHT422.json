@@ -1,0 +1,162 @@
+{
+  "file": "IHT422.pdf",
+  "fieldCount": 39,
+  "fields": [
+    {
+      "name": "IHT422_01",
+      "type": "PDFTextField"
+    },
+    {
+      "name": "IHT422_02_01",
+      "type": "PDFTextField"
+    },
+    {
+      "name": "IHT422_02_02",
+      "type": "PDFTextField"
+    },
+    {
+      "name": "IHT422_03",
+      "type": "PDFTextField"
+    },
+    {
+      "name": "IHT422_04_01",
+      "type": "PDFTextField"
+    },
+    {
+      "name": "IHT422_04_02",
+      "type": "PDFTextField"
+    },
+    {
+      "name": "IHT422_04_03",
+      "type": "PDFTextField"
+    },
+    {
+      "name": "IHT422_04_04",
+      "type": "PDFTextField"
+    },
+    {
+      "name": "IHT422_04_05",
+      "type": "PDFTextField"
+    },
+    {
+      "name": "IHT422_04_06",
+      "type": "PDFTextField"
+    },
+    {
+      "name": "IHT422_04_07",
+      "type": "PDFTextField"
+    },
+    {
+      "name": "IHT422_04_08",
+      "type": "PDFTextField"
+    },
+    {
+      "name": "IHT422_05_01",
+      "type": "PDFTextField"
+    },
+    {
+      "name": "IHT422_05_02",
+      "type": "PDFTextField"
+    },
+    {
+      "name": "IHT422_05_03",
+      "type": "PDFTextField"
+    },
+    {
+      "name": "IHT422_05_04",
+      "type": "PDFTextField"
+    },
+    {
+      "name": "IHT422_05_05",
+      "type": "PDFTextField"
+    },
+    {
+      "name": "IHT422_05_06",
+      "type": "PDFTextField"
+    },
+    {
+      "name": "IHT422_05_07",
+      "type": "PDFTextField"
+    },
+    {
+      "name": "IHT422_05_08",
+      "type": "PDFTextField"
+    },
+    {
+      "name": "IHT422_05_09",
+      "type": "PDFTextField"
+    },
+    {
+      "name": "IHT422_06_01",
+      "type": "PDFTextField"
+    },
+    {
+      "name": "IHT422_06_02",
+      "type": "PDFTextField"
+    },
+    {
+      "name": "IHT422_06_03",
+      "type": "PDFTextField"
+    },
+    {
+      "name": "IHT422_06_04",
+      "type": "PDFTextField"
+    },
+    {
+      "name": "IHT422_06_05",
+      "type": "PDFTextField"
+    },
+    {
+      "name": "IHT422_06_06",
+      "type": "PDFTextField"
+    },
+    {
+      "name": "IHT422_06_07",
+      "type": "PDFTextField"
+    },
+    {
+      "name": "IHT422_06_08",
+      "type": "PDFTextField"
+    },
+    {
+      "name": "IHT422_07",
+      "type": "PDFCheckBox"
+    },
+    {
+      "name": "IHT422_08",
+      "type": "PDFTextField"
+    },
+    {
+      "name": "IHT422_09_01",
+      "type": "PDFTextField"
+    },
+    {
+      "name": "IHT422_09_02",
+      "type": "PDFTextField"
+    },
+    {
+      "name": "IHT422_10_01",
+      "type": "PDFTextField"
+    },
+    {
+      "name": "IHT422_10_02",
+      "type": "PDFTextField"
+    },
+    {
+      "name": "IHT422_10_03",
+      "type": "PDFTextField"
+    },
+    {
+      "name": "IHT422_10_04",
+      "type": "PDFTextField"
+    },
+    {
+      "name": "IHT422_11",
+      "type": "PDFTextField"
+    },
+    {
+      "name": "IHT422_12",
+      "type": "PDFTextField"
+    }
+  ]
+}

@@ -1,0 +1,618 @@
+{
+  "file": "IHT400Calc_0223.pdf",
+  "fieldCount": 153,
+  "fields": [
+    {
+      "name": "IHT400Calc_01",
+      "type": "PDFTextField"
+    },
+    {
+      "name": "IHT400Calc_02",
+      "type": "PDFTextField"
+    },
+    {
+      "name": "IHT400Calc_03",
+      "type": "PDFTextField"
+    },
+    {
+      "name": "IHT400Calc_04",
+      "type": "PDFTextField"
+    },
+    {
+      "name": "IHT400Calc_05",
+      "type": "PDFTextField"
+    },
+    {
+      "name": "IHT400Calc_06",
+      "type": "PDFTextField"
+    },
+    {
+      "name": "IHT400Calc_07",
+      "type": "PDFTextField"
+    },
+    {
+      "name": "IHT400Calc_08",
+      "type": "PDFTextField"
+    },
+    {
+      "name": "IHT400Calc_09",
+      "type": "PDFTextField"
+    },
+    {
+      "name": "IHT400Calc_10",
+      "type": "PDFTextField"
+    },
+    {
+      "name": "IHT400Calc_10_01",
+      "type": "PDFTextField"
+    },
+    {
+      "name": "IHT400Calc_10_02",
+      "type": "PDFTextField"
+    },
+    {
+      "name": "IHT400Calc_11",
+      "type": "PDFCheckBox"
+    },
+    {
+      "name": "IHT400Calc_12",
+      "type": "PDFTextField"
+    },
+    {
+      "name": "IHT400Calc_12_01",
+      "type": "PDFTextField"
+    },
+    {
+      "name": "IHT400Calc_12_02",
+      "type": "PDFTextField"
+    },
+    {
+      "name": "IHT400Calc_13",
+      "type": "PDFTextField"
+    },
+    {
+      "name": "IHT400Calc_13_01",
+      "type": "PDFTextField"
+    },
+    {
+      "name": "IHT400Calc_13_02",
+      "type": "PDFTextField"
+    },
+    {
+      "name": "IHT400Calc_14_01",
+      "type": "PDFTextField"
+    },
+    {
+      "name": "IHT400Calc_14_02",
+      "type": "PDFTextField"
+    },
+    {
+      "name": "IHT400Calc_14_03",
+      "type": "PDFTextField"
+    },
+    {
+      "name": "IHT400Calc_14_04",
+      "type": "PDFTextField"
+    },
+    {
+      "name": "IHT400Calc_14_05",
+      "type": "PDFTextField"
+    },
+    {
+      "name": "IHT400Calc_15",
+      "type": "PDFTextField"
+    },
+    {
+      "name": "IHT400Calc_15_01",
+      "type": "PDFTextField"
+    },
+    {
+      "name": "IHT400Calc_15_02",
+      "type": "PDFTextField"
+    },
+    {
+      "name": "IHT400Calc_16",
+      "type": "PDFTextField"
+    },
+    {
+      "name": "IHT400Calc_16_01",
+      "type": "PDFTextField"
+    },
+    {
+      "name": "IHT400Calc_16_02",
+      "type": "PDFTextField"
+    },
+    {
+      "name": "IHT400Calc_17",
+      "type": "PDFTextField"
+    },
+    {
+      "name": "IHT400Calc_18",
+      "type": "PDFTextField"
+    },
+    {
+      "name": "IHT400Calc_18_01",
+      "type": "PDFTextField"
+    },
+    {
+      "name": "IHT400Calc_18_02",
+      "type": "PDFTextField"
+    },
+    {
+      "name": "IHT400Calc_19",
+      "type": "PDFTextField"
+    },
+    {
+      "name": "IHT400Calc_19_01",
+      "type": "PDFTextField"
+    },
+    {
+      "name": "IHT400Calc_19_02",
+      "type": "PDFTextField"
+    },
+    {
+      "name": "IHT400Calc_20",
+      "type": "PDFTextField"
+    },
+    {
+      "name": "IHT400Calc_21",
+      "type": "PDFTextField"
+    },
+    {
+      "name": "IHT400Calc_22",
+      "type": "PDFTextField"
+    },
+    {
+      "name": "IHT400Calc_23_01",
+      "type": "PDFTextField"
+    },
+    {
+      "name": "IHT400Calc_23_02",
+      "type": "PDFTextField"
+    },
+    {
+      "name": "IHT400Calc_23_03",
+      "type": "PDFTextField"
+    },
+    {
+      "name": "IHT400Calc_23_04",
+      "type": "PDFTextField"
+    },
+    {
+      "name": "IHT400Calc_23_05",
+      "type": "PDFTextField"
+    },
+    {
+      "name": "IHT400Calc_23_06",
+      "type": "PDFTextField"
+    },
+    {
+      "name": "IHT400Calc_23_07",
+      "type": "PDFTextField"
+    },
+    {
+      "name": "IHT400Calc_23_08",
+      "type": "PDFTextField"
+    },
+    {
+      "name": "IHT400Calc_24",
+      "type": "PDFCheckBox"
+    },
+    {
+      "name": "IHT400Calc_25",
+      "type": "PDFTextField"
+    },
+    {
+      "name": "IHT400Calc_26_01",
+      "type": "PDFTextField"
+    },
+    {
+      "name": "IHT400Calc_26_02",
+      "type": "PDFTextField"
+    },
+    {
+      "name": "IHT400Calc_26_03",
+      "type": "PDFTextField"
+    },
+    {
+      "name": "IHT400Calc_26_04",
+      "type": "PDFTextField"
+    },
+    {
+      "name": "IHT400Calc_26_05",
+      "type": "PDFTextField"
+    },
+    {
+      "name": "IHT400Calc_27",
+      "type": "PDFTextField"
+    },
+    {
+      "name": "IHT400Calc_27_01",
+      "type": "PDFTextField"
+    },
+    {
+      "name": "IHT400Calc_27_02",
+      "type": "PDFTextField"
+    },
+    {
+      "name": "IHT400Calc_28",
+      "type": "PDFCheckBox"
+    },
+    {
+      "name": "IHT400Calc_29",
+      "type": "PDFCheckBox"
+    },
+    {
+      "name": "IHT400Calc_30",
+      "type": "PDFTextField"
+    },
+    {
+      "name": "IHT400Calc_31",
+      "type": "PDFTextField"
+    },
+    {
+      "name": "IHT400Calc_31_01",
+      "type": "PDFTextField"
+    },
+    {
+      "name": "IHT400Calc_31_02",
+      "type": "PDFTextField"
+    },
+    {
+      "name": "IHT400Calc_32",
+      "type": "PDFTextField"
+    },
+    {
+      "name": "IHT400Calc_33_01",
+      "type": "PDFTextField"
+    },
+    {
+      "name": "IHT400Calc_33_02",
+      "type": "PDFTextField"
+    },
+    {
+      "name": "IHT400Calc_33_03",
+      "type": "PDFTextField"
+    },
+    {
+      "name": "IHT400Calc_33_04",
+      "type": "PDFTextField"
+    },
+    {
+      "name": "IHT400Calc_33_05",
+      "type": "PDFTextField"
+    },
+    {
+      "name": "IHT400Calc_34",
+      "type": "PDFTextField"
+    },
+    {
+      "name": "IHT400Calc_34_01",
+      "type": "PDFTextField"
+    },
+    {
+      "name": "IHT400Calc_34_02",
+      "type": "PDFTextField"
+    },
+    {
+      "name": "IHT400Calc_35",
+      "type": "PDFTextField"
+    },
+    {
+      "name": "IHT400Calc_35_01",
+      "type": "PDFTextField"
+    },
+    {
+      "name": "IHT400Calc_35_02",
+      "type": "PDFTextField"
+    },
+    {
+      "name": "IHT400Calc_36",
+      "type": "PDFTextField"
+    },
+    {
+      "name": "IHT400Calc_36_01",
+      "type": "PDFTextField"
+    },
+    {
+      "name": "IHT400Calc_36_02",
+      "type": "PDFTextField"
+    },
+    {
+      "name": "IHT400Calc_37",
+      "type": "PDFTextField"
+    },
+    {
+      "name": "IHT400Calc_37_01",
+      "type": "PDFTextField"
+    },
+    {
+      "name": "IHT400Calc_37_02",
+      "type": "PDFTextField"
+    },
+    {
+      "name": "IHT400Calc_38",
+      "type": "PDFTextField"
+    },
+    {
+      "name": "IHT400Calc_38_01",
+      "type": "PDFTextField"
+    },
+    {
+      "name": "IHT400Calc_38_02",
+      "type": "PDFTextField"
+    },
+    {
+      "name": "IHT400Calc_39",
+      "type": "PDFTextField"
+    },
+    {
+      "name": "IHT400Calc_39_01",
+      "type": "PDFTextField"
+    },
+    {
+      "name": "IHT400Calc_39_02",
+      "type": "PDFTextField"
+    },
+    {
+      "name": "IHT400Calc_40",
+      "type": "PDFTextField"
+    },
+    {
+      "name": "IHT400Calc_41_01",
+      "type": "PDFTextField"
+    },
+    {
+      "name": "IHT400Calc_41_02",
+      "type": "PDFTextField"
+    },
+    {
+      "name": "IHT400Calc_41_03",
+      "type": "PDFTextField"
+    },
+    {
+      "name": "IHT400Calc_41_04",
+      "type": "PDFTextField"
+    },
+    {
+      "name": "IHT400Calc_41_05",
+      "type": "PDFTextField"
+    },
+    {
+      "name": "IHT400Calc_42",
+      "type": "PDFTextField"
+    },
+    {
+      "name": "IHT400Calc_42_01",
+      "type": "PDFTextField"
+    },
+    {
+      "name": "IHT400Calc_42_02",
+      "type": "PDFTextField"
+    },
+    {
+      "name": "IHT400Calc_43",
+      "type": "PDFCheckBox"
+    },
+    {
+      "name": "IHT400Calc_44",
+      "type": "PDFCheckBox"
+    },
+    {
+      "name": "IHT400Calc_45",
+      "type": "PDFTextField"
+    },
+    {
+      "name": "IHT400Calc_46",
+      "type": "PDFTextField"
+    },
+    {
+      "name": "IHT400Calc_47",
+      "type": "PDFTextField"
+    },
+    {
+      "name": "IHT400Calc_48",
+      "type": "PDFTextField"
+    },
+    {
+      "name": "IHT400Calc_48_01",
+      "type": "PDFTextField"
+    },
+    {
+      "name": "IHT400Calc_48_02",
+      "type": "PDFTextField"
+    },
+    {
+      "name": "IHT400Calc_49",
+      "type": "PDFTextField"
+    },
+    {
+      "name": "IHT400Calc_50_01",
+      "type": "PDFTextField"
+    },
+    {
+      "name": "IHT400Calc_50_02",
+      "type": "PDFTextField"
+    },
+    {
+      "name": "IHT400Calc_50_03",
+      "type": "PDFTextField"
+    },
+    {
+      "name": "IHT400Calc_50_04",
+      "type": "PDFTextField"
+    },
+    {
+      "name": "IHT400Calc_50_05",
+      "type": "PDFTextField"
+    },
+    {
+      "name": "IHT400Calc_51",
+      "type": "PDFTextField"
+    },
+    {
+      "name": "IHT400Calc_51_01",
+      "type": "PDFTextField"
+    },
+    {
+      "name": "IHT400Calc_51_02",
+      "type": "PDFTextField"
+    },
+    {
+      "name": "IHT400Calc_52",
+      "type": "PDFTextField"
+    },
+    {
+      "name": "IHT400Calc_52_01",
+      "type": "PDFTextField"
+    },
+    {
+      "name": "IHT400Calc_52_02",
+      "type": "PDFTextField"
+    },
+    {
+      "name": "IHT400Calc_53",
+      "type": "PDFTextField"
+    },
+    {
+      "name": "IHT400Calc_53_01",
+      "type": "PDFTextField"
+    },
+    {
+      "name": "IHT400Calc_53_02",
+      "type": "PDFTextField"
+    },
+    {
+      "name": "IHT400Calc_54",
+      "type": "PDFTextField"
+    },
+    {
+      "name": "IHT400Calc_54_01",
+      "type": "PDFTextField"
+    },
+    {
+      "name": "IHT400Calc_54_02",
+      "type": "PDFTextField"
+    },
+    {
+      "name": "IHT400Calc_55_01",
+      "type": "PDFTextField"
+    },
+    {
+      "name": "IHT400Calc_55_02",
+      "type": "PDFTextField"
+    },
+    {
+      "name": "IHT400Calc_55_03",
+      "type": "PDFTextField"
+    },
+    {
+      "name": "IHT400Calc_55_04",
+      "type": "PDFTextField"
+    },
+    {
+      "name": "IHT400Calc_55_05",
+      "type": "PDFTextField"
+    },
+    {
+      "name": "IHT400Calc_55_06",
+      "type": "PDFTextField"
+    },
+    {
+      "name": "IHT400Calc_56",
+      "type": "PDFCheckBox"
+    },
+    {
+      "name": "IHT400Calc_57",
+      "type": "PDFCheckBox"
+    },
+    {
+      "name": "IHT400Calc_58",
+      "type": "PDFTextField"
+    },
+    {
+      "name": "IHT400Calc_58_01",
+      "type": "PDFTextField"
+    },
+    {
+      "name": "IHT400Calc_58_02",
+      "type": "PDFTextField"
+    },
+    {
+      "name": "IHT400Calc_59",
+      "type": "PDFTextField"
+    },
+    {
+      "name": "IHT400Calc_59_01",
+      "type": "PDFTextField"
+    },
+    {
+      "name": "IHT400Calc_59_02",
+      "type": "PDFTextField"
+    },
+    {
+      "name": "IHT400Calc_60",
+      "type": "PDFCheckBox"
+    },
+    {
+      "name": "IHT400Calc_61",
+      "type": "PDFTextField"
+    },
+    {
+      "name": "IHT400Calc_61_01",
+      "type": "PDFTextField"
+    },
+    {
+      "name": "IHT400Calc_61_02",
+      "type": "PDFTextField"
+    },
+    {
+      "name": "IHT400Calc_62",
+      "type": "PDFTextField"
+    },
+    {
+      "name": "IHT400Calc_62_01",
+      "type": "PDFTextField"
+    },
+    {
+      "name": "IHT400Calc_62_02",
+      "type": "PDFTextField"
+    },
+    {
+      "name": "IHT400Calc_63",
+      "type": "PDFTextField"
+    },
+    {
+      "name": "IHT400Calc_63_01",
+      "type": "PDFTextField"
+    },
+    {
+      "name": "IHT400Calc_63_02",
+      "type": "PDFTextField"
+    },
+    {
+      "name": "IHT400Calc_64",
+      "type": "PDFTextField"
+    },
+    {
+      "name": "IHT400Calc_64_01",
+      "type": "PDFTextField"
+    },
+    {
+      "name": "IHT400Calc_64_02",
+      "type": "PDFTextField"
+    },
+    {
+      "name": "IHT400Calc_65",
+      "type": "PDFTextField"
+    },
+    {
+      "name": "IHT400Calc_65_01",
+      "type": "PDFTextField"
+    },
+    {
+      "name": "IHT400Calc_65_02",
+      "type": "PDFTextField"
+    }
+  ]
+}
