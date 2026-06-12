@@ -39,6 +39,10 @@ app.use(session({
   }
 }));
 
+// Stripe webhook needs the raw, unparsed body for signature verification, so it
+// must be registered BEFORE express.json() consumes the request stream.
+app.use("/api/webhooks/stripe", express.raw({ type: "*/*" }));
+
 // Body parsing middleware
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));

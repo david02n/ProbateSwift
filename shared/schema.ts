@@ -219,6 +219,50 @@ export const referralEvents = pgTable("referral_events", {
   createdAt: timestamp("created_at").defaultNow(),
 });
 
+// Payments (Phase C) — one row per Stripe Checkout attempt for a case. The £295
+// flat fee is charged at submission; the product is free to use until then
+// (dec-pricing-model). A case is "paid" once any row reaches status 'paid'.
+export const payments = pgTable(
+  "payments",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    caseId: integer("case_id").references(() => probateCases.id).notNull(),
+    userId: varchar("user_id").references(() => users.id).notNull(),
+    stripeCheckoutSessionId: text("stripe_checkout_session_id"),
+    stripePaymentIntentId: text("stripe_payment_intent_id"),
+    amount: integer("amount").notNull(), // minor units (pence)
+    currency: text("currency").notNull().default("gbp"),
+    status: text("status").notNull().default("pending"), // pending | paid | refunded | failed
+    paidAt: timestamp("paid_at"),
+    createdAt: timestamp("created_at").defaultNow(),
+    updatedAt: timestamp("updated_at").defaultNow(),
+  },
+  (table) => [
+    index("IDX_payments_case").on(table.caseId),
+    index("IDX_payments_session").on(table.stripeCheckoutSessionId),
+  ],
+);
+
+// Case task state (Phase B) — the persisted overlay for the guided task list.
+// The task catalog itself is generated from intake flags (shared/milestone-config);
+// this table only stores per-task momentum: your_move | awaiting | done | skipped.
+// taskKey is the generated task id (e.g. "iht400") or a derived item key
+// (e.g. "asset:42" for a per-asset valuation row). One row per (caseId, taskKey).
+export const caseTasks = pgTable(
+  "case_tasks",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    caseId: integer("case_id").references(() => probateCases.id).notNull(),
+    taskKey: text("task_key").notNull(),
+    status: text("status").notNull().default("your_move"), // your_move | awaiting | done | skipped
+    awaitingSince: timestamp("awaiting_since"),
+    note: text("note"),
+    createdAt: timestamp("created_at").defaultNow(),
+    updatedAt: timestamp("updated_at").defaultNow(),
+  },
+  (table) => [index("IDX_case_tasks_case").on(table.caseId)],
+);
+
 // Insert schemas
 export const insertUserSchema = createInsertSchema(users)
   .pick({
@@ -273,6 +317,27 @@ export const insertReferralEventSchema = createInsertSchema(referralEvents)
     reasons: true,
     summary: true,
     consentedAt: true,
+  });
+
+export const insertPaymentSchema = createInsertSchema(payments)
+  .pick({
+    caseId: true,
+    userId: true,
+    stripeCheckoutSessionId: true,
+    stripePaymentIntentId: true,
+    amount: true,
+    currency: true,
+    status: true,
+    paidAt: true,
+  });
+
+export const insertCaseTaskSchema = createInsertSchema(caseTasks)
+  .pick({
+    caseId: true,
+    taskKey: true,
+    status: true,
+    awaitingSince: true,
+    note: true,
   });
 
 export const insertProbateCaseSchema = createInsertSchema(probateCases)
@@ -383,6 +448,12 @@ export type Lead = typeof leads.$inferSelect;
 
 export type InsertReferralEvent = z.infer<typeof insertReferralEventSchema>;
 export type ReferralEvent = typeof referralEvents.$inferSelect;
+
+export type InsertPayment = z.infer<typeof insertPaymentSchema>;
+export type Payment = typeof payments.$inferSelect;
+
+export type InsertCaseTask = z.infer<typeof insertCaseTaskSchema>;
+export type CaseTask = typeof caseTasks.$inferSelect;
 
 export type InsertProbateCase = z.infer<typeof insertProbateCaseSchema>;
 export type ProbateCase = typeof probateCases.$inferSelect;

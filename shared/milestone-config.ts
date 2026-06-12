@@ -339,5 +339,198 @@ export function generatePersonalisedTasks(
     priority: 30,
   });
 
+  // ── Grant & administration (phases 6–7) ──────────────────────────────────
+  tasks.push({
+    id: "order_office_copies",
+    title: "Order sealed office copies of the grant",
+    description: "Once the grant is issued, order extra sealed copies (about £1.50 each) — one for each bank or asset holder you need to deal with.",
+    category: "legal",
+    priority: 40,
+  });
+
+  tasks.push({
+    id: "collect_assets",
+    title: "Collect in the estate's money and assets",
+    description: "Send a sealed copy of the grant to each bank and institution to release funds, and sell or transfer property as needed.",
+    category: "legal",
+    priority: 41,
+  });
+
+  tasks.push({
+    id: "gazette_notice",
+    title: "Place a creditors' notice (Gazette + local paper)",
+    description: "Protect yourself as executor by advertising for unknown creditors. There is a two-month window before you can safely distribute.",
+    category: "legal",
+    priority: 42,
+  });
+
+  tasks.push({
+    id: "estate_accounts",
+    title: "Prepare the estate accounts",
+    description: "Record everything that came in and went out, settle debts and any tax, and show what each beneficiary will receive.",
+    category: "legal",
+    priority: 43,
+  });
+
+  tasks.push({
+    id: "distribute_estate",
+    title: "Distribute the estate to the beneficiaries",
+    description: "Once debts, tax and the creditor window are cleared, pay out what's due. Hold the final distribution until about six months after the grant.",
+    category: "people",
+    priority: 44,
+  });
+
   return tasks.sort((a, b) => a.priority - b.priority);
+}
+
+// ── Guided 7-phase journey (sol-guided-tasklist-ux, dec-lifecycle-scope) ────────
+// The branchy, ~9–18 month journey rendered as one list that feels linear. The
+// catalog above is grouped into seven phases; per-task state is overlaid from
+// the caseTasks store so "your move" / "awaiting reply" momentum survives reloads.
+
+export interface Phase {
+  number: number;
+  id: string;
+  name: string;
+  description: string;
+}
+
+export const PHASES: Phase[] = [
+  { number: 1, id: "qualify",      name: "Qualify",                 description: "Confirm probate is needed and that you're the right person to apply." },
+  { number: 2, id: "value",        name: "Value the estate",        description: "Find out what everything was worth on the date of death." },
+  { number: 3, id: "iht_prepare",  name: "Prepare the IHT return",  description: "Work out the inheritance tax position and complete the right forms." },
+  { number: 4, id: "iht_pay",      name: "Pay & submit IHT",        description: "Pay anything due and send the inheritance tax return to HMRC." },
+  { number: 5, id: "apply",        name: "Apply for probate",       description: "Complete and send the probate application to the registry." },
+  { number: 6, id: "grant",        name: "Grant issued",            description: "The grant arrives — order sealed copies for the institutions." },
+  { number: 7, id: "administer",   name: "Administer & distribute", description: "Collect the assets, settle debts, and pay the beneficiaries." },
+];
+
+// Which phase each catalog task belongs to, and whether it's safe to start early
+// (parallel-prep: no dependency on outstanding values or the grant).
+const TASK_META: Record<string, { phase: number; parallelPrep?: boolean }> = {
+  blocked_specialist:   { phase: 1 },
+  specialist_advice:    { phase: 1 },
+  death_certificate:    { phase: 2 },
+  add_deceased_details: { phase: 2 },
+  upload_will:          { phase: 2, parallelPrep: true },
+  alias_evidence:       { phase: 2, parallelPrep: true },
+  translations:         { phase: 2, parallelPrep: true },
+  excepted_estate:      { phase: 3 },
+  iht400:               { phase: 3 },
+  iht400_submit:        { phase: 4 },
+  renunciation:         { phase: 5, parallelPrep: true },
+  pa1p_form:            { phase: 5 },
+  pa1a_form:            { phase: 5 },
+  swear_oath:           { phase: 5 },
+  submit_application:   { phase: 5 },
+  order_office_copies:  { phase: 6 },
+  collect_assets:       { phase: 7 },
+  gazette_notice:       { phase: 7 },
+  estate_accounts:      { phase: 7 },
+  distribute_estate:    { phase: 7 },
+};
+const DEFAULT_TASK_PHASE = 2;
+
+export type TaskStatus = "your_move" | "awaiting" | "done" | "skipped";
+
+/** Persisted per-task overlay state, keyed by task id. */
+export interface TaskState {
+  status: TaskStatus;
+  awaitingSince?: string | null;
+  note?: string | null;
+}
+
+export interface GuidedTask extends PersonalisedTask {
+  phase: number;
+  parallelPrep: boolean;
+  status: TaskStatus;
+  awaitingSince?: string | null;
+}
+
+export interface GuidedPhase extends Phase {
+  state: "done" | "now" | "upcoming";
+  doneCount: number;
+  total: number;
+}
+
+export interface GuidedView {
+  phases: GuidedPhase[];
+  currentPhase: number;
+  currentPhaseTasks: GuidedTask[];
+  nextStep: GuidedTask | null;
+  parallelPrep: GuidedTask[];
+  percentComplete: number;
+}
+
+/**
+ * Resolve the branchy catalog + saved task state into one guided, linear-feeling
+ * view: which phase you're in, the single next step, what's parked awaiting a
+ * reply, and head-start tasks you can do while you wait.
+ */
+export function computeGuidedView(
+  flags: Record<string, any> | null | undefined,
+  states: Record<string, TaskState> = {},
+): GuidedView {
+  const enriched: GuidedTask[] = generatePersonalisedTasks(flags).map((t) => {
+    const meta = TASK_META[t.id];
+    const st = states[t.id];
+    return {
+      ...t,
+      phase: meta?.phase ?? DEFAULT_TASK_PHASE,
+      parallelPrep: meta?.parallelPrep ?? false,
+      status: st?.status ?? "your_move",
+      awaitingSince: st?.awaitingSince ?? null,
+    };
+  });
+
+  const counts = (n: number) => {
+    const inPhase = enriched.filter((t) => t.phase === n && t.status !== "skipped");
+    const done = inPhase.filter((t) => t.status === "done").length;
+    return { done, total: inPhase.length };
+  };
+
+  // Current phase = the first phase that still has unfinished tasks. Empty phases
+  // (e.g. IHT phases for an excepted estate) are treated as already cleared.
+  let currentPhase = PHASES.length;
+  for (const p of PHASES) {
+    const { done, total } = counts(p.number);
+    if (total > 0 && done < total) {
+      currentPhase = p.number;
+      break;
+    }
+  }
+
+  const phases: GuidedPhase[] = PHASES.map((p) => {
+    const { done, total } = counts(p.number);
+    const state: GuidedPhase["state"] =
+      p.number < currentPhase ? "done" : p.number === currentPhase ? "now" : "upcoming";
+    return { ...p, state, doneCount: done, total };
+  });
+
+  const currentPhaseTasks = enriched
+    .filter((t) => t.phase === currentPhase && t.status !== "skipped")
+    .sort((a, b) => a.priority - b.priority);
+
+  // The one elevated next step: the highest-priority actionable, non-parked task
+  // in the current phase, preferring critical-path over parallel-prep.
+  const actionable = currentPhaseTasks.filter((t) => t.status === "your_move");
+  const nextStep =
+    actionable.find((t) => !t.parallelPrep) ?? actionable[0] ?? null;
+
+  // Head-start tasks: parallel-prep items from the current or later phases that
+  // aren't done — surfaced so the screen is never a blank "wait".
+  const parallelPrep = enriched
+    .filter((t) => t.parallelPrep && t.status === "your_move" && t.id !== nextStep?.id)
+    .sort((a, b) => a.phase - b.phase || a.priority - b.priority);
+
+  // Phase-weighted progress: whole completed phases + fraction of the current one.
+  const cur = counts(currentPhase);
+  const completedPhases = currentPhase - 1;
+  const fraction = cur.total > 0 ? cur.done / cur.total : 0;
+  const percentComplete = Math.min(
+    100,
+    Math.round(((completedPhases + fraction) / PHASES.length) * 100),
+  );
+
+  return { phases, currentPhase, currentPhaseTasks, nextStep, parallelPrep, percentComplete };
 }

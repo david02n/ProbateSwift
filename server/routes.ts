@@ -14,6 +14,8 @@ import { registerEstateRoutes } from "./routes/estate";
 import { registerDocumentRoutes } from "./routes/documents";
 import { registerEvaluationRoutes } from "./routes/evaluation";
 import { registerDeceasedRoutes } from "./routes/deceased";
+import { registerPaymentRoutes } from "./routes/payments";
+import { registerFormRoutes } from "./routes/forms";
 
 export async function registerRoutes(app: Express): Promise<Server> {
   const httpServer = createServer(app);
@@ -233,6 +235,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
   registerDocumentRoutes(app, requireAuth, broadcast);
   registerEvaluationRoutes(app, requireAuth);
   registerDeceasedRoutes(app, requireAuth);
+  registerPaymentRoutes(app, requireAuth);
+  registerFormRoutes(app, requireAuth);
 
   return httpServer;
 }
