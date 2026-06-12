@@ -140,6 +140,13 @@ IHT forms / full admin £2,730+ — primary threat), `comp-farewill` (Essential 
 - Build IHT400 (439-field) + PA1A mappings — the core differentiator (`sol-guided-iht400`); inventories ready.
 - Error monitoring (Sentry) on the logged-in app — the earlier `/estate` white-screen was invisible.
 
+**Canonical-key audit (2026-06-12) — findings:**
+- ✅ Fixed: jurisdiction read `death_in_england_wales` (landing-only, never set by the live funnel) instead of the detailed-eval `deceased_lived_england_wales` — answered cases were treated as unconfirmed and blocked.
+- ✅ Fixed: detailed eval no longer re-asks landing-assessment questions (`has_will`/`named_executor_in_will`/`next_of_kin`).
+- ⚠️ Coverage gap (product decision): the detailed evaluation does NOT collect grant-needed (`owned_property`, `property_ownership`, NS&I/shares/£50k) or complexity red-flags (`estate_disputed`, `estate_insolvent`, `business_or_farm_assets`, `will_missing_or_invalid`) — those live ONLY in the landing assessment. A user who SKIPS the assessment is never screened for them (defaults to not-flagged/permissive). Decide whether to fold a short complexity/grant screen into the in-app flow for skip-assessment users.
+- ⚠️ Section 2 collects `married_civil_partnership`, `spouse_partner_deceased`, `spouse_nrb_fully_used`, `home_to_children_grandchildren`, `deceased_lived_uk_property` that NO flag currently reads — keep (needed for IHT400 RNRB/TNRB calc in Phase D), but wire them in when IHT mapping lands.
+- TODO: add a drift test asserting every `deriveFlags` read key is set by at least one live question (landing `data.ts` or detailed eval), to catch silently-ignored answers automatically.
+
 **P2 — later:**
 - Delete the now-orphaned legacy pages (estate/people/documents/evaluation/deceased pages, MilestoneProgress, NewHeader) — clears most pre-existing `tsc` errors; `npm run build` is the real gate and is green.
 - Full per-institution valuation tracker (letterSent/replyReceived correspondence model) vs the current lighter status-overlay cut.
