@@ -8,3 +8,7 @@ uploads
 .env
 .env.*
 !.env.example
+
+# QA screenshot artifacts
+qa-screenshot.png
+qa/*.png
